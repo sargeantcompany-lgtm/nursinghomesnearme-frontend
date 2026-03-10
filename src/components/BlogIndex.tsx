@@ -95,15 +95,25 @@ export default function BlogIndex() {
                 overflow: "hidden",
               }}
             >
+              <img
+                src={post.image}
+                alt={post.title}
+                style={{
+                  width: "100%",
+                  height: 180,
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
               <div style={{ padding: 14 }}>
-              <p style={{ margin: 0, fontSize: 12, color: "#0f766e", fontWeight: 700 }}>
-                Blog #{post.day}
-              </p>
-              <h2 style={{ margin: "8px 0 10px", fontSize: 18, color: "#0b3b5b" }}>{post.title}</h2>
-              <p style={{ margin: "0 0 12px", color: "#334155", lineHeight: 1.6 }}>{post.excerpt}</p>
-              <Link to={`/blog/${post.slug}`} style={{ color: "#0f766e", fontWeight: 700 }}>
-                Read post
-              </Link>
+                <p style={{ margin: 0, fontSize: 12, color: "#0f766e", fontWeight: 700 }}>
+                  Blog #{post.day}
+                </p>
+                <h2 style={{ margin: "8px 0 10px", fontSize: 18, color: "#0b3b5b" }}>{post.title}</h2>
+                <p style={{ margin: "0 0 12px", color: "#334155", lineHeight: 1.6 }}>{post.excerpt}</p>
+                <Link to={`/blog/${post.slug}`} style={{ color: "#0f766e", fontWeight: 700 }}>
+                  Read post
+                </Link>
               </div>
             </article>
           ))}

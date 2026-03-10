@@ -4,272 +4,125 @@ export type BlogPost = {
   slug: string;
   content: string;
   excerpt: string;
+  metaDescription: string;
+  datePublished: string;
   image: string;
 };
 
-const rawBlogPosts: Omit<BlogPost, "excerpt" | "image">[] = [
+const rawBlogPosts: Omit<BlogPost, "excerpt">[] = [
   {
     day: 1,
-    title: `How Nursing Home Placement Works in Australia`,
-    slug: `day-1-how-nursing-home-placement-works-in-australia`,
-    content: `Families usually start with one question: where do we begin? In Australia, nursing home placement generally follows this path: check eligibility, complete an aged care assessment, shortlist homes, compare costs, and then apply. The key is to start early, before a crisis. If you wait until hospital discharge pressure starts, choices can become limited. Build a shortlist based on location, care level, and how well staff communicate with families. Ask each home about current vacancies, waitlist timelines, and support for your loved one’s specific needs. Good placement is not just about the next available bed. It is about fit, safety, and continuity of care. Planning ahead gives your family more control and less stress.`,
+    title: "What the New Aged Care Act Means for Your Family Right Now",
+    slug: "new-aged-care-act-australia-2024-family-guide",
+    datePublished: "2024-07-01",
+    metaDescription:
+      "Australia's new Aged Care Act (1 July 2024) shifted to a rights-based system. Learn what changed, what your loved one is entitled to, and how to hold providers accountable.",
+    content:
+      "Australia's aged care system went through its most significant overhaul in a generation when the new Aged Care Act came into effect on 1 July 2024. If you're currently navigating placement for a parent or loved one, understanding what changed isn't optional — it directly affects what rights you can exercise, what providers are legally required to deliver, and how you can hold them accountable.\n\nThe centrepiece of the reform is a shift from a provider-focused system to a rights-based one. The previous framework largely told providers what they had to do. The new Act tells older Australians what they are entitled to. That's a profound difference in how you should approach conversations with any aged care facility.\n\nUnder the Statement of Rights embedded in the new Act, your loved one has legally protected entitlements including the right to be treated with dignity, the right to maintain their identity and cultural practices, the right to make decisions about their own care, and the right to be free from abuse and neglect. These aren't aspirational values — they are legal obligations backed by a strengthened regulator in the Aged Care Quality and Safety Commission.\n\nOne of the most practically significant changes is around Support at Home, which replaced the Home Care Packages program from 1 July 2025. Families who assumed a nursing home was the only path forward should reconsider. The new Support at Home program has been redesigned to fund more intensive care at home, including short-term restorative care and palliative support. For some people, this extends the time before residential care is needed — or removes the need entirely.\n\nThe Star Ratings system for residential aged care facilities, introduced progressively since 2022, is now a mature tool that families should be using. Each home is rated one to five stars across four key areas: residents' experience, staffing levels, compliance with the Quality Standards, and quarterly financial reporting. You can check any home's current rating at My Aged Care. A facility with consistently low staffing scores should prompt careful questioning regardless of how attractive the marketing brochures appear.\n\nFor families currently inside the system, the complaints process has been simplified. You can contact the Aged Care Quality and Safety Commission directly by phone or online without going through the provider first. The Commission has stronger enforcement powers under the new Act, including the ability to impose conditions on providers and escalate to civil penalties. Documenting your concerns clearly and early has never mattered more.\n\nThe key practical takeaway for families: approach every interaction with a nursing home as a rights-based conversation, not a favour-seeking one. Your loved one is entitled to quality care. The provider is legally required to deliver it. The system now exists, more than at any point in Australian history, to back you up when it doesn't.",
+    image: "/blog/blog_1_header.webp",
   },
   {
     day: 2,
-    title: `The First Checklist Before You Apply`,
-    slug: `day-2-the-first-checklist-before-you-apply`,
-    content: `Before contacting homes, prepare a simple placement folder. Include medication list, recent health notes, current care needs, GP details, and emergency contacts. Add financial notes too, including whether you are exploring RAD, DAP, or both. Write down your non-negotiables: distance from family, dementia support, cultural preferences, and clinical capability. This checklist saves time and avoids repeating details in every call. It also helps you compare homes objectively instead of making rushed emotional decisions. Families who prepare first usually move faster once a suitable vacancy appears. A placement checklist is one of the easiest ways to reduce overwhelm and avoid missed steps.`,
+    title: "The Honest Truth About Nursing Home Costs in 2025",
+    slug: "nursing-home-costs-australia-2025-rad-dap-fees",
+    datePublished: "2025-01-15",
+    metaDescription:
+      "Plain-English guide to nursing home costs in Australia 2025: Basic Daily Fee, Means-Tested Care Fee, RAD, DAP, and how to avoid costly mistakes before you sign.",
+    content:
+      "Aged care fees confuse nearly every family going through the process for the first time. The language is technical, the amounts are significant, and the consequences of misunderstanding them can affect family finances for years. Here is a plain-English breakdown of what you will actually pay — and what you need to know before signing anything.\n\nThere are three main types of fees in residential aged care: the Basic Daily Fee, the Means-Tested Care Fee, and the accommodation payment. Each works differently and requires different planning.\n\nThe Basic Daily Fee is paid by all residents, regardless of financial position. It is set at 85% of the single age pension, which in 2025 sits at around $63 per day. This covers daily living expenses: meals, laundry, cleaning, and utilities. You will pay this regardless of your assets or income, and it changes when the pension rate changes.\n\nThe Means-Tested Care Fee is income and assets assessed. Services Australia conducts this assessment after you submit an aged care means assessment form. The fee funds clinical and personal care costs above a base level. There is an annual cap and a lifetime cap on this fee — once either cap is reached, the fee stops. As of 2025, the annual cap is around $32,000 and the lifetime cap is around $78,000. Knowing these caps matters because once your loved one approaches them, their overall cost position changes significantly.\n\nThe accommodation payment is the most misunderstood component. It pays for the room and is negotiated with the individual provider up to a maximum price. Each provider sets their own room price, which must be published on the My Aged Care website and on their own site. You can pay it as a Refundable Accommodation Deposit (RAD) — a lump sum returned when the resident leaves — or as a Daily Accommodation Payment (DAP), which is a non-refundable daily charge calculated at the current MPIR (Maximum Permissible Interest Rate). Many families use a combination: a partial RAD to reduce the ongoing DAP.\n\nOne thing that catches families off guard is the fee assessment timeline. The means assessment can take several weeks. If you don't submit the forms, you may be charged the maximum means-tested fee by default until assessment is complete. Submit the forms through Services Australia as early as possible — even before you have settled on a specific facility.\n\nA critical warning: the accommodation price quoted by a facility is not the total cost. Add the Basic Daily Fee, any applicable Means-Tested Care Fee, and any additional services fee the provider charges for extras like Wi-Fi, pay TV, or specific activity programs. Request an itemised fee schedule in writing from every home you're seriously considering. Compare these documents carefully, not the glossy brochures.",
+    image: "/blog/blog_2_header.webp",
   },
   {
     day: 3,
-    title: `What Makes a Good Nursing Home Shortlist`,
-    slug: `day-3-what-makes-a-good-nursing-home-shortlist`,
-    content: `A strong shortlist usually has 5 to 10 homes, not just one or two. Start with location, then filter by care fit. For example, if your loved one has dementia, ask specifically about secure areas, behaviour support, and trained staff coverage. Then compare practical factors: visiting hours, allied health access, and communication systems for families. Finally, compare cost structure and what is included in daily services. Keep notes in a spreadsheet so each home is scored consistently. The goal is to avoid “panic placement” into the first bed offered. A shortlist gives you options and improves your chance of finding the right long-term fit.`,
+    title: "How to Actually Read a Nursing Home's Star Rating",
+    slug: "how-to-read-nursing-home-star-rating-australia",
+    datePublished: "2025-02-01",
+    metaDescription:
+      "Learn how to interpret Australia's aged care Star Rating system properly — what each sub-rating means, what it misses, and how to use it to compare facilities.",
+    content:
+      "The Australian Government's Star Rating system for aged care was designed to give families a quick reference point when comparing facilities. But like any simplified score, it requires some interpretation to be genuinely useful. Here's how to read ratings properly — and what to look beyond when they don't tell the whole story.\n\nEach residential aged care facility in Australia is currently rated from one to five stars on the My Aged Care website. The overall rating is a composite of four sub-ratings, and understanding what drives each one changes how you use the system.\n\nThe Residents' Experience sub-rating is probably the most valuable. It's based on an independent survey of current residents, who are asked confidential questions about whether they feel safe, respected, and heard. This rating is harder to game than compliance-based metrics. A home can tick every regulatory box and still score poorly on resident experience. If you see a facility with strong compliance scores but a weak residents' experience score, take that seriously.\n\nThe Staffing sub-rating reflects the number of minutes of care residents receive per day from registered nurses and personal care workers. Australia now has mandatory minimum staffing requirements: 200 minutes of total care per resident per day including at least 40 minutes from a registered nurse, with a registered nurse required on site 24/7 from October 2023. The staffing sub-rating shows you how far above or below these minimums a facility operates. Facilities consistently operating near the minimum should be questioned carefully about how they manage high-care residents.\n\nThe Compliance sub-rating reflects the facility's history of meeting the Aged Care Quality Standards across eight domains. Non-compliance findings from the Commission are weighted by severity. A single serious finding can significantly affect the score. You can access the full details of any compliance action on the Commission's public register — always check this separately because the star rating figure alone doesn't describe the nature or severity of past issues.\n\nThe Quarterly Financial Report sub-rating is newer and reflects whether the provider is submitting required financial reports on time. It has limited practical use for most families but can signal organisational stability in providers with consistently late or missing submissions.\n\nA few things the Star Rating system does not capture: staff turnover rates, the quality of dementia care environments, the actual personality and culture of a facility, or the lived experience of families with loved ones currently in residence. Use the ratings as a starting filter, not a final decision tool. A 4-star facility that matches your loved one's specific needs will usually serve them better than a 5-star facility that doesn't.",
+    image: "/blog/blog_3_header.webp",
   },
   {
     day: 4,
-    title: `Questions to Ask on Your First Call`,
-    slug: `day-4-questions-to-ask-on-your-first-call`,
-    content: `Your first phone call should be direct and structured. Ask: Do you currently have vacancies? What care profiles do you accept? What is your waitlist process? How quickly can someone be admitted if needed? Then ask about staffing, GP access, and overnight support. Confirm what is included in basic daily fees and what services are extra. If your family needs regular updates, ask how the home communicates changes in health status. End the call by requesting an information pack and tour availability. These first-call questions help you filter quickly, save time, and avoid spending days on homes that are not a suitable match.`,
+    title: "Dementia Placement in Australia: The Questions Most Families Forget to Ask",
+    slug: "dementia-placement-australia-questions-to-ask",
+    datePublished: "2025-02-15",
+    metaDescription:
+      "Choosing a dementia care facility in Australia? These are the questions experts recommend asking before you commit — environment, staffing, BPSD management, and family communication.",
+    content:
+      "Placing a loved one with dementia requires a different level of inquiry than standard residential aged care placement. The questions are more specific, the risks are higher, and the gap between a good fit and a poor one can have significant consequences for your loved one's safety, wellbeing, and quality of life. Here are the questions that experienced families and aged care advocates recommend asking — before you commit to anything.\n\nStart with the environment. Dementia care units vary enormously in design. Research consistently shows that purpose-built dementia environments with secure outdoor access, good natural light, low-stimulation breakout spaces, and clear wayfinding reduce distress and behavioural symptoms. Ask whether the dementia care area is a dedicated secure unit, how outdoor access is managed, and whether residents can move freely within a safe perimeter. A facility that locks residents in a confined indoor space without meaningful sensory engagement should not be your first choice.\n\nAsk about the Dementia Behaviour Management Advisory Service (DBMAS). This is a free national service that provides specialist support to residential aged care facilities managing complex dementia behaviours. Ask the facility whether they have ever engaged DBMAS and whether they have staff trained in dementia-specific behaviour support. A home that is unfamiliar with this service may not have the specialist resources to manage complex presentations.\n\nAsk specifically about how the facility manages Behavioural and Psychological Symptoms of Dementia (BPSD). These include agitation, wandering, aggression, and sleep disturbances. The best facilities use a personalised, non-pharmacological approach first — understanding triggers, adjusting routines, using sensory strategies. Facilities that default quickly to sedation or physical restriction are not providing best-practice dementia care.\n\nReview the staffing ratios specifically for the dementia unit, not the facility average. Some providers have better ratios on their general floors and lower ratios in memory support. Ask how many residents each personal care worker is responsible for during a standard morning shift — the highest-intensity period of the day. Ask how the ratio changes overnight.\n\nAsk whether the facility uses a validated assessment tool to measure residents' quality of life — such as DEMQOL or the Quality of Life in Alzheimer's Disease scale. The best facilities measure subjective wellbeing, not just clinical outcomes. If a facility doesn't measure it, they can't improve it.\n\nFinally, ask about family communication when your loved one can no longer reliably report their own experience. Good dementia care facilities have structured family check-ins, proactive communication about behavioural changes, and clear escalation pathways. You should never be in a position of finding out about a significant event at a visit rather than receiving a phone call.",
+    image: "/blog/blog_4_header.webp",
   },
   {
     day: 5,
-    title: `Nursing Home Costs in Plain English`,
-    slug: `day-5-nursing-home-costs-in-plain-english`,
-    content: `Most families get stuck at fees. Keep it simple: there are daily living costs, care-related costs, and accommodation payment options. The main accommodation choice is often RAD (lump sum), DAP (daily payment), or a combination. Different homes and circumstances can produce very different outcomes. Instead of chasing the lowest headline number, compare total cost over 12–24 months and check what services are included. Always ask for a written fee schedule before deciding. Good decisions come from understanding both affordability and care quality together. Clear fee comparisons reduce surprises later and help families feel confident during placement discussions.`,
+    title: "What Hospital Discharge Pressure Really Looks Like — and How to Handle It",
+    slug: "hospital-discharge-pressure-aged-care-australia",
+    datePublished: "2025-03-01",
+    metaDescription:
+      "Facing pressure to choose a nursing home within 24 hours of hospital discharge? Know your rights under Australian law and how to push back safely without jeopardising your loved one's care.",
+    content:
+      "One of the most stressful moments in aged care placement is making a major decision under hospital discharge pressure. Families describe it as being handed a list of available beds and told to decide within 24 hours. Understanding what's actually happening — and what your rights are — can help you navigate this without being pushed into a placement you'll regret.\n\nAustralian public hospitals are funded on a throughput model. They receive payment for episodes of care, not for extended stays. When a patient is medically cleared for discharge, the clinical and administrative pressure to free that bed is real and immediate. Families are often not told that this pressure is a system incentive, not a medical instruction. A patient who is medically stable but has complex care needs has not been abandoned to the street — they have a right to safe discharge planning.\n\nThe key term to understand is 'clinically ready for discharge.' This is a clinical determination, not a social one. Being medically stable does not mean the discharge has to happen today regardless of whether an appropriate placement exists. Ask the discharge planner specifically: is this discharge medically urgent, or is it being driven by bed availability? You are entitled to a direct answer.\n\nAsk to speak with the hospital's social worker or discharge planner — not just the ward nurse — if you haven't already. Their role is to connect patients with appropriate post-acute care arrangements. They can liaise with My Aged Care on your behalf if an aged care assessment hasn't yet been completed, and they can help document your loved one's care needs to support an accurate placement.\n\nIf you are being told to accept a specific placement and you have serious concerns, you are not legally required to agree immediately. You can request a formal review of the discharge decision through the hospital's patient advocate or patient liaison service. Every public hospital in Australia is required to have one.\n\nThe practical reality is that urgency sometimes is genuine — particularly following a fall, stroke, or acute infection that has left your loved one unable to return home safely. In these cases, the best approach is not to resist discharge but to secure the best available short-term placement while keeping your preferred homes active on a waitlist. A short-term placement in a home you didn't choose is not a permanent decision.\n\nKeep a written record of every conversation during the discharge period: who said what, when, and what options were presented. This protects you if there are disputes later and helps you maintain clarity during what is typically an emotionally intense period.",
+    image: "/blog/blog_5_header.webp",
   },
   {
     day: 6,
-    title: `RAD vs DAP: Which Option Suits Your Family?`,
-    slug: `day-6-rad-vs-dap-which-option-suits-your-family`,
-    content: `RAD is typically an upfront lump sum, while DAP is an ongoing daily accommodation payment. Many families use a mix of both. The right choice depends on cash flow, assets, and how long the person may need care. Do not decide based on one phone conversation. Ask homes for side-by-side estimates and discuss implications with a qualified adviser if needed. Also review whether partial RAD plus manageable DAP creates better flexibility. Placement decisions are stressful enough without financial confusion. Breaking RAD and DAP into clear scenarios helps families choose a payment approach they can sustain over time.`,
+    title: "What Good Aged Care Actually Looks Like: A Family Observer's Guide",
+    slug: "what-good-aged-care-looks-like-australia-guide",
+    datePublished: "2025-03-15",
+    metaDescription:
+      "How to recognise excellent aged care during a facility visit — the signs staff, resident presentation, activities, and culture that separate great facilities from ordinary ones.",
+    content:
+      "Most families can identify poor aged care when they see it — the smell, the neglect, the disengaged faces. Identifying excellent care is harder. It's quieter, less dramatic, and easy to miss if you don't know what you're looking for. After years of observing facilities across Australia, I've compiled the markers that consistently separate genuinely excellent care from adequate-but-ordinary.\n\nWatch how staff address residents. In good facilities, staff consistently use residents' preferred names, make eye contact at the resident's level rather than talking down to them, and pause their task when a resident speaks. This sounds simple but it is a direct indicator of person-centred care culture. Staff who are so task-focused that they don't stop to engage are working in a system that prioritises completion over connection.\n\nNotice whether residents are dressed and groomed for the time of day. Residents still in pyjamas mid-morning, or with hair uncombed at lunchtime, are a warning sign about staffing ratios or care priority. Personal presentation matters for dignity and self-esteem. Facilities that allow this consistently are not meeting their care obligations.\n\nLook at the activity boards and then look at the actual residents. A glossy activities calendar posted in the foyer means nothing if most residents are sitting alone without engagement during your visit. Ask to see the activities program in action, not just on paper. Ask whether the activities are the same for everyone or personalised to residents' histories and interests. A former carpenter who is given finger-painting as their activity is not receiving person-centred care.\n\nAsk the facility manager about staff turnover. High personal care worker turnover — which is endemic in the industry — directly affects care continuity and relationship quality. A manager who doesn't know their current turnover rate, or who deflects the question, is telling you something important. Good facilities track this, manage it actively, and are willing to discuss it honestly.\n\nVisit at different times. The experience of a facility at 10am on a weekday during a scheduled tour is different from the experience at 4pm on a Friday or 8am on a Sunday morning. If possible, make at least one unannounced visit during a lower-staffed period before committing to a placement.\n\nTalk to other families in the car park or common areas, not just in formal tour settings. Families with loved ones currently in residence have practical, unfiltered knowledge about the facility that no brochure or tour will give you. A simple 'how long has your mum been here?' often opens a much more useful conversation.",
+    image: "/blog/blog_6_header.webp",
   },
   {
     day: 7,
-    title: `How to Compare Homes Beyond Marketing`,
-    slug: `day-7-how-to-compare-homes-beyond-marketing`,
-    content: `Brochures highlight lifestyle features, but placement decisions need deeper checks. Ask about clinical escalation, wound management, falls prevention, and palliative pathways. Ask families currently visiting the home what communication and responsiveness are really like. Observe mealtime, hygiene standards, and staff interactions during your tour. A well-run home feels organised, calm, and respectful. Build your own comparison scorecard and use the same criteria at every site visit. This gives you evidence, not just impressions. A placement that looks good online is not always the best practical fit for your loved one’s daily care needs.`,
+    title: "Aged Care Financial Advice: When You Need It and What to Ask",
+    slug: "aged-care-financial-advice-australia-when-to-get-it",
+    datePublished: "2025-04-01",
+    metaDescription:
+      "Do you need a specialist aged care financial adviser in Australia? When to seek advice, what questions to ask, and why a general financial planner isn't enough for RAD/DAP decisions.",
+    content:
+      "The financial decisions made during aged care placement — particularly around accommodation payments — can have consequences that last for years. Yet a significant proportion of Australian families make these decisions without professional advice, either because they don't know specialist advisers exist or because they assume the cost isn't worth it. Here's when you genuinely need specialist advice and what to look for when choosing an adviser.\n\nAn aged care financial adviser is a licensed financial adviser who specialises in the rules governing aged care fees, Centrelink and DVA entitlements for older Australians, and the interaction between aged care costs and estate planning. They are not the same as a general financial planner. The aged care fee system is complex enough that mistakes made without specialist knowledge are common and expensive.\n\nYou should seek advice before submitting your means assessment forms if your loved one has significant assets — particularly if they own property. The decision about whether to retain or sell the family home affects the means assessment outcome, ongoing pension entitlements, and the size of the means-tested care fee. These decisions cannot always be reversed. Getting the sequencing right requires specialist knowledge.\n\nThe RAD versus DAP versus combination decision is one of the most consequential choices families make. A specialist adviser can model the financial outcomes of each option based on your loved one's specific assets, income, life expectancy, and the interest rate environment. For a family considering a $500,000 RAD, the difference between the right and wrong choice can be tens of thousands of dollars over a few years.\n\nLook for an adviser who is a member of the Aged Care Steps professional network or who holds specific aged care accreditation through the Financial Planning Association. Ask prospective advisers how many aged care clients they advise per year — you want someone for whom this is a primary practice area, not an occasional inquiry. Ask whether they are fee-for-service or whether they receive commissions from any product referrals.\n\nFor families with complex asset structures — investment properties, self-managed super funds, business interests, or multiple beneficiaries — legal advice from an estate planning solicitor in addition to financial advice is often warranted. The interaction between aged care fees and estate outcomes is non-trivial.\n\nCentrelink's Financial Information Service (FIS) offers free, non-advice information sessions about the means assessment process and fee structure. This is a useful starting point but it is not a substitute for personalised advice on your family's specific situation. Think of the FIS as helping you understand the rules; the specialist adviser's role is to apply those rules optimally to your circumstances.",
+    image: "/blog/blog_7_header.webp",
   },
   {
     day: 8,
-    title: `Signs a Home May Not Be the Right Fit`,
-    slug: `day-8-signs-a-home-may-not-be-the-right-fit`,
-    content: `Red flags can appear early. Watch for vague answers about staffing, long delays returning calls, poor tour transparency, or unclear fee explanations. If a home avoids direct questions about incidents and escalation procedures, pause and reassess. During visits, note cleanliness, resident engagement, and whether staff seem rushed. Also watch how management handles your concerns. A quality provider should answer clearly, in writing when needed. Trusting your observations is important. Placement is a long-term decision, so it is better to move on from a questionable option than rush into a setting that creates ongoing stress for the resident and family.`,
+    title: "How to Talk to Your Parent About Aged Care Before It Becomes Urgent",
+    slug: "how-to-talk-to-parent-about-aged-care-australia",
+    datePublished: "2025-04-15",
+    metaDescription:
+      "A practical framework for having the aged care conversation with your parent before a crisis forces it — including values, Power of Attorney, and Advance Care Directives in Australia.",
+    content:
+      "The conversation most Australian families avoid until it is forced upon them is the one about aged care. By then, the decision-making context is often fraught — a hospital admission, a falls crisis, a sudden cognitive decline. Families who have the conversation early, when their parent is well and able to participate meaningfully, almost universally report better outcomes. Here is a practical framework for having it.\n\nThe reason most families avoid this conversation is the same reason it needs to happen: it touches on mortality, loss of independence, and the fear of being a burden. Acknowledging this openly at the start of the conversation disarms it. 'Mum, I know this is uncomfortable to talk about. I find it uncomfortable too. But I'd rather we figure this out together while we have time than be scrambling in a crisis.' That framing alone changes the dynamic.\n\nLead with values, not logistics. Before you discuss which suburb or which fee structure, ask your parent what matters most to them. Safety. Proximity to family. Cultural connection. Maintaining routines. Access to a garden. Continuing to have their dog. These preferences should drive the placement criteria — not the other way around. Many families spend weeks comparing facilities against criteria they assumed, rather than criteria their parent actually holds.\n\nHave the legal paperwork conversation at the same time. The two documents every older Australian should have in place are an Enduring Power of Attorney and an Advance Care Directive. The Power of Attorney allows a nominated person to make financial and legal decisions if capacity is lost. The Advance Care Directive records the person's wishes about medical treatment and care at the end of life. These documents cannot be prepared after capacity is lost. Every state and territory has its own forms; a solicitor can prepare them, or community legal centres often provide assistance at no cost.\n\nAsk specifically what your parent does not want. Some people have strong feelings about not wanting to die in a hospital. Others have strong feelings about not wanting to move into care until it is absolutely necessary. Some have had bad experiences with specific facilities or types of care. These negatives are as important as the preferences — they will help you eliminate options quickly when urgency arrives.\n\nDo not have this conversation once and consider it done. Return to it annually, or after any significant health event. Preferences change as health status changes. A person who was adamant about staying at home at 78 may have a very different view at 83 following a stroke. Keeping the conversation open and ongoing means you always have a current mandate to work from.\n\nIf your parent is resistant to the conversation, consider using a third party to facilitate it — a GP, a geriatrician, or an aged care social worker. Older Australians sometimes hear things differently from professionals than from their adult children, and there is no shame in using that to your advantage when the stakes are this high.",
+    image: "/blog/blog_8_header.webp",
   },
   {
     day: 9,
-    title: `Timing Placement Around Hospital Discharge`,
-    slug: `day-9-timing-placement-around-hospital-discharge`,
-    content: `Hospital discharge can compress timelines. Families often have days, not weeks, to secure care. Preparation is the best defence. Keep your shortlist current, visit likely homes early, and keep documents ready. During discharge planning, ask for clear clinical handover details and medication summaries for each home you contact. Confirm the home can manage current conditions safely from day one. If your first-choice home has no bed, have backup options ready. Discharge pressure is real, but rushed decisions can lead to transfers later. A proactive plan allows faster placement without sacrificing care quality.`,
+    title: "Understanding Aged Care Quality Standards: What They Require and How to Use Them",
+    slug: "aged-care-quality-standards-australia-explained",
+    datePublished: "2025-05-01",
+    metaDescription:
+      "All 8 Aged Care Quality Standards explained for Australian families — what each requires, how to spot gaps during visits, and how to use them to escalate complaints effectively.",
+    content:
+      "Every residential aged care facility in Australia is legally required to meet eight Aged Care Quality Standards. These standards are the foundation of the regulatory system, and families who understand them are significantly better positioned to identify gaps, ask the right questions, and escalate concerns effectively. Here is what each standard covers and how it translates into practical accountability.\n\nStandard 1 covers Consumer Dignity and Choice. It requires that residents are treated with dignity and respect, supported to make decisions about their care, and enabled to express their identity, including cultural identity. In practical terms, this means a facility cannot override a resident's preferences about their care routines without documented discussion and agreement. If your loved one has clear preferences about when they shower, what they eat, or how they spend their time, those preferences are not optional — they are a standard entitlement.\n\nStandard 2 covers Ongoing Assessment and Planning. Facilities must conduct regular care plan reviews, in partnership with the resident and their representative, and update care plans when needs change. Ask when the last care plan review was held, who attended, and what was changed as a result. If the review is happening with staff only and families are not informed or invited, the home is not meeting this standard.\n\nStandard 3 covers Personal Care and Clinical Care. This is the standard most families focus on, covering medication management, wound care, falls prevention, nutrition, and clinical escalation. Complaints data consistently shows this is where the most significant gaps occur. When visiting a facility, ask specifically about their clinical escalation protocol — what happens when a resident deteriorates at 2am?\n\nStandards 4 and 5 cover Services and Supports for Daily Living and Service Environment respectively. Standard 4 addresses activities, meals, and allied health. Standard 5 addresses the physical environment — cleanliness, safety, and whether it meets residents' needs. Both are assessable during a facility visit.\n\nStandard 6 covers Feedback and Complaints. Every facility must have a clear, accessible complaints process and must demonstrate that feedback is used to improve care. Ask the facility how many complaints they received in the last 12 months and what changes resulted. A home that receives zero complaints is almost certainly not asking for feedback effectively.\n\nStandards 7 and 8 cover Human Resources and Organisational Governance. These address staff training, workforce planning, and provider accountability. Under the new Aged Care Act, providers bear corporate responsibility for quality outcomes — it is no longer sufficient to blame individual staff for systemic failures. If you observe patterns of poor care rather than isolated incidents, Standards 7 and 8 are the framework for escalating to the regulator.",
+    image: "/blog/blog_9_header.webp",
   },
   {
     day: 10,
-    title: `The Role of Family in a Smooth Transition`,
-    slug: `day-10-the-role-of-family-in-a-smooth-transition`,
-    content: `Placement is easier when family roles are clear. Nominate one primary contact to handle calls, paperwork, and updates. Assign others to tasks like tours, transport planning, and emotional support. Share one central document so everyone sees the same information. During transition week, prepare personal items that make the new room familiar: photos, blanket, favourite music, and comfort objects. Emotional reassurance matters as much as logistics. Families who coordinate roles early usually experience fewer miscommunications. A supported transition helps residents settle faster and builds trust with staff from the first day.`,
-  },
-  {
-    day: 11,
-    title: `How Dementia Changes Placement Decisions`,
-    slug: `day-11-how-dementia-changes-placement-decisions`,
-    content: `If dementia is involved, placement criteria must be more specific. Ask about secure environment design, wandering management, behaviour support capability, and staff dementia training frequency. Check whether routines can be personalised and how agitation episodes are handled. Families should ask for practical examples, not generic promises. During tours, observe noise levels and whether residents appear settled. Dementia care quality often depends on consistency and communication, not just facility appearance. A home experienced in dementia care can significantly improve quality of life for both residents and carers.`,
-  },
-  {
-    day: 12,
-    title: `What to Ask About Clinical Care`,
-    slug: `day-12-what-to-ask-about-clinical-care`,
-    content: `Clinical capability is one of the most important placement factors. Ask what registered nurse coverage is available and how after-hours medical concerns are escalated. Confirm medication review processes and allied health access. If your loved one has complex needs, ask for examples of similar residents the home supports. Written care planning and regular family updates should be standard. Families should also ask how the home tracks changes in mobility, nutrition, and cognition over time. Strong clinical systems are often the difference between reactive care and proactive care.`,
-  },
-  {
-    day: 13,
-    title: `Touring a Nursing Home: What to Observe`,
-    slug: `day-13-touring-a-nursing-home-what-to-observe`,
-    content: `A tour is not just a walkthrough. Look at resident engagement, odour control, hygiene, dining setup, and staff responsiveness. Notice whether residents are addressed respectfully and whether staff appear familiar with individual preferences. Ask to see common areas at different times if possible. Observe call-bell response times and how visitors are welcomed. Take notes immediately after each visit while details are fresh. The best tours leave families with clear answers, not polished impressions. Structured observation helps you choose based on care reality, not presentation quality.`,
-  },
-  {
-    day: 14,
-    title: `Understanding Waitlists and Vacancy Strategy`,
-    slug: `day-14-understanding-waitlists-and-vacancy-strategy`,
-    content: `Waitlists vary by provider and location. Some homes call families quickly; others keep long waiting pools with uncertain timing. Ask exactly how waitlist priority works and what documents are needed to activate fast placement when a bed opens. Stay in touch regularly so your interest remains current. Keep at least one interim option available in case preferred homes are full. Smart vacancy strategy means balancing ideal choice with realistic timing. Families who maintain multiple active options usually avoid emergency decisions when health status changes suddenly.`,
-  },
-  {
-    day: 15,
-    title: `Private Room, Shared Room, and Practical Trade-offs`,
-    slug: `day-15-private-room-shared-room-and-practical-trade-offs`,
-    content: `Room type affects comfort, privacy, and budget. Private rooms can support dignity and quieter routines, but may cost more. Shared arrangements may reduce costs but may not suit residents who are easily distressed or need calm routines. During tours, check room layout, accessibility, natural light, and proximity to nursing stations. Ask what personalisation is allowed. Room choice should align with clinical needs and personality, not only price. Thoughtful room selection can improve settling outcomes and family satisfaction long after admission day.`,
-  },
-  {
-    day: 16,
-    title: `Nutrition and Mealtimes: Why It Matters`,
-    slug: `day-16-nutrition-and-mealtimes-why-it-matters`,
-    content: `Food quality and mealtime support directly affect health and wellbeing. Ask how menus are planned, how special diets are managed, and how staff support residents with swallowing or appetite issues. Observe whether residents look engaged during meals and whether assistance is provided respectfully. Ask what happens if weight loss is detected and how families are informed. Homes with strong nutrition routines tend to have better overall care coordination. Placement decisions should include mealtime quality, not just accommodation and fees.`,
-  },
-  {
-    day: 17,
-    title: `Medication Management Questions Families Should Ask`,
-    slug: `day-17-medication-management-questions-families-should-ask`,
-    content: `Medication errors are a major concern for families. Ask about medication administration processes, pharmacist reviews, and incident response protocols. Confirm how medication changes from hospital or GP are reconciled. Ask whether family is informed about major medication adjustments and side effects. Good homes explain these systems clearly and can show how they reduce risk. You do not need to be clinical to ask strong medication questions. A clear, transparent process is a core sign of safe care.`,
-  },
-  {
-    day: 18,
-    title: `How to Read a Home’s Communication Style`,
-    slug: `day-18-how-to-read-a-home-s-communication-style`,
-    content: `Communication quality is a predictor of long-term family satisfaction. Ask how updates are shared, who your primary contact is, and expected response times. Check whether care conferences are scheduled routinely and whether families can raise concerns without friction. During initial interactions, note if staff are consistent and clear. Poor communication early usually becomes worse under pressure. Placement should prioritise homes that communicate proactively, not only when something goes wrong.`,
-  },
-  {
-    day: 19,
-    title: `Handling Family Disagreement During Placement`,
-    slug: `day-19-handling-family-disagreement-during-placement`,
-    content: `Different family members often prioritise different things: cost, distance, clinical support, or room type. Use a simple decision matrix with weighted criteria. Agree upfront on non-negotiables and final decision authority. Keep discussions focused on resident needs, not individual convenience. If disagreement persists, bring in a neutral professional such as a social worker or aged care adviser. A structured process reduces conflict and keeps placement moving. The goal is a stable decision everyone can support.`,
-  },
-  {
-    day: 20,
-    title: `What to Pack for Admission Day`,
-    slug: `day-20-what-to-pack-for-admission-day`,
-    content: `Packing for admission is easier with a checklist. Bring daily clothing, labelled essentials, personal care items, hearing/vision aids, medication summary, and meaningful personal items. Add contact numbers and preferred routines in writing for staff. Keep valuables minimal and documented. On arrival, confirm who to speak with for first-week updates. A practical, organised admission pack helps staff deliver personalised care from day one and reduces first-week confusion for families.`,
-  },
-  {
-    day: 21,
-    title: `First 14 Days After Placement: What to Monitor`,
-    slug: `day-21-first-14-days-after-placement-what-to-monitor`,
-    content: `The first two weeks are the adjustment period. Monitor appetite, sleep, mood, orientation, and social engagement. Ask staff for early care plan review if your loved one appears unsettled. Track concerns in writing and escalate politely if issues persist. Families should also watch communication consistency and response speed. Early intervention improves settling outcomes and can prevent avoidable decline. The first 14 days often set the long-term tone of care.`,
-  },
-  {
-    day: 22,
-    title: `How to Escalate Concerns Effectively`,
-    slug: `day-22-how-to-escalate-concerns-effectively`,
-    content: `When concerns arise, use a calm escalation path: document issue, request meeting with care lead, agree actions, and set review date. Keep notes factual and specific. If outcomes are unclear, escalate through provider channels. Effective escalation is not confrontation; it is clear communication with accountability. Families who escalate early and professionally often get faster resolution. A transparent response culture is a strong sign of service quality.`,
-  },
-  {
-    day: 23,
-    title: `Visiting Routines That Support Better Outcomes`,
-    slug: `day-23-visiting-routines-that-support-better-outcomes`,
-    content: `Frequent, predictable family contact can improve adjustment. Create a simple visiting routine and share it with staff. Use visits to reinforce familiarity and gather practical feedback from frontline carers. Bring meaningful activities: photos, music, short walks, or familiar conversation topics. Consistent family presence helps detect early changes in wellbeing. Good visiting routines are not just emotional support; they are part of quality monitoring.`,
-  },
-  {
-    day: 24,
-    title: `End-of-Life Planning in Residential Care`,
-    slug: `day-24-end-of-life-planning-in-residential-care`,
-    content: `End-of-life planning is difficult but important. Ask how the home approaches palliative care discussions, symptom management, and family communication during decline. Confirm who is contacted first and what support is available for relatives. Discuss preferences early so decisions are guided by resident values, not crisis pressure. Compassionate planning gives families clarity and dignity during a hard period. Homes with strong palliative communication frameworks usually provide more reassuring care.`,
-  },
-  {
-    day: 25,
-    title: `Choosing by Location vs Choosing by Care Quality`,
-    slug: `day-25-choosing-by-location-vs-choosing-by-care-quality`,
-    content: `Families often prioritise distance, but care quality can matter even more over time. If the nearest home is not a good fit, consider slightly farther options with stronger clinical and communication performance. Balance travel burden with resident outcomes. In many cases, a better-quality home 20–30 minutes farther can be the better long-term choice. Use objective criteria and revisit priorities as needs evolve.`,
-  },
-  {
-    day: 26,
-    title: `Common Mistakes Families Make in Placement`,
-    slug: `day-26-common-mistakes-families-make-in-placement`,
-    content: `Common mistakes include waiting too long, relying on one provider, ignoring fee details, and not documenting conversations. Another mistake is choosing based only on appearances during one tour. Better outcomes come from early planning, structured comparisons, and clear communication records. Placement is both emotional and operational. Families who treat it like a project usually avoid costly or stressful corrections later.`,
-  },
-  {
-    day: 27,
-    title: `How to Build a Nursing Home Comparison Spreadsheet`,
-    slug: `day-27-how-to-build-a-nursing-home-comparison-spreadsheet`,
-    content: `A simple spreadsheet can transform decision quality. Add columns for vacancy status, room type, fee structure, care capability, staffing answers, communication rating, and tour notes. Score each home consistently from 1 to 5. Include a final “fit” score based on your non-negotiables. Update weekly while you are searching. This system makes discussions easier and reduces confusion among family members. It also helps you act quickly when a suitable vacancy appears.`,
-  },
-  {
-    day: 28,
-    title: `What a Good Care Plan Discussion Looks Like`,
-    slug: `day-28-what-a-good-care-plan-discussion-looks-like`,
-    content: `A strong care plan discussion is detailed, resident-specific, and collaborative. Staff should ask about routines, mobility, nutrition, communication preferences, and emotional triggers. Families should ask how progress is tracked and when formal reviews happen. Care plans should not be static documents; they should adapt as conditions change. Clear care planning is a core indicator of quality and should influence your placement decision.`,
-  },
-  {
-    day: 29,
-    title: `Supporting a Loved One Emotionally During Transition`,
-    slug: `day-29-supporting-a-loved-one-emotionally-during-transition`,
-    content: `Moving into residential care can feel like a major loss of control. Families can help by keeping language reassuring, maintaining routines where possible, and introducing familiar objects and people. Small consistency cues matter: same visiting times, favourite music, and regular phone calls. Emotional support does not remove all anxiety, but it significantly improves adjustment. Placement success includes emotional wellbeing, not only clinical metrics.`,
-  },
-  {
-    day: 30,
-    title: `Your Family’s 90-Day Placement Success Plan`,
-    slug: `day-30-your-family-s-90-day-placement-success-plan`,
-    content: `The first 90 days should be intentional. Set monthly review points for health, communication, and quality-of-life outcomes. Track key indicators: weight stability, falls, mood, medication changes, and engagement. Keep one lead family contact for consistency with staff. If concerns emerge, escalate early and document responses. A 90-day plan helps families move from reactive stress to proactive care partnership. Placement is not the end of the journey; it is the start of ongoing quality management.`,
-  },
-  {
-    day: 31,
-    title: `How to Prepare for a Care Plan Review Meeting`,
-    slug: `day-31-how-to-prepare-for-a-care-plan-review-meeting`,
-    content: `Care plan reviews are where families can influence day-to-day outcomes. Before the meeting, write a short list of concerns and goals: mobility, mood, pain, sleep, social engagement, and communication frequency. Ask for recent observations and practical examples from staff, not general summaries. During the review, agree on actions, who is responsible, and when progress will be checked. If something is unclear, request it in writing. A structured review discussion improves accountability and reduces misunderstandings. Families who prepare well usually get clearer care changes and faster follow-through.`,
-  },
-  {
-    day: 32,
-    title: `What to Do if a Preferred Home Has No Vacancy`,
-    slug: `day-32-what-to-do-if-a-preferred-home-has-no-vacancy`,
-    content: `No vacancy in your first-choice home does not mean your search has failed. Keep your preferred home active while moving on parallel options. Confirm exactly how their waitlist works, what documents they require, and whether short-notice placement is possible. At the same time, shortlist other homes with similar care capability and location practicality. Ask each one how quickly they can assess and admit. A dual-track approach keeps quality high while reducing placement delay risk. It also protects families from panic decisions when timelines tighten.`,
-  },
-  {
-    day: 33,
-    title: `How to Speak with Hospitals During Discharge Pressure`,
-    slug: `day-33-how-to-speak-with-hospitals-during-discharge-pressure`,
-    content: `Discharge conversations can feel rushed, so use a clear script. Ask for current clinical status, immediate risks, medication updates, and what level of support is essential on day one. Request a complete handover package for homes you contact. Be direct about your shortlist and expected timelines, and ask what interim support exists if placement takes longer. Keep all communication in writing where possible. Hospitals and families work best as partners when expectations are clear. Calm, documented conversations reduce confusion and improve transfer quality.`,
-  },
-  {
-    day: 34,
-    title: `How to Compare Facility Culture Before Admission`,
-    slug: `day-34-how-to-compare-facility-culture-before-admission`,
-    content: `Culture is one of the hardest factors to measure but one of the most important long term. During visits, observe how staff greet residents, how concerns are handled, and whether communication feels respectful. Ask staff how they support new residents in the first two weeks and what happens when someone is distressed. Look for consistency between what management promises and what frontline staff describe. A strong culture usually shows up in small daily behaviours, not marketing language. Choosing a home with a healthy culture can reduce later conflict and improve quality of life.`,
-  },
-  {
-    day: 35,
-    title: `When to Involve an Aged Care Financial Adviser`,
-    slug: `day-35-when-to-involve-an-aged-care-financial-adviser`,
-    content: `Some families delay financial advice and make decisions under pressure. If RAD, DAP, asset sales, or complex family arrangements are involved, early advice can prevent expensive mistakes. Bring clear figures to the conversation: likely stay duration, cash flow limits, and non-negotiable care goals. Ask for scenario comparisons rather than one recommendation. Good advice should improve clarity, not add confusion. Financial decisions and care decisions are linked, so they should be reviewed together. Timely advice can protect both affordability and placement quality.`,
-  },
-  {
-    day: 36,
-    title: `Questions to Ask About Allied Health Services`,
-    slug: `day-36-questions-to-ask-about-allied-health-services`,
-    content: `Allied health can significantly affect function and wellbeing. Ask what physiotherapy, occupational therapy, speech pathology, and podiatry support is available, how often residents are reviewed, and how referrals are prioritised. Confirm whether services are proactive or mainly reactive after decline. Ask how progress is measured and shared with families. Homes with strong allied health coordination often support better mobility and independence outcomes. This area is frequently overlooked during selection, but it matters for long-term quality of care.`,
-  },
-  {
-    day: 37,
-    title: `How to Evaluate Night Shift Support in Aged Care`,
-    slug: `day-37-how-to-evaluate-night-shift-support-in-aged-care`,
-    content: `Night-time support is critical, especially for residents at risk of falls, confusion, or clinical deterioration. Ask how many staff are on overnight, what escalation process is used, and how urgent medical decisions are handled after hours. Confirm response expectations for call bells and how incidents are documented. Families should also ask how overnight updates are communicated the next day. Strong overnight systems usually indicate stronger overall governance. A home that performs well at night is often safer across the full 24-hour cycle.`,
-  },
-  {
-    day: 38,
-    title: `How Families Can Build Better Relationships with Staff`,
-    slug: `day-38-how-families-can-build-better-relationships-with-staff`,
-    content: `Positive staff relationships improve communication and outcomes. Start by nominating one family contact to keep messages consistent. Share practical resident preferences in writing and thank staff when good care is observed. Raise concerns early and respectfully, with clear examples rather than assumptions. Ask for regular check-ins instead of waiting for problems to escalate. Most teams respond better when communication is collaborative and structured. Strong family-staff partnerships create a more stable care environment for everyone.`,
-  },
-  {
-    day: 39,
-    title: `How to Review a Home After the First 30 Days`,
-    slug: `day-39-how-to-review-a-home-after-the-first-30-days`,
-    content: `The 30-day mark is a good checkpoint for placement quality. Review core areas: settling, health stability, communication consistency, medication updates, and social engagement. Compare what was promised before admission with what has actually happened. If gaps appear, request a meeting with a short action list and follow-up date. Keep notes concise and factual so progress can be tracked. Early course correction is easier than waiting months. A practical 30-day review helps families stay proactive and supports better long-term outcomes.`,
-  },
-  {
-    day: 40,
-    title: `A Practical Family Checklist for Ongoing Placement Success`,
-    slug: `day-40-a-practical-family-checklist-for-ongoing-placement-success`,
-    content: `Placement success depends on steady follow-through, not one decision. Keep a monthly checklist covering health changes, communication quality, fees, care plan updates, and resident wellbeing. Confirm who in the family handles each task to avoid duplication or missed steps. Schedule regular check-ins with the home and document agreed actions. Review your checklist every month and adjust as needs change. Families who use a simple process usually feel more confident and less reactive. Ongoing structure turns placement from crisis management into quality management.`,
+    title: "After Placement: The Six-Month Checklist Every Family Should Use",
+    slug: "after-aged-care-placement-six-month-checklist",
+    datePublished: "2025-05-15",
+    metaDescription:
+      "What to do in the first six months after placing a loved one in aged care in Australia — settling signs, care plan reviews, billing checks, weight monitoring, and when to escalate.",
+    content:
+      "The work doesn't stop when your loved one moves in. In fact, the six months following placement are among the most important in determining long-term outcomes. Families who stay actively involved in this period — in a structured, informed way — consistently report better care outcomes, stronger relationships with staff, and faster resolution when problems arise. Here is the checklist experienced families and aged care advocates recommend.\n\nIn the first two weeks, focus on settling indicators rather than care quality judgements. Monitor your loved one's appetite, sleep patterns, and orientation to the new environment. Disorientation and withdrawal in the first one to two weeks is common and does not necessarily indicate poor care — it can be a normal grief response to a significant life change. Introduce familiar objects, maintain regular visiting times, and resist the urge to bring your loved one home every weekend as this can impede adjustment.\n\nAt the one-month mark, request a formal care plan review meeting. This is your opportunity to give structured feedback to clinical staff, raise any concerns about care delivery, and confirm that the care plan accurately reflects your loved one's current needs. Come to this meeting with written notes. Specific, documented observations carry more weight than general concerns.\n\nReview the quarterly financial statements carefully when they arrive. Check that the fees being charged match the agreement signed at admission. Check whether any additional services fees have been applied that weren't discussed. Errors in aged care billing do occur, and some are not picked up by families who don't check. If anything is unclear, request an itemised explanation in writing.\n\nAt three months, ask for an update on your loved one's weight trajectory. Unintended weight loss in aged care residents is a significant clinical concern and one of the most common indicators of insufficient nutritional support or undiagnosed health changes. Request to see the weight monitoring records if you have concerns.\n\nAt six months, conduct a holistic reassessment. Compare the facility's performance against your original expectations. Has communication with staff been what you hoped? Has your loved one's quality of life been maintained or improved? Are there aspects of care you're consistently concerned about? Six months is enough time to distinguish early teething problems from systemic patterns.\n\nThroughout the entire period, keep a simple log of visits, significant conversations with staff, incidents, and your observations. If a situation ever escalates to a formal complaint — with the facility or with the Commission — this record will be invaluable. It also helps you track change over time, which is easy to lose sight of when you're visiting frequently.",
+    image: "/blog/blog_10_header.webp",
   },
 ];
 
-const blogImages = [
-  "/AND_1024-909x465.jpg",
-  "/AND_1031-909x465.jpg",
-  "/AND_1038-909x465.jpg",
-  "/DJI_0161-909x465.jpg",
-  "/Duhig_Resdient-room_1-909x465.jpg",
-  "/Duhig_Resident-room_3-909x465.jpg",
-  "/Merrimac-couplesdeluxesuite4_EDI9234.jpg",
-  "/2020-07-05.webp",
-  "/Duhig Village.webp",
-  "/EDI_4333 copy.webp",
-];
-
-export const blogPosts: BlogPost[] = rawBlogPosts.map((post, idx) => {
-  const excerpt = post.content.replace(/\s+/g, " ").trim().slice(0, 170) + "...";
-  return {
-    ...post,
-    excerpt,
-    image: blogImages[idx % blogImages.length],
-  };
-});
-
-
+export const blogPosts: BlogPost[] = rawBlogPosts.map((post) => ({
+  ...post,
+  excerpt: post.content.replace(/\s+/g, " ").trim().slice(0, 170) + "...",
+}));

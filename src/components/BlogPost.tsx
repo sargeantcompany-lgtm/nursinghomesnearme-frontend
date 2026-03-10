@@ -18,6 +18,7 @@ export default function BlogPost() {
     "@type": "BlogPosting",
     headline: post.title,
     description,
+    image: `https://www.nursinghomesnearme.com.au${post.image}`,
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
     author: {
@@ -52,6 +53,16 @@ export default function BlogPost() {
         </p>
         <p style={{ marginBottom: 6, color: "#0f766e", fontWeight: 700 }}>Day {post.day}</p>
         <h1 style={{ marginTop: 0, color: "#0b3b5b", lineHeight: 1.2 }}>{post.title}</h1>
+        <img
+          src={post.image}
+          alt={post.title}
+          style={{
+            width: "100%",
+            borderRadius: 12,
+            display: "block",
+            marginBottom: 20,
+          }}
+        />
 
         <article>
           {paragraphs.map((paragraph, idx) => (

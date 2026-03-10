@@ -1,5 +1,5 @@
 // src/components/FacilityDashboard.tsx
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { API_BASE } from "../lib/runtimeConfig";
 import SeoHead from "./SeoHead";
