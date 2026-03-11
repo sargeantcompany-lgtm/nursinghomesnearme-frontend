@@ -531,17 +531,44 @@ function HeaderLinksMenu({ showHome, onAdmin }: { showHome: boolean; onAdmin: ()
 /* ========================= LOGIN PAGE ========================= */
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = React.useState("");
-  const [sending, setSending] = React.useState(false);
-  const [sent, setSent] = React.useState(false);
+  const [password, setPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [showForgot, setShowForgot] = React.useState(false);
+  const [linkSent, setLinkSent] = React.useState(false);
+  const [linkSending, setLinkSending] = React.useState(false);
+  const [linkError, setLinkError] = React.useState("");
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/api/workflow/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || "Invalid email or password");
+      navigate(`/workflow/${data.token}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function sendLoginLink(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim();
     if (!trimmed) return;
-    setSending(true);
-    setError("");
+    setLinkSending(true);
+    setLinkError("");
     try {
       const res = await fetch(`${API_BASE}/api/workflow/request-login-link`, {
         method: "POST",
@@ -550,11 +577,11 @@ function LoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "Failed to send");
-      setSent(true);
+      setLinkSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send");
+      setLinkError(err instanceof Error ? err.message : "Failed to send");
     } finally {
-      setSending(false);
+      setLinkSending(false);
     }
   }
 
@@ -569,53 +596,117 @@ function LoginPage() {
       <div style={{ maxWidth: 520, margin: "0 auto", background: "white", border: "1px solid #e5e7eb", borderRadius: 14, padding: 24 }}>
         <h1 style={{ marginTop: 0, color: "#0b3b5b" }}>Client Login</h1>
         <p style={{ color: "#475569", marginTop: 0, fontSize: 14 }}>
-          Enter your email to receive a secure login link for your client dashboard.
+          Sign in to view your nursing home matches and submission details.
         </p>
 
-        {sent ? (
-          <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: 16, marginTop: 12 }}>
-            <div style={{ color: "#166534", fontWeight: 700 }}>Login link sent</div>
-            <div style={{ color: "#15803d", fontSize: 14, marginTop: 4 }}>
-              Check your inbox at <strong>{email}</strong> and click the link to access your dashboard.
+        {!showForgot ? (
+          <>
+            <form onSubmit={handleLogin} style={{ marginTop: 16 }}>
+              <label style={{ display: "block", marginBottom: 14 }}>
+                <div style={{ color: "#334155", fontWeight: 700, marginBottom: 6, fontSize: 14 }}>Email address</div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  style={{ width: "100%", borderRadius: 10, border: "1px solid #cbd5e1", padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
+                />
+              </label>
+              <label style={{ display: "block" }}>
+                <div style={{ color: "#334155", fontWeight: 700, marginBottom: 6, fontSize: 14 }}>Password</div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Your password"
+                  required
+                  style={{ width: "100%", borderRadius: 10, border: "1px solid #cbd5e1", padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
+                />
+              </label>
+
+              {error ? (
+                <div style={{ marginTop: 10, color: "#991b1b", fontSize: 13, background: "#fef2f2", borderRadius: 8, padding: "8px 12px" }}>
+                  {error}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={loading || !email.trim() || !password}
+                style={{ marginTop: 14, width: "100%", padding: "11px 16px", borderRadius: 10, border: "none", background: loading || !email.trim() || !password ? "#94a3b8" : "#0b3b5b", color: "white", fontWeight: 700, fontSize: 15, cursor: loading || !email.trim() || !password ? "not-allowed" : "pointer" }}
+              >
+                {loading ? "Signing in..." : "Sign in"}
+              </button>
+            </form>
+
+            <div style={{ marginTop: 14, textAlign: "center" }}>
+              <button
+                style={{ background: "none", border: "none", color: "#0f766e", cursor: "pointer", fontSize: 13, textDecoration: "underline", padding: 0 }}
+                onClick={() => { setShowForgot(true); setError(""); }}
+              >
+                Forgot password? Send me a login link instead
+              </button>
             </div>
-            <button
-              style={{ marginTop: 10, background: "none", border: "none", color: "#0b3b5b", cursor: "pointer", fontSize: 13, textDecoration: "underline", padding: 0 }}
-              onClick={() => { setSent(false); setEmail(""); }}
-            >
-              Use a different email
-            </button>
-          </div>
+          </>
         ) : (
-          <form onSubmit={sendLoginLink} style={{ marginTop: 16 }}>
-            <label style={{ display: "block" }}>
-              <div style={{ color: "#334155", fontWeight: 700, marginBottom: 6, fontSize: 14 }}>Email address</div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                style={{ width: "100%", borderRadius: 10, border: "1px solid #cbd5e1", padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
-              />
-            </label>
-
-            {error ? (
-              <div style={{ marginTop: 10, color: "#991b1b", fontSize: 13, background: "#fef2f2", borderRadius: 8, padding: "8px 12px" }}>
-                {error}
+          <>
+            <p style={{ color: "#475569", fontSize: 14, marginTop: 16 }}>
+              Enter your email and we&apos;ll send you a one-time login link.
+            </p>
+            {linkSent ? (
+              <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: 16 }}>
+                <div style={{ color: "#166534", fontWeight: 700 }}>Login link sent</div>
+                <div style={{ color: "#15803d", fontSize: 14, marginTop: 4 }}>
+                  Check your inbox at <strong>{email}</strong> and click the link to access your dashboard.
+                </div>
               </div>
-            ) : null}
-
-            <button
-              type="submit"
-              disabled={sending || !email.trim()}
-              style={{ marginTop: 12, padding: "10px 16px", borderRadius: 10, border: "none", background: sending || !email.trim() ? "#94a3b8" : "#0b3b5b", color: "white", fontWeight: 700, fontSize: 14, cursor: sending || !email.trim() ? "not-allowed" : "pointer" }}
-            >
-              {sending ? "Sending..." : "Send login link"}
-            </button>
-          </form>
+            ) : (
+              <form onSubmit={sendLoginLink} style={{ marginTop: 8 }}>
+                <label style={{ display: "block" }}>
+                  <div style={{ color: "#334155", fontWeight: 700, marginBottom: 6, fontSize: 14 }}>Email address</div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    style={{ width: "100%", borderRadius: 10, border: "1px solid #cbd5e1", padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
+                  />
+                </label>
+                {linkError ? (
+                  <div style={{ marginTop: 10, color: "#991b1b", fontSize: 13, background: "#fef2f2", borderRadius: 8, padding: "8px 12px" }}>
+                    {linkError}
+                  </div>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={linkSending || !email.trim()}
+                  style={{ marginTop: 12, padding: "10px 16px", borderRadius: 10, border: "none", background: linkSending || !email.trim() ? "#94a3b8" : "#0b3b5b", color: "white", fontWeight: 700, fontSize: 14, cursor: linkSending || !email.trim() ? "not-allowed" : "pointer" }}
+                >
+                  {linkSending ? "Sending..." : "Send login link"}
+                </button>
+              </form>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <button
+                style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 13, textDecoration: "underline", padding: 0 }}
+                onClick={() => { setShowForgot(false); setLinkSent(false); setLinkError(""); }}
+              >
+                ← Back to password login
+              </button>
+            </div>
+          </>
         )}
 
-        <div style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid #e5e7eb", fontSize: 13, color: "#94a3b8" }}>
+        <div style={{ marginTop: 16, textAlign: "center" }}>
+          <span style={{ fontSize: 13, color: "#475569" }}>New client? </span>
+          <Link to="/" style={{ fontSize: 13, color: "#0f766e", fontWeight: 700, textDecoration: "underline" }}>
+            Submit your enquiry →
+          </Link>
+        </div>
+
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #e5e7eb", fontSize: 13, color: "#94a3b8" }}>
           Are you a nursing home?{" "}
           <Link to="/facility/login" style={{ color: "#0b3b5b", textDecoration: "underline" }}>
             Facility portal →
