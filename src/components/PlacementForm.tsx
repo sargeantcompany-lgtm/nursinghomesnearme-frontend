@@ -1,4 +1,3 @@
-// src/components/PlacementForm.tsx
 import React, { useMemo, useState } from "react";
 import { API_BASE } from "../lib/runtimeConfig";
 
@@ -108,7 +107,6 @@ const Check = ({
   </label>
 );
 
-/** Step indicator */
 function Steps({ current, total }: { current: number; total: number }) {
   return (
     <div className="flex items-center gap-2 mb-6">
@@ -130,13 +128,14 @@ function Steps({ current, total }: { current: number; total: number }) {
 
 export default function PlacementForm() {
   const [step, setStep] = useState(1);
-  const TOTAL_STEPS = 3;
+  const totalSteps = 3;
   const [data, setData] = useState<FormData>(initialData);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSending, setLoginSending] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
+  const [dashboardEmailTriggered, setDashboardEmailTriggered] = useState(false);
 
   const preferredLocations = useMemo(
     () => [data.preferredLocation1, data.preferredLocation2].map((x) => x.trim()).filter(Boolean),
@@ -144,12 +143,9 @@ export default function PlacementForm() {
   );
 
   const canNext = useMemo(() => {
-    if (step === 1)
-      return (
-        data.contactName.trim().length >= 2 &&
-        isValidEmail(data.email) &&
-        preferredLocations.length >= 1
-      );
+    if (step === 1) {
+      return data.contactName.trim().length >= 2 && isValidEmail(data.email) && preferredLocations.length >= 1;
+    }
     if (step === 2) return data.timing !== "" && data.careTypes.length > 0;
     if (step === 3) return data.consentToShareWithHomes;
     return true;
@@ -158,9 +154,7 @@ export default function PlacementForm() {
   function toggleCareType(t: CareType) {
     setData((prev) => ({
       ...prev,
-      careTypes: prev.careTypes.includes(t)
-        ? prev.careTypes.filter((x) => x !== t)
-        : [...prev.careTypes, t],
+      careTypes: prev.careTypes.includes(t) ? prev.careTypes.filter((x) => x !== t) : [...prev.careTypes, t],
     }));
   }
 
@@ -168,10 +162,13 @@ export default function PlacementForm() {
     if (!canNext || submitting) return;
 
     setSubmitting(true);
+    setLoginMessage("");
+    setDashboardEmailTriggered(false);
+
     try {
       const payload = {
         access_key: WEB3FORMS_ACCESS_KEY,
-        subject: `New Placement Enquiry — ${data.contactName}`,
+        subject: `New Placement Enquiry - ${data.contactName}`,
         from_name: "NursingHomesNearMe.com.au",
         replyto: data.email,
         contactName: data.contactName,
@@ -192,40 +189,44 @@ export default function PlacementForm() {
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.message || "Submission failed");
 
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 10000);
+      let workflowTriggered = false;
+
+      try {
+        const wRes = await fetch(`${API_BASE}/api/workflow/placement-intake`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contactName: data.contactName,
+            email: data.email,
+            phone: data.phone,
+            suburb: preferredLocations[0] ?? "",
+            preferredLocations,
+            timing: data.timing,
+            careTypes: data.careTypes,
+            consentToShare: data.consentToShareWithHomes,
+          }),
+          signal: controller.signal,
+        });
+        const wJson = wRes.ok ? await wRes.json() : null;
+        if (!wRes.ok) {
+          throw new Error("Dashboard email setup failed");
+        }
+        if (wJson?.clientToken) {
+          localStorage.setItem("nhnm_workflow_token", wJson.clientToken);
+        }
+        workflowTriggered = true;
+      } catch {
+        setLoginMessage("Your enquiry was received, but the dashboard email could not be sent automatically. You can resend it below.");
+      } finally {
+        window.clearTimeout(timer);
+      }
+
+      setDashboardEmailTriggered(workflowTriggered);
       setSubmitted(true);
       setStep(4);
       setLoginEmail(data.email.trim());
-
-      // Background: trigger workflow automation
-      void (async () => {
-        const controller = new AbortController();
-        const timer = window.setTimeout(() => controller.abort(), 10000);
-        try {
-          const wRes = await fetch(`${API_BASE}/api/workflow/placement-intake`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contactName: data.contactName,
-              email: data.email,
-              phone: data.phone,
-              suburb: preferredLocations[0] ?? "",
-              preferredLocations,
-              timing: data.timing,
-              careTypes: data.careTypes,
-              consentToShare: data.consentToShareWithHomes,
-            }),
-            signal: controller.signal,
-          });
-          const wJson = wRes.ok ? await wRes.json() : null;
-          if (wJson?.clientToken) {
-            localStorage.setItem("nhnm_workflow_token", wJson.clientToken);
-          }
-        } catch {
-          // silent fail — form already submitted via Web3Forms
-        } finally {
-          window.clearTimeout(timer);
-        }
-      })();
     } catch (e) {
       alert(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
@@ -246,7 +247,8 @@ export default function PlacementForm() {
       });
       const msg = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(msg?.message || "Failed to send login email");
-      setLoginMessage("Login link sent — check your inbox.");
+      setDashboardEmailTriggered(true);
+      setLoginMessage("Login link sent - check your inbox.");
     } catch (e) {
       setLoginMessage(e instanceof Error ? e.message : "Failed to send login email");
     } finally {
@@ -254,8 +256,9 @@ export default function PlacementForm() {
     }
   }
 
-  // --- Success screen ---
   if (step === 4 && submitted) {
+    const workflowToken = localStorage.getItem("nhnm_workflow_token");
+
     return (
       <div className="bg-white px-2 py-2">
         <div className="max-w-4xl mx-auto w-full">
@@ -266,6 +269,12 @@ export default function PlacementForm() {
               We've received your details and will reach out with options. In the meantime, you can access your
               client dashboard to add more information and track progress.
             </p>
+
+            <div className="mt-4 text-sm text-[#334155]">
+              {dashboardEmailTriggered
+                ? "Your dashboard access email has been sent."
+                : "If you don't receive your dashboard access email, you can resend it below."}
+            </div>
 
             <div className="mt-4">
               <Label>Email for dashboard access</Label>
@@ -278,18 +287,15 @@ export default function PlacementForm() {
             </div>
 
             <div className="mt-4 flex gap-3 flex-wrap">
-              <Btn
-                onClick={requestDashboardLoginLink}
-                disabled={!isValidEmail(loginEmail) || loginSending}
-              >
-                {loginSending ? "Sending..." : "Email me my dashboard link"}
+              <Btn onClick={requestDashboardLoginLink} disabled={!isValidEmail(loginEmail) || loginSending}>
+                {loginSending ? "Sending..." : dashboardEmailTriggered ? "Resend my dashboard link" : "Email me my dashboard link"}
               </Btn>
-              {localStorage.getItem("nhnm_workflow_token") ? (
+              {workflowToken ? (
                 <a
-                  href={`/workflow/${localStorage.getItem("nhnm_workflow_token")}`}
+                  href={`/workflow/${workflowToken}`}
                   className="text-[#0D9488] font-semibold underline self-center text-sm"
                 >
-                  Open dashboard now →
+                  Open dashboard now &rarr;
                 </a>
               ) : null}
             </div>
@@ -305,6 +311,7 @@ export default function PlacementForm() {
                   setSubmitted(false);
                   setLoginEmail("");
                   setLoginMessage("");
+                  setDashboardEmailTriggered(false);
                 }}
               >
                 Start a new enquiry
@@ -319,23 +326,22 @@ export default function PlacementForm() {
   return (
     <div className="bg-white px-2 py-2">
       <div className="max-w-4xl mx-auto w-full">
-        <Steps current={step} total={TOTAL_STEPS} />
+        <Steps current={step} total={totalSteps} />
 
         {step > 1 && (
           <div className="mb-4">
             <Btn variant="secondary" onClick={() => setStep((s) => Math.max(1, s - 1))}>
-              ← Back
+              &larr; Back
             </Btn>
           </div>
         )}
 
         <Card>
-          {/* ── STEP 1: Contact + location ── */}
           {step === 1 && (
             <>
               <H2>Find care options near you</H2>
               <p className="text-sm text-[#475569] mb-5 leading-relaxed">
-                Free and independent — we don't charge families or take referral payments from facilities.
+                Free and independent - we don't charge families or take referral payments from facilities.
               </p>
 
               <div className="space-y-4">
@@ -394,20 +400,19 @@ export default function PlacementForm() {
 
                 <div className="pt-1 border-t border-[#E5E7EB]">
                   <p className="text-xs text-[#94A3B8] mt-3">
-                    Looking for a job in aged care? Please contact facilities directly or visit a job board — this form is for families seeking placement.
+                    Looking for a job in aged care? Please contact facilities directly or visit a job board - this form is for families seeking placement.
                   </p>
                 </div>
 
                 <div className="flex justify-end">
                   <Btn onClick={() => setStep(2)} disabled={!canNext}>
-                    Next →
+                    Next &rarr;
                   </Btn>
                 </div>
               </div>
             </>
           )}
 
-          {/* ── STEP 2: Timing + care type ── */}
           {step === 2 && (
             <>
               <H2>Placement needs</H2>
@@ -444,13 +449,12 @@ export default function PlacementForm() {
 
               <div className="flex justify-end mt-6">
                 <Btn onClick={() => setStep(3)} disabled={!canNext}>
-                  Next →
+                  Next &rarr;
                 </Btn>
               </div>
             </>
           )}
 
-          {/* ── STEP 3: Consent + submit ── */}
           {step === 3 && (
             <>
               <H2>Almost done</H2>
