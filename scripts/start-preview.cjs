@@ -4,11 +4,11 @@ const { spawn } = require("child_process");
 const path = require("path");
 
 const port = process.env.PORT || "4173";
-const viteBin = path.join(process.cwd(), "node_modules", "vite", "bin", "vite.js");
+const serveBin = path.join(process.cwd(), "node_modules", "serve", "build", "main.js");
 
 const child = spawn(
   process.execPath,
-  [viteBin, "preview", "--host", "0.0.0.0", "--port", port],
+  [serveBin, "-s", "dist", "-l", `tcp://0.0.0.0:${port}`],
   {
     stdio: "inherit",
     env: process.env,
