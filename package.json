@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/run-react-snap.cjs",
+    "start": "node scripts/start-preview.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

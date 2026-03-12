@@ -42,7 +42,8 @@ const options = {
 if (detectedExecutable) {
   console.log(`[react-snap] using browser: ${detectedExecutable}`);
 } else {
-  console.log("[react-snap] no browser path detected, using react-snap defaults");
+  console.log("[react-snap] no browser path detected, skipping prerender");
+  process.exit(0);
 }
 
 run(options).catch((error) => {
