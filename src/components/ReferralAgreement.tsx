@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-
-const API_BASE =
-  (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:8080";
+import { API_BASE } from "../lib/runtimeConfig";
 
 type Category = "REAL_ESTATE" | "FURNITURE_REMOVAL" | "AGED_CARE_SERVICES" | "OTHER";
 type FeeType = "FIXED" | "PERCENT";

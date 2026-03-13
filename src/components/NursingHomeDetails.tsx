@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { API_BASE } from "../lib/runtimeConfig";
 
 type NursingHomePublicDetails = {
   id: number;
@@ -10,9 +11,6 @@ type NursingHomePublicDetails = {
   website: string | null;
   tags: string | null;
 };
-
-const API_BASE =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;

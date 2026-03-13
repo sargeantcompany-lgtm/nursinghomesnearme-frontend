@@ -5,7 +5,7 @@ import process from "node:process";
 import XLSXModule from "xlsx";
 const XLSX = XLSXModule?.readFile ? XLSXModule : XLSXModule.default;
 
-const API_BASE = process.env.API_BASE || "https://nursinghomesnearme-backend.onrender.com";
+const API_BASE = process.env.API_BASE || "";
 const ADMIN_TOKEN = (process.env.ADMIN_TOKEN || "").trim();
 const CSV_PATH = process.argv[2];
 

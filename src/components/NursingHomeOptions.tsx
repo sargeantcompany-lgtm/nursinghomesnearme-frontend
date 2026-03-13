@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import NursingHomeGrid from "./NursingHomeGrid";
 import type { NursingHomeListItem } from "./NursingHomeGrid";
-
-const API_BASE =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
+import { API_BASE } from "../lib/runtimeConfig";
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
