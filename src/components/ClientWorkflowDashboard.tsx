@@ -29,6 +29,7 @@ type WorkflowSnapshot = {
   timing: string;
   careType: string;
   fundingPlan: string;
+  budgetRange: string;
   acatNumber: string;
   waitingListPreference: string;
   notes: string;
@@ -202,6 +203,7 @@ export default function ClientWorkflowDashboard() {
   const [timing, setTiming] = useState("");
   const [careType, setCareType] = useState("");
   const [fundingPlan, setFundingPlan] = useState("");
+  const [budgetRange, setBudgetRange] = useState("");
   const [acatNumber, setAcatNumber] = useState("");
   const [waitingListPreference, setWaitingListPreference] = useState("");
   const [notes, setNotes] = useState("");
@@ -233,6 +235,7 @@ export default function ClientWorkflowDashboard() {
         setTiming(snapshot.timing || "");
         setCareType(snapshot.careType || "");
         setFundingPlan(snapshot.fundingPlan || "");
+        setBudgetRange(snapshot.budgetRange || "");
         setAcatNumber(snapshot.acatNumber || "");
         setWaitingListPreference(snapshot.waitingListPreference || "");
         setNotes(snapshot.notes || "");
@@ -328,6 +331,7 @@ export default function ClientWorkflowDashboard() {
       setTiming(result.snapshot.timing || "");
       setCareType(result.snapshot.careType || "");
       setFundingPlan(result.snapshot.fundingPlan || "");
+      setBudgetRange(result.snapshot.budgetRange || "");
       setAcatNumber(result.snapshot.acatNumber || "");
       setWaitingListPreference(result.snapshot.waitingListPreference || "");
       setNotes(result.snapshot.notes || "");
@@ -366,6 +370,7 @@ export default function ClientWorkflowDashboard() {
       setTiming(result.snapshot.timing || "");
       setCareType(result.snapshot.careType || "");
       setFundingPlan(result.snapshot.fundingPlan || "");
+      setBudgetRange(result.snapshot.budgetRange || "");
       setAcatNumber(result.snapshot.acatNumber || "");
       setWaitingListPreference(result.snapshot.waitingListPreference || "");
       setNotes(result.snapshot.notes || "");
@@ -397,6 +402,7 @@ export default function ClientWorkflowDashboard() {
         timing: timing.trim(),
         careType: careType.trim(),
         fundingPlan: fundingPlan.trim(),
+        budgetRange: budgetRange.trim(),
         acatNumber: acatNumber.trim(),
         waitingListPreference: waitingListPreference.trim(),
         notes: notes.trim(),
@@ -429,6 +435,7 @@ export default function ClientWorkflowDashboard() {
             timing: timing.trim(),
             careType: careType.trim(),
             fundingPlan: fundingPlan.trim(),
+            budgetRange: budgetRange.trim(),
             acatNumber: acatNumber.trim(),
             waitingListPreference: waitingListPreference.trim(),
             notes: notes.trim(),
@@ -547,6 +554,7 @@ export default function ClientWorkflowDashboard() {
                 <TextField label="Placement timing" value={timing} onChange={setTiming} placeholder="Timing" />
                 <TextField label="Care type" value={careType} onChange={setCareType} placeholder="Care type" />
                 <TextField label="Funding plan" value={fundingPlan} onChange={setFundingPlan} placeholder="Funding plan" />
+                <TextField label="Budget range" value={budgetRange} onChange={setBudgetRange} placeholder="Budget range" />
                 <TextField label="ACAT number" value={acatNumber} onChange={setAcatNumber} placeholder="ACAT number" />
                 <TextField
                   label="Waiting list preference"
