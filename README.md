@@ -32,6 +32,18 @@ Build for production:
 npm run build
 ```
 
+Start the static frontend locally:
+
+```bash
+npm start
+```
+
+Start the backend locally:
+
+```bash
+npm run start:backend
+```
+
 Preview the production build:
 
 ```bash
@@ -77,6 +89,13 @@ Recommended Railway setup:
 5. Set `VITE_API_BASE_URL` to the backend URL if frontend and backend are on different domains.
 
 The server runs migrations automatically on startup, so a fresh Railway Postgres instance will create the required tables the first time the app boots.
+
+This repo is shared by two Railway services:
+
+- `nursinghomesnearme-frontend` serves `dist`
+- `nursinghomesnearme-backend` runs `server/index.mjs`
+
+`nixpacks.toml` switches between those start commands automatically using `RAILWAY_SERVICE_NAME`.
 
 ## Important flows
 
