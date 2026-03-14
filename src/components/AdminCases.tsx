@@ -331,6 +331,7 @@ export default function AdminCases() {
   const [saving, setSaving] = useState(false);
   const [creating, setCreating] = useState(false);
   const [sending, setSending] = useState<null | "short" | "full">(null);
+  const [sendingDashboardLink, setSendingDashboardLink] = useState(false);
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -582,6 +583,31 @@ export default function AdminCases() {
     }
   }
 
+  async function sendDashboardLink() {
+    if (!current?.clientEmail?.trim()) {
+      setError("Client email is required before sending a dashboard link.");
+      return;
+    }
+
+    setError("");
+    setNotice("");
+    setSendingDashboardLink(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/workflow/request-login-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: current.clientEmail.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || "Failed to send dashboard link.");
+      setNotice(`Sent dashboard link to ${current.clientEmail}.`);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setSendingDashboardLink(false);
+    }
+  }
+
   useEffect(() => {
     localStorage.setItem("nhnm_admin_token", token);
   }, [token]);
@@ -722,6 +748,13 @@ export default function AdminCases() {
                   </div>
 
                   <div style={{ marginLeft: "auto", display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => sendDashboardLink()}
+                      disabled={disabled || sendingDashboardLink || !current.clientEmail?.trim()}
+                      style={secondaryBtn}
+                    >
+                      {sendingDashboardLink ? "Sending dashboard..." : "Send dashboard link"}
+                    </button>
                     <button
                       onClick={() => send("short")}
                       disabled={disabled || shortCount === 0}

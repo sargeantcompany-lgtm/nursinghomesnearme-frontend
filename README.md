@@ -1,73 +1,104 @@
-# React + TypeScript + Vite
+# Nursing Homes Near Me Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend for `nursinghomesnearme.com.au`, built with React, TypeScript, and Vite.
 
-Currently, two official plugins are available:
+## What this app includes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Public marketing pages for aged care placement support
+- Placement intake form that creates a client workflow
+- Client dashboard login and workflow pages
+- Facility login and response pages
+- Admin tools for nursing homes and case management
+- Blog and suburb landing pages
+- Static SEO assets including `robots.txt`, `sitemap.xml`, and prerendering via `react-snap`
 
-## React Compiler
+## Local development
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+Install dependencies:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Run the app locally:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+Build for production:
+
+```bash
+npm run build
+```
+
+Preview the production build:
+
+```bash
+npm run preview
+```
+
+## Environment
+
+The frontend reads the API base URL from `VITE_API_BASE_URL`.
+
+Example:
+
+```env
+VITE_API_BASE_URL=https://your-api-domain.com
+```
+
+If `VITE_API_BASE_URL` is empty, the frontend will call same-origin API paths such as `/api/workflow/placement-intake`.
+
+The backend uses:
+
+```env
+DATABASE_URL=postgresql://...
+APP_SECRET=...
+ADMIN_PASSWORD=...
+SITE_URL=https://www.nursinghomesnearme.com.au
+CLIENT_LOGIN_FROM_EMAIL=hello@yourdomain.com
+RESEND_API_KEY=...
+ALLOWED_ORIGIN=https://www.nursinghomesnearme.com.au
+```
+
+Copy `.env.example` to `.env` and fill in the real values.
+
+## Database and Railway
+
+This repo now includes a lightweight Express API in [server/index.mjs](/c:/Users/aslam/Projects/nursinghomesnearme-frontend/server/index.mjs) and Postgres migrations in [server/migrate.mjs](/c:/Users/aslam/Projects/nursinghomesnearme-frontend/server/migrate.mjs).
+
+Recommended Railway setup:
+
+1. Create a Railway Postgres database.
+2. Add `DATABASE_URL` from Railway to your service variables.
+3. Add `APP_SECRET`, `ADMIN_PASSWORD`, `SITE_URL`, and `ALLOWED_ORIGIN`.
+4. Add `RESEND_API_KEY` and `CLIENT_LOGIN_FROM_EMAIL` if you want live email delivery.
+5. Set `VITE_API_BASE_URL` to the backend URL if frontend and backend are on different domains.
+
+The server runs migrations automatically on startup, so a fresh Railway Postgres instance will create the required tables the first time the app boots.
+
+## Important flows
+
+- Placement intake posts to `/api/workflow/placement-intake`
+- Client login link requests post to `/api/workflow/request-login-link`
+- Facility login link requests post to `/api/facility/auth/request-link`
+- Admin case management uses `/api/admin/*`
+
+## Launch checklist
+
+- Confirm `VITE_API_BASE_URL` points to the live API
+- Confirm `DATABASE_URL` is connected to Railway Postgres
+- Test placement intake creation and dashboard link email delivery
+- Test client login, password setup, and dashboard access
+- Test facility login link delivery and dashboard access
+- Test admin case editing and outbound case emails
+- Keep `public/sitemap.xml` aligned with live blog posts and landing pages
+
+## Daily SEO workflow
+
+- Publish one useful article or landing-page improvement each day
+- Update on-page title, meta description, internal links, and schema as needed
+- Update `public/sitemap.xml` when a new indexable URL is added
+- Submit the updated sitemap in Google Search Console and Bing Webmaster Tools
+- Track which URLs were published, indexed, and improved

@@ -208,6 +208,21 @@ export default function PlacementForm() {
     }));
   }
 
+  async function sendDashboardLoginLink(email: string) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      throw new Error("Missing email address for dashboard access.");
+    }
+
+    const res = await fetch(`${API_BASE}/api/workflow/request-login-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: trimmedEmail }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.message || "Failed to send login email");
+  }
+
   async function submit() {
     if (!canNext || submitting) return;
 
@@ -245,8 +260,19 @@ export default function PlacementForm() {
 
       setSubmitted(true);
       setStep(5);
-      setLoginEmail(data.email.trim());
-      setLoginMessage("Your dashboard access email has been sent. Open it to set your password.");
+      const trimmedEmail = data.email.trim();
+      setLoginEmail(trimmedEmail);
+
+      try {
+        await sendDashboardLoginLink(trimmedEmail);
+        setLoginMessage("Your dashboard access email has been sent. Open it to set your password.");
+      } catch (linkError) {
+        setLoginMessage(
+          linkError instanceof Error
+            ? `Your dashboard was created, but the email link could not be sent yet: ${linkError.message}`
+            : "Your dashboard was created, but the email link could not be sent yet.",
+        );
+      }
     } catch (e) {
       alert(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
@@ -260,13 +286,7 @@ export default function PlacementForm() {
     setLoginSending(true);
     setLoginMessage("");
     try {
-      const res = await fetch(`${API_BASE}/api/workflow/request-login-link`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const msg = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(msg?.message || "Failed to send login email");
+      await sendDashboardLoginLink(email);
       setLoginMessage("Login link sent. Check your inbox and set your password.");
     } catch (e) {
       setLoginMessage(e instanceof Error ? e.message : "Failed to send login email");
