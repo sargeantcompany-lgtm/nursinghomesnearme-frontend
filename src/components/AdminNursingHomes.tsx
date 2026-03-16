@@ -981,7 +981,7 @@ export default function AdminNursingHomes() {
             </button>
 
             <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              {importingSheet ? "Importing..." : "Import Spreadsheet"}
+              {importingSheet ? "Uploading..." : "Upload Facility CSV"}
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
@@ -1011,7 +1011,7 @@ export default function AdminNursingHomes() {
             </label>
 
             <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              {importingPhotoManifest ? "Importing..." : "Import Photo Manifest"}
+              {importingPhotoManifest ? "Uploading..." : "Upload Photo Manifest"}
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
@@ -1060,6 +1060,10 @@ export default function AdminNursingHomes() {
             <div><strong>{list.length}</strong> facilities loaded</div>
             <div><strong>{list.length - missingGeoCount}</strong> with geo</div>
             <div><strong>{missingGeoCount}</strong> missing geo</div>
+          </div>
+
+          <div style={{ marginTop: 10, color: "#64748b", fontSize: 13 }}>
+            Upload order for each region: <strong>1.</strong> facility CSV, <strong>2.</strong> photo manifest, <strong>3.</strong> vacancy checks.
           </div>
 
           <div
