@@ -637,12 +637,30 @@ export default function AdminNursingHomes() {
             latitude: getNum("latitude", "lat", "Latitude"),
             longitude: getNum("longitude", "lng", "lon", "Longitude"),
             status: get("status", "Status") || "ACTIVE",
+            websiteSaysVacancies: get("websiteSaysVacancies", "website_says_vacancies", "Website Says Vacancies"),
+            facilityConfirmedVacancies: get(
+              "facilityConfirmedVacancies",
+              "facility_confirmed_vacancies",
+              "Facility Confirmed Vacancies",
+            ),
+            websiteCheckedAt: get("websiteCheckedAt", "website_checked_at", "Website Checked At"),
+            facilityConfirmedAt: get("facilityConfirmedAt", "facility_confirmed_at", "Facility Confirmed At"),
+            websiteSourceUrl: get("websiteSourceUrl", "website_source_url", "Website Source URL"),
+            facilityConfirmationSource: get(
+              "facilityConfirmationSource",
+              "facility_confirmation_source",
+              "Facility Confirmation Source",
+            ),
+            conflictFlag: ["true", "yes", "1"].includes(
+              get("conflictFlag", "conflict_flag", "Conflict Flag").toLowerCase(),
+            ),
             careTypes: parseDelimitedList(get("careTypes", "care_types", "Care Types")),
             specialties: featureTags,
             roomTypes,
             images: parseDelimitedList(get("images", "Images")).length
               ? parseDelimitedList(get("images", "Images"))
               : galleryImages,
+            galleryImageUrls: galleryImages,
             lastProfileScanAt: get("lastProfileScanAt", "last_profile_scan_at", "verified_at", "Last Profile Scan At"),
             languages,
             otherTags: [...(category ? [category] : []), ...otherTags],
