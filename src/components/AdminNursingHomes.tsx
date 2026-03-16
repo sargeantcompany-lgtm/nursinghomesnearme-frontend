@@ -602,12 +602,19 @@ export default function AdminNursingHomes() {
               .find((x) => x.includes("@")) ?? "";
           };
           const category = get("category", "Category");
+          const featureTags = parseDelimitedList(get("featureTags", "feature_tags", "Feature Tags"));
+          const otherTags = parseDelimitedList(get("otherTags", "other_tags", "Other Tags"));
+          const languages = parseDelimitedList(get("languages", "Languages"));
+          const roomTypes = parseDelimitedList(get("roomTypes", "room_types", "room_options", "Room Types", "Room Options"));
+          const galleryImages = parseDelimitedList(
+            get("galleryImageUrls", "gallery_image_urls", "gallery_images", "Gallery Image URLs"),
+          );
 
           return {
             name: get("name", "Name", "facility_name", "Facility Name"),
             providerName: get("providerName", "provider_name", "Provider Name"),
             oneLineDescription: get("oneLineDescription", "one_line_description", "One Line Description"),
-            description: get("description", "Description"),
+            description: get("description", "long_description", "Description", "Long Description"),
             addressLine1: get("addressLine1", "address_line", "address", "Address", "street_address"),
             addressLine2: get("addressLine2", "address_line_2", "Address Line 2"),
             suburb: get("suburb", "Suburb"),
@@ -620,16 +627,22 @@ export default function AdminNursingHomes() {
             sourcePrimary: get("sourcePrimary", "source_primary", "Source Primary"),
             facilityType: get("facilityType", "facility_type", "Facility Type"),
             beds: getNum("beds", "Beds"),
-            primaryImageUrl: get("primaryImageUrl", "primary_image_url", "Primary Image URL"),
+            primaryImageUrl: get("primaryImageUrl", "primary_image_url", "primary_photo_url", "Primary Image URL"),
             latitude: getNum("latitude", "lat", "Latitude"),
             longitude: getNum("longitude", "lng", "lon", "Longitude"),
             status: get("status", "Status") || "ACTIVE",
             careTypes: parseDelimitedList(get("careTypes", "care_types", "Care Types")),
-            specialties: parseDelimitedList(get("specialties", "Specialties")),
-            roomTypes: parseDelimitedList(get("roomTypes", "room_types", "Room Types")),
-            images: parseDelimitedList(get("images", "Images")),
-            lastProfileScanAt: get("lastProfileScanAt", "last_profile_scan_at", "Last Profile Scan At"),
-            otherTags: category ? [category] : [],
+            specialties: featureTags,
+            roomTypes,
+            images: parseDelimitedList(get("images", "Images")).length
+              ? parseDelimitedList(get("images", "Images"))
+              : galleryImages,
+            lastProfileScanAt: get("lastProfileScanAt", "last_profile_scan_at", "verified_at", "Last Profile Scan At"),
+            languages,
+            otherTags: [...(category ? [category] : []), ...otherTags],
+            internalNotes: get("internalNotes", "internal_notes", "Internal Notes"),
+            activeVacancies: getNum("activeVacancies", "active_vacancies", "Active Vacancies"),
+            verifiedAt: get("verifiedAt", "verified_at", "Verified At"),
           };
         })
         .filter((x) => x.name && x.suburb && x.state && x.postcode);
