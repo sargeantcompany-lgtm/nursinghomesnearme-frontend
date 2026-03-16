@@ -258,6 +258,7 @@ export default function AdminNursingHomes() {
   const [importingSheet, setImportingSheet] = useState(false);
   const [importingCenters, setImportingCenters] = useState(false);
   const [importingVacancyChecks, setImportingVacancyChecks] = useState(false);
+  const [sendingWeeklyCheck, setSendingWeeklyCheck] = useState(false);
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -670,6 +671,32 @@ export default function AdminNursingHomes() {
     }
   }
 
+  async function sendWeeklyVacancyCheck() {
+    setError("");
+    setNotice("");
+    setSendingWeeklyCheck(true);
+    try {
+      const payload =
+        selectedId === "NEW"
+          ? {}
+          : { facilityIds: [Number(selectedId)] };
+
+      const res = await apiFetch<{ sent: number; skipped: number }>(
+        "/api/admin/facility-outreach/send-weekly",
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        },
+      );
+
+      setNotice(`Weekly vacancy check sent to ${res.sent} facility(s). Skipped ${res.skipped}.`);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setSendingWeeklyCheck(false);
+    }
+  }
+
   async function uploadOnePhoto(file: File): Promise<string> {
     const fd = new FormData();
     fd.append("file", file);
@@ -763,7 +790,7 @@ export default function AdminNursingHomes() {
   }, [selectedId]);
 
   const disabled =
-    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingCenters || importingVacancyChecks;
+    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingCenters || importingVacancyChecks || sendingWeeklyCheck;
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
@@ -855,6 +882,14 @@ export default function AdminNursingHomes() {
             >
               Download Vacancy Template
             </a>
+
+            <button onClick={() => sendWeeklyVacancyCheck()} disabled={disabled} style={secondaryBtn}>
+              {sendingWeeklyCheck
+                ? "Sending..."
+                : selectedId === "NEW"
+                  ? "Send Weekly Check to All"
+                  : "Send Weekly Check to Selected"}
+            </button>
 
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>
               API: {API_BASE}
