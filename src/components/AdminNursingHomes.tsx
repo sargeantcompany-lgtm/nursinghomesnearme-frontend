@@ -145,6 +145,13 @@ function parseOptionalFloat(raw: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function parseDelimitedList(raw: string): string[] {
+  return raw
+    .split(/\r?\n|[|;,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function rowsToRoomOptions(
   rows: RoomOptionRow[]
 ): Array<{
@@ -472,19 +479,30 @@ export default function AdminNursingHomes() {
 
           return {
             name: get("name", "Name", "facility_name", "Facility Name"),
+            providerName: get("providerName", "provider_name", "Provider Name"),
             oneLineDescription: get("oneLineDescription", "one_line_description", "One Line Description"),
             description: get("description", "Description"),
             addressLine1: get("addressLine1", "address_line", "address", "Address", "street_address"),
+            addressLine2: get("addressLine2", "address_line_2", "Address Line 2"),
             suburb: get("suburb", "Suburb"),
             state: get("state", "State"),
             postcode: get("postcode", "Postcode", "post_code"),
             phone: get("phone", "Phone"),
             website: get("website", "Website", "source_url", "Source URL"),
             email: getFirstEmail("email", "Email"),
+            governmentListingUrl: get("governmentListingUrl", "government_listing_url", "Government Listing URL"),
+            sourcePrimary: get("sourcePrimary", "source_primary", "Source Primary"),
+            facilityType: get("facilityType", "facility_type", "Facility Type"),
+            beds: getNum("beds", "Beds"),
             primaryImageUrl: get("primaryImageUrl", "primary_image_url", "Primary Image URL"),
             latitude: getNum("latitude", "lat", "Latitude"),
             longitude: getNum("longitude", "lng", "lon", "Longitude"),
             status: get("status", "Status") || "ACTIVE",
+            careTypes: parseDelimitedList(get("careTypes", "care_types", "Care Types")),
+            specialties: parseDelimitedList(get("specialties", "Specialties")),
+            roomTypes: parseDelimitedList(get("roomTypes", "room_types", "Room Types")),
+            images: parseDelimitedList(get("images", "Images")),
+            lastProfileScanAt: get("lastProfileScanAt", "last_profile_scan_at", "Last Profile Scan At"),
             otherTags: category ? [category] : [],
           };
         })
@@ -721,6 +739,15 @@ export default function AdminNursingHomes() {
                 }}
               />
             </label>
+
+            <a
+              href="/facility_profile_import_template.csv"
+              target="_blank"
+              rel="noreferrer"
+              style={{ ...secondaryBtn, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+            >
+              Download CSV Template
+            </a>
 
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>
               API: {API_BASE}
