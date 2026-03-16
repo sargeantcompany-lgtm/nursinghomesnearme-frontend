@@ -310,6 +310,7 @@ export default function AdminNursingHomes() {
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("ALL");
+  const [showFacilitiesBoard, setShowFacilitiesBoard] = useState(false);
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
@@ -387,10 +388,7 @@ export default function AdminNursingHomes() {
   const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
   function jumpToFacilitiesBoard() {
-    const target = document.getElementById("facility-operations-board");
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    setShowFacilitiesBoard(true);
   }
 
   async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -1083,114 +1081,146 @@ export default function AdminNursingHomes() {
           {notice ? <Alert color="#166534" bg="#dcfce7" title="OK" text={notice} /> : null}
         </div>
 
-        <div id="facility-operations-board" style={{ ...cardStyle, marginTop: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <div style={{ fontWeight: 800, color: "#0b3b5b" }}>Facility Operations Board</div>
-            <div style={{ color: "#64748b", fontSize: 13 }}>
-              View all facilities by state and check who is receiving weekly update emails.
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            {stateOptions.map((state) => {
-              const active = stateFilter === state;
-              const count = state === "ALL" ? list.length : stateCounts.get(state) ?? 0;
-              return (
-                <button
-                  key={state}
-                  type="button"
-                  onClick={() => setStateFilter(state)}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 999,
-                    border: active ? "1px solid #0b3b5b" : "1px solid #cbd5e1",
-                    background: active ? "#0b3b5b" : "white",
-                    color: active ? "white" : "#0b3b5b",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  {state} ({count})
-                </button>
-              );
-            })}
-          </div>
-
+        {showFacilitiesBoard ? (
           <div
             style={{
-              marginTop: 14,
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 12,
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15, 23, 42, 0.45)",
+              zIndex: 1000,
+              padding: 24,
+              overflowY: "auto",
             }}
+            onClick={() => setShowFacilitiesBoard(false)}
           >
-            {filteredList.slice(0, 120).map((nh) => {
-              const outreachStatus = !nh.canReceiveWeeklyCheck
-                ? "Missing facility email"
-                : nh.lastOutreachSentAt
-                  ? nh.lastOutreachReplyAt
-                    ? "Weekly check sent and replied"
-                    : "Weekly check sent, waiting reply"
-                  : "Ready for weekly check";
-              return (
-                <button
-                  key={`board-${nh.id}`}
-                  type="button"
-                  onClick={() => setSelectedId(nh.id)}
-                  style={{
-                    textAlign: "left",
-                    padding: 14,
-                    borderRadius: 14,
-                    border: selectedId === nh.id ? "1px solid #0b3b5b" : "1px solid #e5e7eb",
-                    background: selectedId === nh.id ? "#eff6ff" : "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                    <div style={{ fontWeight: 800, color: "#0f172a" }}>{nh.name}</div>
-                    <span
+            <div
+              id="facility-operations-board"
+              style={{
+                maxWidth: 1200,
+                margin: "0 auto",
+                background: "white",
+                borderRadius: 16,
+                border: "1px solid #e5e7eb",
+                padding: 18,
+                boxShadow: "0 24px 80px rgba(15, 23, 42, 0.22)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ fontWeight: 800, color: "#0b3b5b", fontSize: 22 }}>All Facilities</div>
+                <div style={{ color: "#64748b", fontSize: 13 }}>
+                  View all facilities by state and open one straight into the editor.
+                </div>
+                <button type="button" onClick={() => setShowFacilitiesBoard(false)} style={{ ...secondaryBtn, marginLeft: "auto" }}>
+                  Close
+                </button>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                {stateOptions.map((state) => {
+                  const active = stateFilter === state;
+                  const count = state === "ALL" ? list.length : stateCounts.get(state) ?? 0;
+                  return (
+                    <button
+                      key={state}
+                      type="button"
+                      onClick={() => setStateFilter(state)}
                       style={{
-                        padding: "3px 8px",
+                        padding: "8px 12px",
                         borderRadius: 999,
-                        background: nh.conflictFlag ? "#fee2e2" : "#dcfce7",
-                        color: nh.conflictFlag ? "#991b1b" : "#166534",
-                        fontSize: 12,
+                        border: active ? "1px solid #0b3b5b" : "1px solid #cbd5e1",
+                        background: active ? "#0b3b5b" : "white",
+                        color: active ? "white" : "#0b3b5b",
                         fontWeight: 800,
-                        whiteSpace: "nowrap",
+                        cursor: "pointer",
                       }}
                     >
-                      {nh.conflictFlag ? "Conflict" : "Stable"}
-                    </span>
-                  </div>
-                  <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
-                    {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                    <StatusChip
-                      tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
-                      text={nh.canReceiveWeeklyCheck ? "Email ready" : "No email"}
-                    />
-                    <StatusChip tone="blue" text={`Website: ${nh.websiteSaysVacancies ?? "unknown"}`} />
-                    <StatusChip tone="blue" text={`Facility: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
-                  </div>
-                  <div style={{ marginTop: 10, fontSize: 12, color: "#334155" }}>
-                    <div><strong>Weekly check:</strong> {outreachStatus}</div>
-                    <div><strong>Last sent:</strong> {formatDateTime(nh.lastOutreachSentAt)}</div>
-                    <div><strong>Last reply:</strong> {formatDateTime(nh.lastOutreachReplyAt)}</div>
-                    <div><strong>Website checked:</strong> {formatDateTime(nh.websiteCheckedAt)}</div>
-                    <div><strong>Facility confirmed:</strong> {formatDateTime(nh.facilityConfirmedAt)}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                      {state} ({count})
+                    </button>
+                  );
+                })}
+              </div>
 
-          {filteredList.length > 120 ? (
-            <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
-              Showing the first 120 facilities in this view. Use the state filter or search to narrow it further.
+              <div
+                style={{
+                  marginTop: 14,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: 12,
+                }}
+              >
+                {filteredList.slice(0, 120).map((nh) => {
+                  const outreachStatus = !nh.canReceiveWeeklyCheck
+                    ? "Missing facility email"
+                    : nh.lastOutreachSentAt
+                      ? nh.lastOutreachReplyAt
+                        ? "Weekly check sent and replied"
+                        : "Weekly check sent, waiting reply"
+                      : "Ready for weekly check";
+                  return (
+                    <button
+                      key={`board-${nh.id}`}
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(nh.id);
+                        setShowFacilitiesBoard(false);
+                      }}
+                      style={{
+                        textAlign: "left",
+                        padding: 14,
+                        borderRadius: 14,
+                        border: selectedId === nh.id ? "1px solid #0b3b5b" : "1px solid #e5e7eb",
+                        background: selectedId === nh.id ? "#eff6ff" : "white",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                        <div style={{ fontWeight: 800, color: "#0f172a" }}>{nh.name}</div>
+                        <span
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: 999,
+                            background: nh.conflictFlag ? "#fee2e2" : "#dcfce7",
+                            color: nh.conflictFlag ? "#991b1b" : "#166534",
+                            fontSize: 12,
+                            fontWeight: 800,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {nh.conflictFlag ? "Conflict" : "Stable"}
+                        </span>
+                      </div>
+                      <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
+                        {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                        <StatusChip
+                          tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
+                          text={nh.canReceiveWeeklyCheck ? "Email ready" : "No email"}
+                        />
+                        <StatusChip tone="blue" text={`Website: ${nh.websiteSaysVacancies ?? "unknown"}`} />
+                        <StatusChip tone="blue" text={`Facility: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
+                      </div>
+                      <div style={{ marginTop: 10, fontSize: 12, color: "#334155" }}>
+                        <div><strong>Weekly check:</strong> {outreachStatus}</div>
+                        <div><strong>Last sent:</strong> {formatDateTime(nh.lastOutreachSentAt)}</div>
+                        <div><strong>Last reply:</strong> {formatDateTime(nh.lastOutreachReplyAt)}</div>
+                        <div><strong>Website checked:</strong> {formatDateTime(nh.websiteCheckedAt)}</div>
+                        <div><strong>Facility confirmed:</strong> {formatDateTime(nh.facilityConfirmedAt)}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {filteredList.length > 120 ? (
+                <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
+                  Showing the first 120 facilities in this view. Use the state filter or search to narrow it further.
+                </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         <div style={gridWrap}>
           {/* LEFT */}
