@@ -841,28 +841,30 @@ export default function AdminCases() {
 
                 <SectionTitle text="Residential application questions" />
                 <Grid2>
-                  <Field label="Preferred homes" value={intakeForm.preferredHomes} onChange={(v) => setIntakeField("preferredHomes", v)} disabled={disabled} />
                   <Field label="Current location (residential)" value={intakeForm.currentLocation} onChange={(v) => setIntakeField("currentLocation", v)} disabled={disabled} />
                   <Field label="Hospital/ward" value={intakeForm.hospitalWard} onChange={(v) => setIntakeField("hospitalWard", v)} disabled={disabled} />
                   <Field label="Residential permanent approved (Yes/No)" value={intakeForm.residentialPermanentApproved} onChange={(v) => setIntakeField("residentialPermanentApproved", v)} disabled={disabled} />
                   <Field label="My Aged Care referral code" value={intakeForm.myAgedCareReferralCode} onChange={(v) => setIntakeField("myAgedCareReferralCode", v)} disabled={disabled} />
                   <Field label="EPOA in place? (Yes/No)" value={intakeForm.hasEpoa} onChange={(v) => setIntakeField("hasEpoa", v)} disabled={disabled} />
                   <Field label="QCAT order? (Yes/No)" value={intakeForm.qcatOrder} onChange={(v) => setIntakeField("qcatOrder", v)} disabled={disabled} />
-                  <Field label="QCAT case number" value={intakeForm.qcatCaseNumber} onChange={(v) => setIntakeField("qcatCaseNumber", v)} disabled={disabled} />
                   <Field label="Memory support required? (Yes/No)" value={intakeForm.memorySupportRequired} onChange={(v) => setIntakeField("memorySupportRequired", v)} disabled={disabled} />
                   <Field label="Advance Health Directive? (Yes/No)" value={intakeForm.advanceHealthDirective} onChange={(v) => setIntakeField("advanceHealthDirective", v)} disabled={disabled} />
-                  <Field label="NDIS plan? (Yes/No)" value={intakeForm.ndisPlan} onChange={(v) => setIntakeField("ndisPlan", v)} disabled={disabled} />
                   <Field label="Support at Home? (Yes/No)" value={intakeForm.supportAtHome} onChange={(v) => setIntakeField("supportAtHome", v)} disabled={disabled} />
                   <Field label="Support at Home start date" value={intakeForm.supportAtHomeStartDate} onChange={(v) => setIntakeField("supportAtHomeStartDate", v)} disabled={disabled} />
-                  <Field label="Pension type" value={intakeForm.pensionType} onChange={(v) => setIntakeField("pensionType", v)} disabled={disabled} />
-                  <Field label="Pension / DVA number" value={intakeForm.pensionOrDvaNumber} onChange={(v) => setIntakeField("pensionOrDvaNumber", v)} disabled={disabled} />
-                  <Field label="Medicare number" value={intakeForm.medicareNumber} onChange={(v) => setIntakeField("medicareNumber", v)} disabled={disabled} />
-                  <Field label="SA457 / SA485 status" value={intakeForm.sa457Sa485Status} onChange={(v) => setIntakeField("sa457Sa485Status", v)} disabled={disabled} />
-                  <Field label="Estimated annual income" value={intakeForm.estimatedAnnualIncome} onChange={(v) => setIntakeField("estimatedAnnualIncome", v)} disabled={disabled} />
-                  <Field label="Spouse/dependent in home? (Yes/No)" value={intakeForm.homeHasSpouseOrDependent} onChange={(v) => setIntakeField("homeHasSpouseOrDependent", v)} disabled={disabled} />
-                  <Field label="Carer in home 2+ years? (Yes/No)" value={intakeForm.carerInHomeTwoYears} onChange={(v) => setIntakeField("carerInHomeTwoYears", v)} disabled={disabled} />
-                  <Field label="Close family/friend carer 5+ years? (Yes/No)" value={intakeForm.closeFamilyCarerFiveYears} onChange={(v) => setIntakeField("closeFamilyCarerFiveYears", v)} disabled={disabled} />
-                  <Field label="Correspondence recipient" value={intakeForm.correspondenceRecipient} onChange={(v) => setIntakeField("correspondenceRecipient", v)} disabled={disabled} />
+                  <SelectInput
+                    label="Pension type"
+                    value={intakeForm.pensionType}
+                    onChange={(v) => setIntakeField("pensionType", v)}
+                    disabled={disabled}
+                    options={[
+                      { value: "full_pension", label: "Full pension" },
+                      { value: "part_pension", label: "Part pension" },
+                      { value: "dva", label: "DVA" },
+                      { value: "self_funded", label: "Self-funded" },
+                      { value: "non_pensioner", label: "Non-pensioner" },
+                      { value: "unknown", label: "Unknown" },
+                    ]}
+                  />
                 </Grid2>
 
                 <SectionTitle text="ACAT + care profile" />
@@ -1019,6 +1021,33 @@ function Field(props: {
         disabled={props.disabled}
         style={inputStyle}
       />
+    </label>
+  );
+}
+
+function SelectInput(props: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <label style={{ display: "block" }}>
+      <div style={labelStyle}>{props.label}</div>
+      <select
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        disabled={props.disabled}
+        style={inputStyle}
+      >
+        <option value="">Select</option>
+        {props.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

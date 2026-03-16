@@ -618,13 +618,6 @@ export default function ClientWorkflowDashboard() {
               </div>
 
               <div style={{ color: "#475569", marginBottom: 6 }}>Aged care home preferences</div>
-              <textarea
-                value={intake.preferredHomes}
-                onChange={(e) => updateIntakeField("preferredHomes", e.target.value)}
-                placeholder="1st preference, 2nd preference, 3rd preference..."
-                style={{ ...input, minHeight: 80, resize: "vertical" }}
-              />
-
               <div style={{ color: "#475569", margin: "10px 0 6px" }}>Current location of applicant</div>
               <input
                 value={intake.currentLocation}
@@ -663,12 +656,6 @@ export default function ClientWorkflowDashboard() {
                   value={intake.qcatOrder}
                   onChange={(v) => updateIntakeField("qcatOrder", v)}
                 />
-                <TextField
-                  label="QCAT case number"
-                  value={intake.qcatCaseNumber}
-                  onChange={(v) => updateIntakeField("qcatCaseNumber", v)}
-                  placeholder="Case number"
-                />
                 <SelectField
                   label="Memory support required?"
                   value={intake.memorySupportRequired}
@@ -678,11 +665,6 @@ export default function ClientWorkflowDashboard() {
                   label="Advance Health Directive?"
                   value={intake.advanceHealthDirective}
                   onChange={(v) => updateIntakeField("advanceHealthDirective", v)}
-                />
-                <SelectField
-                  label="NDIS plan in place?"
-                  value={intake.ndisPlan}
-                  onChange={(v) => updateIntakeField("ndisPlan", v)}
                 />
                 <SelectField
                   label="Currently receiving Support at Home?"
@@ -695,56 +677,18 @@ export default function ClientWorkflowDashboard() {
                   onChange={(v) => updateIntakeField("supportAtHomeStartDate", v)}
                   placeholder="YYYY-MM-DD"
                 />
-                <TextField
+                <SelectField
                   label="Pension type"
                   value={intake.pensionType}
                   onChange={(v) => updateIntakeField("pensionType", v)}
-                  placeholder="Full pension, part pension, non-pensioner"
-                />
-                <TextField
-                  label="Pension / DVA number"
-                  value={intake.pensionOrDvaNumber}
-                  onChange={(v) => updateIntakeField("pensionOrDvaNumber", v)}
-                  placeholder="Number"
-                />
-                <TextField
-                  label="Medicare number"
-                  value={intake.medicareNumber}
-                  onChange={(v) => updateIntakeField("medicareNumber", v)}
-                  placeholder="Medicare number"
-                />
-                <TextField
-                  label="SA457 / SA485 status"
-                  value={intake.sa457Sa485Status}
-                  onChange={(v) => updateIntakeField("sa457Sa485Status", v)}
-                  placeholder="Lodged, reply received, not required, etc."
-                />
-                <TextField
-                  label="Estimated annual income"
-                  value={intake.estimatedAnnualIncome}
-                  onChange={(v) => updateIntakeField("estimatedAnnualIncome", v)}
-                  placeholder="Amount"
-                />
-                <SelectField
-                  label="Spouse or dependent child living in home?"
-                  value={intake.homeHasSpouseOrDependent}
-                  onChange={(v) => updateIntakeField("homeHasSpouseOrDependent", v)}
-                />
-                <SelectField
-                  label="Carer (pension-eligible) in home for 2+ years?"
-                  value={intake.carerInHomeTwoYears}
-                  onChange={(v) => updateIntakeField("carerInHomeTwoYears", v)}
-                />
-                <SelectField
-                  label="Close family/friend carer in home for 5+ years?"
-                  value={intake.closeFamilyCarerFiveYears}
-                  onChange={(v) => updateIntakeField("closeFamilyCarerFiveYears", v)}
-                />
-                <TextField
-                  label="Correspondence recipient"
-                  value={intake.correspondenceRecipient}
-                  onChange={(v) => updateIntakeField("correspondenceRecipient", v)}
-                  placeholder="Applicant, first contact, second contact, or other"
+                  options={[
+                    { value: "full_pension", label: "Full pension" },
+                    { value: "part_pension", label: "Part pension" },
+                    { value: "dva", label: "DVA" },
+                    { value: "self_funded", label: "Self-funded" },
+                    { value: "non_pensioner", label: "Non-pensioner" },
+                    { value: "unknown", label: "Unknown" },
+                  ]}
                 />
               </div>
 
@@ -790,6 +734,20 @@ export default function ClientWorkflowDashboard() {
                     {m.phone ? <div style={{ color: "#475569", fontSize: 13 }}>Phone: {m.phone}</div> : null}
                     <div style={{ color: "#334155", marginTop: 4 }}>
                       Status: {titleForStatus(m.facilityResponseStatus || m.status)}
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <a
+                        href={`/options/${m.nursingHomeId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          color: "#0b3b5b",
+                          fontWeight: 700,
+                          textDecoration: "underline",
+                        }}
+                      >
+                        View facility details
+                      </a>
                     </div>
                     <div style={{ marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap" }}>
                       <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -867,19 +825,29 @@ function SelectField({
   label,
   value,
   onChange,
+  options,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  options?: Array<{ value: string; label: string }>;
 }) {
+  const items = options ?? [
+    { value: "yes", label: "Yes" },
+    { value: "no", label: "No" },
+    { value: "unknown", label: "Unknown" },
+  ];
+
   return (
     <label style={{ display: "grid", gap: 6 }}>
       <span style={{ color: "#475569", fontSize: 13, fontWeight: 600 }}>{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} style={input}>
         <option value="">Select</option>
-        <option value="yes">Yes</option>
-        <option value="no">No</option>
-        <option value="unknown">Unknown</option>
+        {items.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
     </label>
   );
