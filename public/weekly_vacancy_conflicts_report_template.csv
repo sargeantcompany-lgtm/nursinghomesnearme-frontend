@@ -1,0 +1,2 @@
+facility_id,facility_name,website,government_listing_url,website_says_vacancies,facility_confirmed_vacancies,website_checked_at,facility_confirmed_at,conflict_flag,latest_display_status,reason,action_needed
+1,"Example Aged Care Home","https://example.com.au/facility","https://www.myagedcare.gov.au/example","yes","no","2026-03-16T03:00:00Z","2026-03-16T05:20:00Z",true,"facility_confirmed_no","Website says vacancies but facility reply says no current vacancies","Manual review and follow-up call"

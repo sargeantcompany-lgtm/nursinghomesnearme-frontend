@@ -257,6 +257,7 @@ export default function AdminNursingHomes() {
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [importingSheet, setImportingSheet] = useState(false);
   const [importingCenters, setImportingCenters] = useState(false);
+  const [importingVacancyChecks, setImportingVacancyChecks] = useState(false);
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -587,6 +588,88 @@ export default function AdminNursingHomes() {
     }
   }
 
+  async function importVacancyChecks(file: File) {
+    setError("");
+    setNotice("");
+    setImportingVacancyChecks(true);
+    try {
+      const XLSX = await import("xlsx");
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+
+      const normalized = rows
+        .map((r) => {
+          const get = (...keys: string[]) => {
+            for (const key of keys) {
+              const v = r[key];
+              if (v != null && String(v).trim()) return String(v).trim();
+            }
+            return "";
+          };
+          const getNum = (...keys: string[]) => {
+            const txt = get(...keys);
+            if (!txt) return null;
+            const n = Number(txt);
+            return Number.isFinite(n) ? n : null;
+          };
+          const getBool = (...keys: string[]) => {
+            const txt = get(...keys).toLowerCase();
+            if (!txt) return false;
+            return txt === "true" || txt === "yes" || txt === "1";
+          };
+
+          return {
+            facilityId: getNum("facility_id", "facilityId", "Facility ID"),
+            facilityName: get("facility_name", "facilityName", "Facility Name", "name", "Name"),
+            suburb: get("suburb", "Suburb"),
+            postcode: get("postcode", "Postcode"),
+            website: get("website", "Website"),
+            governmentListingUrl: get("government_listing_url", "governmentListingUrl", "Government Listing URL"),
+            checkedAt: get("checked_at", "checkedAt", "Checked At"),
+            sourceType: get("source_type", "sourceType", "Source Type"),
+            sourceUrl: get("source_url", "sourceUrl", "Source URL"),
+            websiteSaysVacancies: get("website_says_vacancies", "websiteSaysVacancies", "Website Says Vacancies"),
+            facilityConfirmedVacancies: get("facility_confirmed_vacancies", "facilityConfirmedVacancies", "Facility Confirmed Vacancies"),
+            websiteCheckedAt: get("website_checked_at", "websiteCheckedAt", "Website Checked At"),
+            websiteSourceUrl: get("website_source_url", "websiteSourceUrl", "Website Source URL"),
+            facilityConfirmedAt: get("facility_confirmed_at", "facilityConfirmedAt", "Facility Confirmed At"),
+            facilityConfirmationSource: get("facility_confirmation_source", "facilityConfirmationSource", "Facility Confirmation Source"),
+            vacancyStatus: get("vacancy_status", "vacancyStatus", "Vacancy Status"),
+            vacancySummary: get("vacancy_summary", "vacancySummary", "Vacancy Summary"),
+            waitlistStatus: get("waitlist_status", "waitlistStatus", "Waitlist Status"),
+            admissionsStatus: get("admissions_status", "admissionsStatus", "Admissions Status"),
+            contactCta: get("contact_cta", "contactCta", "Contact CTA"),
+            confidence: get("confidence", "Confidence"),
+            rawTextExcerpt: get("raw_text_excerpt", "rawTextExcerpt", "Raw Text Excerpt"),
+            conflictFlag: getBool("conflict_flag", "conflictFlag", "Conflict Flag"),
+            needsManualReview: getBool("needs_manual_review", "needsManualReview", "Needs Manual Review"),
+          };
+        })
+        .filter((x) => x.facilityId != null || x.website || x.governmentListingUrl || (x.facilityName && x.suburb && x.postcode));
+
+      if (!normalized.length) {
+        throw new Error("No valid rows found. Need facility_id, website, government_listing_url, or name+suburb+postcode.");
+      }
+
+      const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
+        "/api/admin/nursing-homes/import-vacancy-checks",
+        {
+          method: "POST",
+          body: JSON.stringify(normalized),
+        },
+      );
+
+      setNotice(`Vacancy import complete. Created ${res.created}, updated ${res.updated}, skipped ${res.skipped}.`);
+      await refreshList();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setImportingVacancyChecks(false);
+    }
+  }
+
   async function uploadOnePhoto(file: File): Promise<string> {
     const fd = new FormData();
     fd.append("file", file);
@@ -680,7 +763,7 @@ export default function AdminNursingHomes() {
   }, [selectedId]);
 
   const disabled =
-    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingCenters;
+    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingCenters || importingVacancyChecks;
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
@@ -740,6 +823,21 @@ export default function AdminNursingHomes() {
               />
             </label>
 
+            <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              {importingVacancyChecks ? "Importing..." : "Import Vacancy Checks"}
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                style={{ display: "none" }}
+                disabled={disabled || importingVacancyChecks}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) importVacancyChecks(f).catch(() => {});
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+
             <a
               href="/facility_profile_import_template.csv"
               target="_blank"
@@ -747,6 +845,15 @@ export default function AdminNursingHomes() {
               style={{ ...secondaryBtn, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
             >
               Download CSV Template
+            </a>
+
+            <a
+              href="/facility_vacancy_checks_template.csv"
+              target="_blank"
+              rel="noreferrer"
+              style={{ ...secondaryBtn, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+            >
+              Download Vacancy Template
             </a>
 
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>

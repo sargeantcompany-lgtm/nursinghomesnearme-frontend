@@ -1,0 +1,2 @@
+facility_id,facility_name,website,government_listing_url,checked_at,source_url,website_says_vacancies,vacancy_status,waitlist_status,admissions_status,confidence,needs_manual_review,notes
+1,"Example Aged Care Home","https://example.com.au/facility","https://www.myagedcare.gov.au/example","2026-03-16T03:00:00Z","https://example.com.au/facility/vacancies","yes","vacancies_open","waitlist_open","accepting","high",false,"Website scan found clear vacancy language"

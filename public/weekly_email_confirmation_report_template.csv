@@ -1,0 +1,2 @@
+facility_id,facility_name,recipient_email,reply_received_at,channel,facility_confirmed_vacancies,facility_confirmed_at,facility_confirmation_source,waitlist_status_from_reply,reply_summary,confidence,needs_manual_review
+1,"Example Aged Care Home","admissions@example.com.au","2026-03-16T05:20:00Z","email","yes","2026-03-16T05:20:00Z","zoho_inbox_reply","waitlist_open","Facility replied that one room is currently available and waitlist is open.","high",false
