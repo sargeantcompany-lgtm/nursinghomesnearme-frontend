@@ -15,6 +15,15 @@ type NursingHomeListItem = {
   longitude?: number | null;
   status?: string | null;
   primaryImageUrl?: string | null;
+  email?: string | null;
+  websiteSaysVacancies?: string | null;
+  facilityConfirmedVacancies?: string | null;
+  websiteCheckedAt?: string | null;
+  facilityConfirmedAt?: string | null;
+  conflictFlag?: boolean | null;
+  lastOutreachSentAt?: string | null;
+  lastOutreachReplyAt?: string | null;
+  canReceiveWeeklyCheck?: boolean;
 };
 
 type RoomOption = {
@@ -299,6 +308,7 @@ export default function AdminNursingHomes() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
+  const [stateFilter, setStateFilter] = useState("ALL");
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
@@ -318,16 +328,32 @@ export default function AdminNursingHomes() {
     () => [...list].sort((a, b) => a.name.localeCompare(b.name)),
     [list]
   );
+  const stateOptions = useMemo(() => {
+    const states = Array.from(new Set(list.map((nh) => (nh.state ?? "").trim()).filter(Boolean))).sort();
+    return ["ALL", ...states];
+  }, [list]);
+  const stateCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of list) {
+      const key = (item.state ?? "").trim();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return counts;
+  }, [list]);
   const filteredList = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    if (!needle) return sortedList;
-    return sortedList.filter((nh) =>
+    const inState = stateFilter === "ALL"
+      ? sortedList
+      : sortedList.filter((nh) => (nh.state ?? "").trim().toUpperCase() === stateFilter.toUpperCase());
+    if (!needle) return inState;
+    return inState.filter((nh) =>
       [nh.name, nh.suburb ?? "", nh.state ?? "", nh.postcode ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(needle),
     );
-  }, [search, sortedList]);
+  }, [search, sortedList, stateFilter]);
   const missingGeoCount = useMemo(
     () => list.filter((nh) => nh.latitude == null || nh.longitude == null).length,
     [list],
@@ -944,6 +970,115 @@ export default function AdminNursingHomes() {
 
           {error ? <Alert color="#991b1b" bg="#fee2e2" title="Error" text={error} /> : null}
           {notice ? <Alert color="#166534" bg="#dcfce7" title="OK" text={notice} /> : null}
+        </div>
+
+        <div style={{ ...cardStyle, marginTop: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ fontWeight: 800, color: "#0b3b5b" }}>Facility Operations Board</div>
+            <div style={{ color: "#64748b", fontSize: 13 }}>
+              View all facilities by state and check who is receiving weekly update emails.
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            {stateOptions.map((state) => {
+              const active = stateFilter === state;
+              const count = state === "ALL" ? list.length : stateCounts.get(state) ?? 0;
+              return (
+                <button
+                  key={state}
+                  type="button"
+                  onClick={() => setStateFilter(state)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    border: active ? "1px solid #0b3b5b" : "1px solid #cbd5e1",
+                    background: active ? "#0b3b5b" : "white",
+                    color: active ? "white" : "#0b3b5b",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  {state} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          <div
+            style={{
+              marginTop: 14,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 12,
+            }}
+          >
+            {filteredList.slice(0, 120).map((nh) => {
+              const outreachStatus = !nh.canReceiveWeeklyCheck
+                ? "Missing facility email"
+                : nh.lastOutreachSentAt
+                  ? nh.lastOutreachReplyAt
+                    ? "Weekly check sent and replied"
+                    : "Weekly check sent, waiting reply"
+                  : "Ready for weekly check";
+              return (
+                <button
+                  key={`board-${nh.id}`}
+                  type="button"
+                  onClick={() => setSelectedId(nh.id)}
+                  style={{
+                    textAlign: "left",
+                    padding: 14,
+                    borderRadius: 14,
+                    border: selectedId === nh.id ? "1px solid #0b3b5b" : "1px solid #e5e7eb",
+                    background: selectedId === nh.id ? "#eff6ff" : "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                    <div style={{ fontWeight: 800, color: "#0f172a" }}>{nh.name}</div>
+                    <span
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: 999,
+                        background: nh.conflictFlag ? "#fee2e2" : "#dcfce7",
+                        color: nh.conflictFlag ? "#991b1b" : "#166534",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {nh.conflictFlag ? "Conflict" : "Stable"}
+                    </span>
+                  </div>
+                  <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
+                    {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                    <StatusChip
+                      tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
+                      text={nh.canReceiveWeeklyCheck ? "Email ready" : "No email"}
+                    />
+                    <StatusChip tone="blue" text={`Website: ${nh.websiteSaysVacancies ?? "unknown"}`} />
+                    <StatusChip tone="blue" text={`Facility: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 12, color: "#334155" }}>
+                    <div><strong>Weekly check:</strong> {outreachStatus}</div>
+                    <div><strong>Last sent:</strong> {formatDateTime(nh.lastOutreachSentAt)}</div>
+                    <div><strong>Last reply:</strong> {formatDateTime(nh.lastOutreachReplyAt)}</div>
+                    <div><strong>Website checked:</strong> {formatDateTime(nh.websiteCheckedAt)}</div>
+                    <div><strong>Facility confirmed:</strong> {formatDateTime(nh.facilityConfirmedAt)}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {filteredList.length > 120 ? (
+            <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
+              Showing the first 120 facilities in this view. Use the state filter or search to narrow it further.
+            </div>
+          ) : null}
         </div>
 
         <div style={gridWrap}>
@@ -1611,6 +1746,29 @@ function MetaLine({ label, value }: { label: string; value: string }) {
       <div style={{ fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>{label}</div>
       <div style={{ color: "#475569", wordBreak: "break-word" }}>{value}</div>
     </div>
+  );
+}
+
+function StatusChip({ tone, text }: { tone: "green" | "red" | "blue"; text: string }) {
+  const styles =
+    tone === "green"
+      ? { background: "#dcfce7", color: "#166534" }
+      : tone === "red"
+        ? { background: "#fee2e2", color: "#991b1b" }
+        : { background: "#dbeafe", color: "#1d4ed8" };
+
+  return (
+    <span
+      style={{
+        padding: "3px 8px",
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 800,
+        ...styles,
+      }}
+    >
+      {text}
+    </span>
   );
 }
 
