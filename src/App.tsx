@@ -315,12 +315,11 @@ function SiteHeader({ showHome = false, onAdmin }: { showHome?: boolean; onAdmin
 function HomePage() {
   const navigate = useNavigate();
 
-  function openAdminWithCode(e?: React.MouseEvent) {
-    e?.preventDefault();
-    if (isAdminAuthed()) { navigate("/admin/menu"); return; }
-    const code = window.prompt("Enter admin access code:");
-    if (!code) return;
-    if (code.trim() !== "NHNM2026") { window.alert("Wrong code."); return; }
+  function openAdmin() {
+    if (isAdminAuthed()) {
+      navigate("/admin/menu");
+      return;
+    }
     navigate("/admin");
   }
 
@@ -334,7 +333,7 @@ function HomePage() {
         imageUrl="https://www.nursinghomesnearme.com.au/social-preview.png"
       />
       <style>{sharedPageStyles}</style>
-      <SiteHeader onAdmin={openAdminWithCode} />
+      <SiteHeader onAdmin={openAdmin} />
 
       <main className="pageWrap">
         <img src="/nursinghomesnearme-woman.png" alt="Nursing Homes Near Me" className="heroImg" />
@@ -716,4 +715,3 @@ function LoginPage() {
     </div>
   );
 }
-
