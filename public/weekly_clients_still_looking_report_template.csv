@@ -1,0 +1,2 @@
+client_id,client_name,email,phone,preferred_area,state,care_type,timing,approval_status,last_workflow_stage,dashboard_password_set,matches_count,selected_facilities_count,last_client_activity_at,created_at,next_action,notes
+1,"Example Client","client@example.com.au","0400 000 000","Southport, Robina","QLD","respite","next_1_3_months","PENDING","AWAITING_ADMIN_APPROVAL",false,5,0,"2026-03-16T06:20:00Z","2026-03-15T11:41:15Z","Follow up with client and review shortlist","Client still reviewing facilities"
