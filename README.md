@@ -120,4 +120,8 @@ This repo is shared by two Railway services:
 - Update on-page title, meta description, internal links, and schema as needed
 - Update `public/sitemap.xml` when a new indexable URL is added
 - Submit the updated sitemap in Google Search Console and Bing Webmaster Tools
+- Run `npm run bing:indexnow -- --url <changed-url>` after important page updates
+- Run `npm run bing:indexnow -- --from-sitemap` after larger content batches
 - Track which URLs were published, indexed, and improved
+
+See [BING_SETUP.md](/c:/Users/aslam/Projects/nursinghomesnearme-frontend/BING_SETUP.md) for the Bing and IndexNow workflow.

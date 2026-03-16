@@ -8,6 +8,7 @@
     "dev:server": "node --watch server/index.mjs",
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/run-react-snap.cjs",
+    "bing:indexnow": "node scripts/submit-indexnow.mjs",
     "start": "node scripts/start-preview.cjs",
     "start:backend": "node server/index.mjs",
     "server": "node server/index.mjs",
