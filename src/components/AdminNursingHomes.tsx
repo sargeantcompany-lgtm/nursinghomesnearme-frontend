@@ -279,7 +279,6 @@ export default function AdminNursingHomes() {
   const [uploadingPrimary, setUploadingPrimary] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [importingSheet, setImportingSheet] = useState(false);
-  const [importingCenters, setImportingCenters] = useState(false);
   const [importingVacancyChecks, setImportingVacancyChecks] = useState(false);
   const [sendingWeeklyCheck, setSendingWeeklyCheck] = useState(false);
 
@@ -602,64 +601,6 @@ export default function AdminNursingHomes() {
     }
   }
 
-  async function importLocationCenters(file: File) {
-    setError("");
-    setNotice("");
-    setImportingCenters(true);
-    try {
-      const XLSX = await import("xlsx");
-      const ab = await file.arrayBuffer();
-      const wb = XLSX.read(ab, { type: "array" });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-
-      const normalized = rows
-        .map((r) => {
-          const get = (...keys: string[]) => {
-            for (const key of keys) {
-              const v = r[key];
-              if (v != null && String(v).trim()) return String(v).trim();
-            }
-            return "";
-          };
-          const getNum = (...keys: string[]) => {
-            const txt = get(...keys);
-            if (!txt) return null;
-            const n = Number(txt);
-            return Number.isFinite(n) ? n : null;
-          };
-          return {
-            suburb: get("suburb", "Suburb"),
-            state: get("state", "State"),
-            postcode: get("postcode", "Postcode"),
-            latitude: getNum("lat", "latitude", "Latitude"),
-            longitude: getNum("lng", "lon", "longitude", "Longitude"),
-          };
-        })
-        .filter((x) => x.suburb && x.state && x.postcode && x.latitude != null && x.longitude != null);
-
-      if (!normalized.length) {
-        throw new Error("No valid rows found. Required: suburb, state, postcode, lat/lng.");
-      }
-
-      const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
-        "/api/admin/nursing-homes/import-location-centers",
-        {
-          method: "POST",
-          body: JSON.stringify(normalized),
-        },
-      );
-
-      setNotice(
-        `Suburb geocodes import complete. Created ${res.created}, updated ${res.updated}, skipped ${res.skipped}.`,
-      );
-    } catch (e) {
-      setError(getErrorMessage(e));
-    } finally {
-      setImportingCenters(false);
-    }
-  }
-
   async function importVacancyChecks(file: File) {
     setError("");
     setNotice("");
@@ -861,7 +802,7 @@ export default function AdminNursingHomes() {
   }, [selectedId]);
 
   const disabled =
-    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingCenters || importingVacancyChecks || sendingWeeklyCheck;
+    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingVacancyChecks || sendingWeeklyCheck;
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
@@ -903,21 +844,6 @@ export default function AdminNursingHomes() {
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) importSpreadsheet(f).catch(() => {});
-                  e.currentTarget.value = "";
-                }}
-              />
-            </label>
-
-            <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              {importingCenters ? "Importing..." : "Import Suburb Geocodes"}
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                style={{ display: "none" }}
-                disabled={disabled || importingCenters}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) importLocationCenters(f).catch(() => {});
                   e.currentTarget.value = "";
                 }}
               />
