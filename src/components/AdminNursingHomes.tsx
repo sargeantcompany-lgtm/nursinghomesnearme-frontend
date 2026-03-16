@@ -319,6 +319,30 @@ export default function AdminNursingHomes() {
     () => list.filter((nh) => nh.latitude == null || nh.longitude == null).length,
     [list],
   );
+  const vacancyActivity = useMemo(() => {
+    if (importingVacancyChecks) {
+      return {
+        tone: "info" as const,
+        title: "Vacancy import running",
+        text: "Importing vacancy checks into the database now. Please wait until the import completes before refreshing or sending more actions.",
+      };
+    }
+    if (sendingWeeklyCheck) {
+      return {
+        tone: "info" as const,
+        title: "Weekly vacancy emails sending",
+        text:
+          selectedId === "NEW"
+            ? "Sending the weekly vacancy check to all active facilities now."
+            : "Sending the weekly vacancy check for the selected facility now.",
+      };
+    }
+    return {
+      tone: "idle" as const,
+      title: "Vacancy status ready",
+      text: "Use the vacancy import for scanner updates, or send the weekly check email to collect direct facility confirmations.",
+    };
+  }, [importingVacancyChecks, sendingWeeklyCheck, selectedId]);
 
   const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
@@ -949,6 +973,19 @@ export default function AdminNursingHomes() {
             <div><strong>{list.length}</strong> facilities loaded</div>
             <div><strong>{list.length - missingGeoCount}</strong> with geo</div>
             <div><strong>{missingGeoCount}</strong> missing geo</div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              padding: 12,
+              borderRadius: 12,
+              border: vacancyActivity.tone === "info" ? "1px solid #bfdbfe" : "1px solid #dbeafe",
+              background: vacancyActivity.tone === "info" ? "#eff6ff" : "#f8fbff",
+            }}
+          >
+            <div style={{ fontWeight: 800, color: "#0b3b5b" }}>{vacancyActivity.title}</div>
+            <div style={{ marginTop: 4, color: "#475569", fontSize: 13 }}>{vacancyActivity.text}</div>
           </div>
 
           {error ? <Alert color="#991b1b" bg="#fee2e2" title="Error" text={error} /> : null}
