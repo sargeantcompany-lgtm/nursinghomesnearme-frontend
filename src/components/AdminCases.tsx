@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { API_BASE, TOKEN_ENV } from "../lib/runtimeConfig";
 import { adminFetch } from "../lib/api";
+import AdminTopNav from "./AdminTopNav";
 
 type ListType = "FULL" | "SHORT";
 
@@ -639,6 +640,8 @@ export default function AdminCases() {
         <p style={{ marginTop: 8, color: "#334155" }}>
           Case file editor + email send. Facilities in case: Short={shortCount} / Full={fullCount}
         </p>
+
+        <AdminTopNav />
 
         <div style={topCard}>
           <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>Admin Token</label>

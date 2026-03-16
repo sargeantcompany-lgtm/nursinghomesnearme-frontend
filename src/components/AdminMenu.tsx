@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../lib/runtimeConfig";
+import AdminTopNav from "./AdminTopNav";
 
 export default function AdminMenu() {
   const navigate = useNavigate();
@@ -10,11 +11,6 @@ export default function AdminMenu() {
   React.useEffect(() => {
     if (!isAuthed) navigate("/admin", { replace: true });
   }, [isAuthed, navigate]);
-
-  function logout() {
-    localStorage.removeItem("nhnm_admin_token");
-    navigate("/admin", { replace: true });
-  }
 
   function go(to: string) {
     navigate(to);
@@ -31,6 +27,8 @@ export default function AdminMenu() {
           </div>
         </div>
 
+        <AdminTopNav />
+
         <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
           <button type="button" onClick={() => go("/admin/case-manager")} style={linkCardBtn}>
             Case Manager (Add Homes + Send Lists)
@@ -44,11 +42,6 @@ export default function AdminMenu() {
             Nursing Homes
           </button>
 
-        </div>
-
-        <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button onClick={logout} style={secondaryBtn}>Log out</button>
-          <button type="button" onClick={() => go("/")} style={secondaryBtn}>Back to site</button>
         </div>
       </div>
     </div>
@@ -77,12 +70,3 @@ const linkCardBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const secondaryBtn: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #cbd5e1",
-  background: "white",
-  color: "#0b3b5b",
-  cursor: "pointer",
-  fontWeight: 800,
-};

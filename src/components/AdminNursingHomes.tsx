@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { API_BASE, TOKEN_ENV } from "../lib/runtimeConfig";
+import AdminTopNav from "./AdminTopNav";
 
 type NursingHomeListItem = {
   id: number;
@@ -845,6 +846,8 @@ export default function AdminNursingHomes() {
         <p style={{ marginTop: 8, color: "#334155" }}>
           Add / update facilities in your database (matches the new “options list + details” spec).
         </p>
+
+        <AdminTopNav />
 
         <div style={topCard}>
           <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
