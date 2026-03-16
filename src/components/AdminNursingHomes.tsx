@@ -41,6 +41,15 @@ type NursingHome = {
 
   phone?: string | null;
   website?: string | null;
+  websiteSaysVacancies?: string | null;
+  facilityConfirmedVacancies?: string | null;
+  websiteCheckedAt?: string | null;
+  websiteSourceUrl?: string | null;
+  facilityConfirmedAt?: string | null;
+  facilityConfirmationSource?: string | null;
+  conflictFlag?: boolean | null;
+  lastProfileScanAt?: string | null;
+  updatedAt?: string | null;
 
   // admin-only
   email?: string | null;
@@ -240,6 +249,19 @@ function appendLines(existingText: string, newUrls: string[]): string {
   return next.join("\n");
 }
 
+function formatDateTime(value?: string | null): string {
+  if (!value) return "Not yet recorded";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-AU", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export default function AdminNursingHomes() {
   const [token, setToken] = useState<string>(() => {
     const saved = localStorage.getItem("nhnm_admin_token");
@@ -266,6 +288,17 @@ export default function AdminNursingHomes() {
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
+  const [currentMeta, setCurrentMeta] = useState<{
+    websiteSaysVacancies?: string | null;
+    facilityConfirmedVacancies?: string | null;
+    websiteCheckedAt?: string | null;
+    websiteSourceUrl?: string | null;
+    facilityConfirmedAt?: string | null;
+    facilityConfirmationSource?: string | null;
+    conflictFlag?: boolean | null;
+    lastProfileScanAt?: string | null;
+    updatedAt?: string | null;
+  } | null>(null);
 
   const sortedList = useMemo(
     () => [...list].sort((a, b) => a.name.localeCompare(b.name)),
@@ -332,6 +365,17 @@ export default function AdminNursingHomes() {
       const nh = await apiFetch<NursingHome>(`/api/admin/nursing-homes/${id}`);
 
       setCurrentId(nh.id);
+      setCurrentMeta({
+        websiteSaysVacancies: nh.websiteSaysVacancies,
+        facilityConfirmedVacancies: nh.facilityConfirmedVacancies,
+        websiteCheckedAt: nh.websiteCheckedAt,
+        websiteSourceUrl: nh.websiteSourceUrl,
+        facilityConfirmedAt: nh.facilityConfirmedAt,
+        facilityConfirmationSource: nh.facilityConfirmationSource,
+        conflictFlag: nh.conflictFlag,
+        lastProfileScanAt: nh.lastProfileScanAt,
+        updatedAt: nh.updatedAt,
+      });
 
       setForm({
         name: (nh.name ?? "") as string,
@@ -375,6 +419,7 @@ export default function AdminNursingHomes() {
     setNotice("");
     setSelectedId("NEW");
     setCurrentId(null);
+    setCurrentMeta(null);
     setForm(emptyForm());
   }
 
@@ -427,7 +472,7 @@ export default function AdminNursingHomes() {
         setNotice(`Created: ${created.name} (ID ${created.id})`);
         await refreshList();
         setSelectedId(created.id);
-        setCurrentId(created.id);
+        await loadOne(created.id);
       } else {
         const updated = await apiFetch<NursingHome>(`/api/admin/nursing-homes/${currentId}`, {
           method: "PUT",
@@ -435,6 +480,7 @@ export default function AdminNursingHomes() {
         });
         setNotice(`Updated: ${updated.name} (ID ${updated.id})`);
         await refreshList();
+        await loadOne(updated.id);
       }
     } catch (e) {
       setError(getErrorMessage(e));
@@ -1102,6 +1148,71 @@ export default function AdminNursingHomes() {
               </div>
             ) : null}
 
+            {currentId != null && currentMeta ? (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: 14,
+                  borderRadius: 12,
+                  border: "1px solid #dbeafe",
+                  background: "#f8fbff",
+                }}
+              >
+                <div style={{ fontWeight: 800, color: "#0b3b5b", marginBottom: 10 }}>
+                  Vacancy Status Snapshot
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 10,
+                    fontSize: 13,
+                    color: "#334155",
+                  }}
+                >
+                  <MetaLine label="Website says vacancies" value={currentMeta.websiteSaysVacancies ?? "unknown"} />
+                  <MetaLine
+                    label="Facility confirmed"
+                    value={currentMeta.facilityConfirmedVacancies ?? "unknown"}
+                  />
+                  <MetaLine
+                    label="Last website check"
+                    value={formatDateTime(currentMeta.websiteCheckedAt)}
+                  />
+                  <MetaLine
+                    label="Last facility confirmation"
+                    value={formatDateTime(currentMeta.facilityConfirmedAt)}
+                  />
+                  <MetaLine
+                    label="Website source"
+                    value={currentMeta.websiteSourceUrl ?? "Not yet recorded"}
+                  />
+                  <MetaLine
+                    label="Confirmation source"
+                    value={currentMeta.facilityConfirmationSource ?? "Not yet recorded"}
+                  />
+                  <MetaLine
+                    label="Last profile scan"
+                    value={formatDateTime(currentMeta.lastProfileScanAt)}
+                  />
+                  <MetaLine label="Facility record updated" value={formatDateTime(currentMeta.updatedAt)} />
+                </div>
+                <div style={{ marginTop: 10, fontSize: 12 }}>
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 999,
+                      background: currentMeta.conflictFlag ? "#fee2e2" : "#dcfce7",
+                      color: currentMeta.conflictFlag ? "#991b1b" : "#166534",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {currentMeta.conflictFlag ? "Conflict between website and facility reply" : "No conflict flagged"}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
             <SectionTitle text="Facility Details Fields" />
             <Grid2>
               <Field
@@ -1433,6 +1544,15 @@ function SectionTitle({ text }: { text: string }) {
   return (
     <div style={{ marginTop: 16, marginBottom: 8, fontWeight: 800, color: "#0b3b5b" }}>
       {text}
+    </div>
+  );
+}
+
+function MetaLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div style={{ fontWeight: 800, color: "#0f172a", marginBottom: 2 }}>{label}</div>
+      <div style={{ color: "#475569", wordBreak: "break-word" }}>{value}</div>
     </div>
   );
 }
