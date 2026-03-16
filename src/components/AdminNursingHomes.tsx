@@ -253,6 +253,7 @@ export default function AdminNursingHomes() {
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [search, setSearch] = useState("");
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
@@ -260,6 +261,20 @@ export default function AdminNursingHomes() {
   const sortedList = useMemo(
     () => [...list].sort((a, b) => a.name.localeCompare(b.name)),
     [list]
+  );
+  const filteredList = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return sortedList;
+    return sortedList.filter((nh) =>
+      [nh.name, nh.suburb ?? "", nh.state ?? "", nh.postcode ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [search, sortedList]);
+  const missingGeoCount = useMemo(
+    () => list.filter((nh) => nh.latitude == null || nh.longitude == null).length,
+    [list],
   );
 
   const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
@@ -712,6 +727,12 @@ export default function AdminNursingHomes() {
             </div>
           </div>
 
+          <div style={{ marginTop: 12, display: "flex", gap: 16, flexWrap: "wrap", color: "#334155", fontSize: 14 }}>
+            <div><strong>{list.length}</strong> facilities loaded</div>
+            <div><strong>{list.length - missingGeoCount}</strong> with geo</div>
+            <div><strong>{missingGeoCount}</strong> missing geo</div>
+          </div>
+
           {error ? <Alert color="#991b1b" bg="#fee2e2" title="Error" text={error} /> : null}
           {notice ? <Alert color="#166534" bg="#dcfce7" title="OK" text={notice} /> : null}
         </div>
@@ -720,8 +741,16 @@ export default function AdminNursingHomes() {
           {/* LEFT */}
           <div style={cardStyle}>
             <div style={{ fontWeight: 800, marginBottom: 10, color: "#0b3b5b" }}>
-              Facilities ({sortedList.length})
+              Facilities ({filteredList.length})
             </div>
+
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, suburb, state or postcode"
+              disabled={disabled}
+              style={{ ...inputStyle, marginBottom: 10 }}
+            />
 
             <select
               value={selectedId === "NEW" ? "NEW" : String(selectedId)}
@@ -734,7 +763,7 @@ export default function AdminNursingHomes() {
               style={inputStyle}
             >
               <option value="NEW">+ Create new…</option>
-              {sortedList.map((nh) => (
+              {filteredList.map((nh) => (
                 <option key={nh.id} value={nh.id}>
                   {nh.name}
                   {nh.suburb ? ` — ${nh.suburb}` : ""}
@@ -743,8 +772,54 @@ export default function AdminNursingHomes() {
               ))}
             </select>
 
+            <div style={{ marginTop: 12, maxHeight: 420, overflow: "auto", display: "grid", gap: 8 }}>
+              {filteredList.map((nh) => {
+                const isActive = selectedId !== "NEW" && selectedId === nh.id;
+                const hasGeo = nh.latitude != null && nh.longitude != null;
+                return (
+                  <button
+                    key={nh.id}
+                    type="button"
+                    onClick={() => setSelectedId(nh.id)}
+                    disabled={disabled}
+                    style={{
+                      textAlign: "left",
+                      padding: 10,
+                      borderRadius: 10,
+                      border: isActive ? "1px solid #0b3b5b" : "1px solid #e5e7eb",
+                      background: isActive ? "#eff6ff" : "white",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, color: "#0f172a" }}>{nh.name}</div>
+                    <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
+                      {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
+                    </div>
+                    <div style={{ marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          background: hasGeo ? "#dcfce7" : "#fee2e2",
+                          color: hasGeo ? "#166534" : "#991b1b",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {hasGeo ? "Geo ready" : "Missing geo"}
+                      </span>
+                      {hasGeo ? (
+                        <span style={{ color: "#334155" }}>
+                          {Number(nh.latitude).toFixed(4)}, {Number(nh.longitude).toFixed(4)}
+                        </span>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
             <div style={{ marginTop: 12, fontSize: 13, color: "#64748b" }}>
-              Pick a facility then edit on the right and hit <b>Save</b>.
+              Pick a facility from the list, review the geo and details, then edit on the right and hit <b>Save</b>.
             </div>
           </div>
 
