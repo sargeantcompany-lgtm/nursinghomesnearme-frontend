@@ -385,6 +385,13 @@ export default function AdminNursingHomes() {
 
   const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
+  function jumpToFacilitiesBoard() {
+    const target = document.getElementById("facility-operations-board");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const headers = new Headers(init?.headers);
     const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
@@ -901,6 +908,10 @@ export default function AdminNursingHomes() {
               + New Facility
             </button>
 
+            <button onClick={jumpToFacilitiesBoard} disabled={disabled} style={secondaryBtn}>
+              View All Facilities
+            </button>
+
             <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
               {importingSheet ? "Importing..." : "Import Spreadsheet"}
               <input
@@ -985,7 +996,7 @@ export default function AdminNursingHomes() {
           {notice ? <Alert color="#166534" bg="#dcfce7" title="OK" text={notice} /> : null}
         </div>
 
-        <div style={{ ...cardStyle, marginTop: 14 }}>
+        <div id="facility-operations-board" style={{ ...cardStyle, marginTop: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <div style={{ fontWeight: 800, color: "#0b3b5b" }}>Facility Operations Board</div>
             <div style={{ color: "#64748b", fontSize: 13 }}>
