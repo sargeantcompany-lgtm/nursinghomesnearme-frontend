@@ -95,6 +95,13 @@ type UpsertForm = {
 
   phone: string;
   website: string;
+  websiteSaysVacancies: string;
+  facilityConfirmedVacancies: string;
+  websiteCheckedAt: string;
+  websiteSourceUrl: string;
+  facilityConfirmedAt: string;
+  facilityConfirmationSource: string;
+  conflictFlag: boolean;
 
   // admin-only
   email: string;
@@ -215,6 +222,13 @@ function emptyForm(): UpsertForm {
 
     phone: "",
     website: "",
+    websiteSaysVacancies: "unknown",
+    facilityConfirmedVacancies: "unknown",
+    websiteCheckedAt: "",
+    websiteSourceUrl: "",
+    facilityConfirmedAt: "",
+    facilityConfirmationSource: "",
+    conflictFlag: false,
 
     email: "",
     internalNotes: "",
@@ -415,6 +429,13 @@ export default function AdminNursingHomes() {
 
         phone: (nh.phone ?? "") as string,
         website: (nh.website ?? "") as string,
+        websiteSaysVacancies: (nh.websiteSaysVacancies ?? "unknown") as string,
+        facilityConfirmedVacancies: (nh.facilityConfirmedVacancies ?? "unknown") as string,
+        websiteCheckedAt: (nh.websiteCheckedAt ?? "") as string,
+        websiteSourceUrl: (nh.websiteSourceUrl ?? "") as string,
+        facilityConfirmedAt: (nh.facilityConfirmedAt ?? "") as string,
+        facilityConfirmationSource: (nh.facilityConfirmationSource ?? "") as string,
+        conflictFlag: !!nh.conflictFlag,
 
         email: (nh.email ?? "") as string,
         internalNotes: (nh.internalNotes ?? "") as string,
@@ -467,6 +488,13 @@ export default function AdminNursingHomes() {
 
         phone: form.phone.trim() || null,
         website: form.website.trim() || null,
+        websiteSaysVacancies: form.websiteSaysVacancies,
+        facilityConfirmedVacancies: form.facilityConfirmedVacancies,
+        websiteCheckedAt: form.websiteCheckedAt.trim() || null,
+        websiteSourceUrl: form.websiteSourceUrl.trim() || null,
+        facilityConfirmedAt: form.facilityConfirmedAt.trim() || null,
+        facilityConfirmationSource: form.facilityConfirmationSource.trim() || null,
+        conflictFlag: form.conflictFlag,
 
         // admin-only
         email: form.email.trim() || null,
@@ -1202,6 +1230,69 @@ export default function AdminNursingHomes() {
               <div />
             </Grid2>
 
+            <SectionTitle text="Vacancies Section" />
+            <Grid2>
+              <SelectInput
+                label="Website says vacancies"
+                value={form.websiteSaysVacancies}
+                onChange={(v) => setForm((p) => ({ ...p, websiteSaysVacancies: v }))}
+                disabled={disabled}
+                options={[
+                  { value: "yes", label: "Yes" },
+                  { value: "no", label: "No" },
+                  { value: "unknown", label: "Unknown" },
+                ]}
+              />
+              <SelectInput
+                label="Facility confirmed vacancies"
+                value={form.facilityConfirmedVacancies}
+                onChange={(v) => setForm((p) => ({ ...p, facilityConfirmedVacancies: v }))}
+                disabled={disabled}
+                options={[
+                  { value: "yes", label: "Yes" },
+                  { value: "no", label: "No" },
+                  { value: "unknown", label: "Unknown" },
+                ]}
+              />
+              <Field
+                label="Website checked at (ISO)"
+                value={form.websiteCheckedAt}
+                onChange={(v) => setForm((p) => ({ ...p, websiteCheckedAt: v }))}
+                disabled={disabled}
+              />
+              <Field
+                label="Facility confirmed at (ISO)"
+                value={form.facilityConfirmedAt}
+                onChange={(v) => setForm((p) => ({ ...p, facilityConfirmedAt: v }))}
+                disabled={disabled}
+              />
+              <Field
+                label="Website source URL"
+                value={form.websiteSourceUrl}
+                onChange={(v) => setForm((p) => ({ ...p, websiteSourceUrl: v }))}
+                disabled={disabled}
+              />
+              <Field
+                label="Facility confirmation source"
+                value={form.facilityConfirmationSource}
+                onChange={(v) => setForm((p) => ({ ...p, facilityConfirmationSource: v }))}
+                disabled={disabled}
+              />
+              <label style={{ display: "block" }}>
+                <div style={labelStyle}>Conflict flag</div>
+                <select
+                  value={form.conflictFlag ? "true" : "false"}
+                  onChange={(e) => setForm((p) => ({ ...p, conflictFlag: e.target.value === "true" }))}
+                  disabled={disabled}
+                  style={inputStyle}
+                >
+                  <option value="false">No conflict</option>
+                  <option value="true">Conflict flagged</option>
+                </select>
+              </label>
+              <div />
+            </Grid2>
+
             <div style={{ marginTop: 12 }}>
               <TextArea
                 label="Gallery Image URLs (one per line)"
@@ -1560,6 +1651,32 @@ function Field(props: {
       ) : (
         <input value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} style={inputStyle} />
       )}
+    </label>
+  );
+}
+
+function SelectInput(props: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <label style={{ display: "block" }}>
+      <div style={labelStyle}>{props.label}</div>
+      <select
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        disabled={props.disabled}
+        style={inputStyle}
+      >
+        {props.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }
