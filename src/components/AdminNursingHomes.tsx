@@ -303,6 +303,7 @@ export default function AdminNursingHomes() {
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [importingSheet, setImportingSheet] = useState(false);
   const [importingVacancyChecks, setImportingVacancyChecks] = useState(false);
+  const [importingPhotoManifest, setImportingPhotoManifest] = useState(false);
   const [sendingWeeklyCheck, setSendingWeeklyCheck] = useState(false);
 
   const [error, setError] = useState("");
@@ -650,6 +651,13 @@ export default function AdminNursingHomes() {
             internalNotes: get("internalNotes", "internal_notes", "Internal Notes"),
             activeVacancies: getNum("activeVacancies", "active_vacancies", "Active Vacancies"),
             verifiedAt: get("verifiedAt", "verified_at", "Verified At"),
+            facilityRowId: get("facilityRowId", "facility_row_id", "Facility Row ID"),
+            primaryPhotoId: get("primaryPhotoId", "primary_photo_id", "Primary Photo ID"),
+            primaryPhotoLocalPath: get("primaryPhotoLocalPath", "primary_photo_local_path", "Primary Photo Local Path"),
+            galleryPhotoIds: parseDelimitedList(get("galleryPhotoIds", "gallery_photo_ids", "Gallery Photo IDs")),
+            galleryPhotoLocalPaths: parseDelimitedList(
+              get("galleryPhotoLocalPaths", "gallery_photo_local_paths", "Gallery Photo Local Paths"),
+            ),
           };
         })
         .filter((x) => x.name && x.suburb && x.state && x.postcode);
@@ -754,6 +762,66 @@ export default function AdminNursingHomes() {
       setError(getErrorMessage(e));
     } finally {
       setImportingVacancyChecks(false);
+    }
+  }
+
+  async function importPhotoManifest(file: File) {
+    setError("");
+    setNotice("");
+    setImportingPhotoManifest(true);
+    try {
+      const XLSX = await import("xlsx");
+      const ab = await file.arrayBuffer();
+      const wb = XLSX.read(ab, { type: "array" });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+
+      const normalized = rows
+        .map((r) => {
+          const get = (...keys: string[]) => {
+            for (const key of keys) {
+              const v = r[key];
+              if (v != null && String(v).trim()) return String(v).trim();
+            }
+            return "";
+          };
+          const getBool = (...keys: string[]) => {
+            const txt = get(...keys).toLowerCase();
+            return txt === "true" || txt === "yes" || txt === "1";
+          };
+
+          return {
+            facilityRowId: get("facilityRowId", "facility_row_id", "Facility Row ID"),
+            facilityName: get("facilityName", "facility_name", "Facility Name"),
+            photoId: get("photoId", "photo_id", "Photo ID"),
+            isPrimary: getBool("isPrimary", "is_primary", "Is Primary"),
+            sourceUrl: get("sourceUrl", "source_url", "Source URL"),
+            localPath: get("localPath", "local_path", "Local Path"),
+            fileName: get("fileName", "file_name", "File Name"),
+            contentType: get("contentType", "content_type", "Content Type"),
+            downloadStatus: get("downloadStatus", "download_status", "Download Status"),
+          };
+        })
+        .filter((x) => x.facilityRowId || x.facilityName);
+
+      if (!normalized.length) {
+        throw new Error("No valid photo manifest rows found. Required: facility_row_id or facility_name.");
+      }
+
+      const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
+        "/api/admin/nursing-homes/import-photo-manifest",
+        {
+          method: "POST",
+          body: JSON.stringify(normalized),
+        },
+      );
+
+      setNotice(`Photo manifest import complete. Updated ${res.updated}, skipped ${res.skipped}.`);
+      await refreshList();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setImportingPhotoManifest(false);
     }
   }
 
@@ -876,7 +944,7 @@ export default function AdminNursingHomes() {
   }, [selectedId]);
 
   const disabled =
-    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingVacancyChecks || sendingWeeklyCheck;
+    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingVacancyChecks || importingPhotoManifest || sendingWeeklyCheck;
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
@@ -937,6 +1005,21 @@ export default function AdminNursingHomes() {
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) importVacancyChecks(f).catch(() => {});
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+
+            <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
+              {importingPhotoManifest ? "Importing..." : "Import Photo Manifest"}
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                style={{ display: "none" }}
+                disabled={disabled || importingPhotoManifest}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) importPhotoManifest(f).catch(() => {});
                   e.currentTarget.value = "";
                 }}
               />
