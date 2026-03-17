@@ -5,8 +5,18 @@ type MatchSummary = {
   id: number;
   nursingHomeId: number;
   nursingHomeName: string;
+  providerName: string;
   suburb: string;
+  state: string;
+  postcode: string;
   phone: string;
+  email: string;
+  website: string;
+  primaryImageUrl: string;
+  oneLineDescription: string;
+  beds?: number;
+  careTypes: string[];
+  specialties: string[];
   status: string;
   facilityResponseStatus: string;
   waitlistStatus: string;
@@ -177,6 +187,25 @@ function titleForStatus(status: string): string {
       return "Needs more info";
     default:
       return "Enquiry sent";
+  }
+}
+
+function locationLabel(match: MatchSummary): string {
+  return [match.suburb, match.state, match.postcode].filter(Boolean).join(", ");
+}
+
+function availabilityBadge(status: string): { label: string; bg: string; color: string } {
+  switch ((status || "").toLowerCase()) {
+    case "vacancy":
+      return { label: "Vacancy available", bg: "#dcfce7", color: "#166534" };
+    case "no_vacancy":
+      return { label: "Currently full", bg: "#fee2e2", color: "#991b1b" };
+    case "waitlist_offered":
+      return { label: "Waitlist open", bg: "#ffedd5", color: "#9a3412" };
+    case "needs_more_info":
+      return { label: "Needs more info", bg: "#dbeafe", color: "#1d4ed8" };
+    default:
+      return { label: "Enquiry sent", bg: "#e2e8f0", color: "#334155" };
   }
 }
 
@@ -725,59 +754,143 @@ export default function ClientWorkflowDashboard() {
                 </button>
               </div>
               {!data.matches.length ? <div style={{ color: "#64748b" }}>No facility matches yet.</div> : null}
-              <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
                 {data.matches.map((m) => (
-                  <div key={m.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 10 }}>
-                    <div style={{ fontWeight: 800, color: "#0f172a" }}>
-                      {m.nursingHomeName} {m.suburb ? `(${m.suburb})` : ""}
-                    </div>
-                    {m.phone ? <div style={{ color: "#475569", fontSize: 13 }}>Phone: {m.phone}</div> : null}
-                    <div style={{ color: "#334155", marginTop: 4 }}>
-                      Status: {titleForStatus(m.facilityResponseStatus || m.status)}
-                    </div>
-                    <div style={{ marginTop: 8 }}>
-                      <a
-                        href={`/options/${m.nursingHomeId}`}
-                        target="_blank"
-                        rel="noreferrer"
+                  <div key={m.id} style={facilityCard}>
+                    <div style={{ position: "relative", height: 206, background: "#dbeafe" }}>
+                      {m.primaryImageUrl ? (
+                        <img
+                          src={m.primaryImageUrl}
+                          alt={m.nursingHomeName}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            background: "linear-gradient(140deg, #0b3b5b 0%, #0f766e 100%)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <img
+                            src="/nursing-homes-near-me-logo.png"
+                            alt="Nursing Homes Near Me"
+                            style={{
+                              width: 76,
+                              height: 76,
+                              objectFit: "contain",
+                              borderRadius: 10,
+                              background: "rgba(255,255,255,0.9)",
+                              padding: 10,
+                            }}
+                          />
+                        </div>
+                      )}
+                      {locationLabel(m) ? (
+                        <div style={facilityLocationPill}>{locationLabel(m)}</div>
+                      ) : null}
+                      <div
                         style={{
-                          color: "#0b3b5b",
-                          fontWeight: 700,
-                          textDecoration: "underline",
+                          ...facilityStatusPill,
+                          background: availabilityBadge(m.facilityResponseStatus || m.status).bg,
+                          color: availabilityBadge(m.facilityResponseStatus || m.status).color,
                         }}
                       >
-                        View facility details
-                      </a>
+                        {availabilityBadge(m.facilityResponseStatus || m.status).label}
+                      </div>
                     </div>
-                    <div style={{ marginTop: 8, display: "flex", gap: 14, flexWrap: "wrap" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <input
-                          type="checkbox"
-                          checked={m.clientSelected}
-                          disabled={savingId === m.id}
-                          onChange={(e) =>
-                            updateMatch(m.id, {
-                              clientSelected: e.target.checked,
-                              tourRequested: e.target.checked ? m.tourRequested : false,
-                            })
-                          }
-                        />
-                        Send enquiry
-                      </label>
-                      <label style={{ display: "flex", alignItems: "center", gap: 6, opacity: m.clientSelected ? 1 : 0.6 }}>
-                        <input
-                          type="checkbox"
-                          checked={m.tourRequested}
-                          disabled={!m.clientSelected || savingId === m.id}
-                          onChange={(e) => updateMatch(m.id, { tourRequested: e.target.checked })}
-                        />
-                        Request tour
-                      </label>
+
+                    <div style={{ padding: 16, display: "grid", gap: 10 }}>
+                      <div style={{ display: "grid", gap: 4 }}>
+                        {m.providerName ? (
+                          <div style={facilityProvider}>{m.providerName}</div>
+                        ) : null}
+                        <div style={facilityTitle}>{m.nursingHomeName}</div>
+                      </div>
+
+                      <p style={facilityDescription}>
+                        {(m.oneLineDescription || "Review this facility and open the full details page for more information.").slice(0, 160)}
+                      </p>
+
+                      <div style={facilityMetaRow}>
+                        {m.beds ? <span>{m.beds} beds</span> : null}
+                        {locationLabel(m) ? <span>{locationLabel(m)}</span> : null}
+                      </div>
+
+                      {[...(m.careTypes || []), ...(m.specialties || [])].filter((tag, index, list) => list.indexOf(tag) === index).slice(0, 5).length ? (
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {[...(m.careTypes || []), ...(m.specialties || [])]
+                            .filter((tag, index, list) => list.indexOf(tag) === index)
+                            .slice(0, 5)
+                            .map((tag) => (
+                              <span key={`${m.id}-${tag}`} style={facilityTag}>
+                                {tag}
+                              </span>
+                            ))}
+                        </div>
+                      ) : null}
+
+                      {(m.phone || m.email || m.website) ? (
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {m.phone ? <a href={`tel:${m.phone}`} style={facilityActionPill}>Call</a> : null}
+                          {m.email ? <a href={`mailto:${m.email}`} style={facilityActionPill}>Email</a> : null}
+                          {m.website ? (
+                            <a href={m.website} target="_blank" rel="noreferrer" style={facilityActionPill}>
+                              Website
+                            </a>
+                          ) : null}
+                        </div>
+                      ) : null}
+
+                      <div>
+                        <a
+                          href={`/options/${m.nursingHomeId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={facilityPreviewLink}
+                        >
+                          View facility details
+                        </a>
+                      </div>
                     </div>
-                    {m.waitlistStatus && m.waitlistStatus !== "not_requested" ? (
-                      <div style={{ color: "#334155" }}>Waitlist: {m.waitlistStatus}</div>
-                    ) : null}
-                    {m.facilityNotes ? <div style={{ color: "#475569" }}>Notes: {m.facilityNotes}</div> : null}
+
+                    <div style={{ padding: "0 16px 16px", display: "grid", gap: 10 }}>
+                      <div style={{ marginTop: 2, color: "#334155", fontSize: 13 }}>
+                        Status: {titleForStatus(m.facilityResponseStatus || m.status)}
+                      </div>
+                      <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <input
+                            type="checkbox"
+                            checked={m.clientSelected}
+                            disabled={savingId === m.id}
+                            onChange={(e) =>
+                              updateMatch(m.id, {
+                                clientSelected: e.target.checked,
+                                tourRequested: e.target.checked ? m.tourRequested : false,
+                              })
+                            }
+                          />
+                          Send enquiry
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: 6, opacity: m.clientSelected ? 1 : 0.6 }}>
+                          <input
+                            type="checkbox"
+                            checked={m.tourRequested}
+                            disabled={!m.clientSelected || savingId === m.id}
+                            onChange={(e) => updateMatch(m.id, { tourRequested: e.target.checked })}
+                          />
+                          Request tour
+                        </label>
+                      </div>
+                      {m.waitlistStatus && m.waitlistStatus !== "not_requested" ? (
+                        <div style={{ color: "#334155", fontSize: 13 }}>Waitlist: {m.waitlistStatus}</div>
+                      ) : null}
+                      {m.facilityNotes ? <div style={{ color: "#475569" }}>Notes: {m.facilityNotes}</div> : null}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -804,6 +917,97 @@ const submitBtn: React.CSSProperties = {
   color: "white",
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const facilityCard: React.CSSProperties = {
+  background: "white",
+  border: "1px solid #dbe3ed",
+  borderRadius: 16,
+  overflow: "hidden",
+  boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const facilityLocationPill: React.CSSProperties = {
+  position: "absolute",
+  left: 12,
+  top: 12,
+  background: "rgba(8,15,28,0.74)",
+  color: "white",
+  borderRadius: 999,
+  padding: "6px 11px",
+  fontSize: 12,
+  fontWeight: 800,
+};
+
+const facilityStatusPill: React.CSSProperties = {
+  position: "absolute",
+  right: 12,
+  top: 12,
+  borderRadius: 999,
+  padding: "5px 10px",
+  fontSize: 11,
+  fontWeight: 800,
+  boxShadow: "0 10px 18px rgba(0,0,0,0.08)",
+};
+
+const facilityProvider: React.CSSProperties = {
+  fontSize: 12,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: "#64748b",
+  fontWeight: 800,
+};
+
+const facilityTitle: React.CSSProperties = {
+  fontWeight: 900,
+  fontSize: 22,
+  lineHeight: 1.18,
+  color: "#0b3b5b",
+};
+
+const facilityDescription: React.CSSProperties = {
+  margin: 0,
+  color: "#475569",
+  fontSize: 14,
+  lineHeight: 1.6,
+};
+
+const facilityMetaRow: React.CSSProperties = {
+  display: "flex",
+  gap: 16,
+  flexWrap: "wrap",
+  color: "#526072",
+  fontSize: 13,
+  fontWeight: 700,
+};
+
+const facilityTag: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 800,
+  color: "#0f766e",
+  border: "1px solid #bde7e2",
+  borderRadius: 999,
+  padding: "5px 9px",
+  background: "#eef9f7",
+};
+
+const facilityActionPill: React.CSSProperties = {
+  padding: "8px 11px",
+  borderRadius: 999,
+  border: "1px solid #d7e0ea",
+  background: "#f8fbfd",
+  color: "#0b3b5b",
+  textDecoration: "none",
+  fontWeight: 800,
+  fontSize: 12,
+};
+
+const facilityPreviewLink: React.CSSProperties = {
+  color: "#0b3b5b",
+  fontWeight: 800,
+  textDecoration: "underline",
 };
 
 const input: React.CSSProperties = {
