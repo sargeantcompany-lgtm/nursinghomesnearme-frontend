@@ -93,6 +93,16 @@ type RoomOptionRow = {
   availabilityNote: string;
 };
 
+function emptyRoomOptionRow(): RoomOptionRow {
+  return { roomType: "", bathroomType: "", radMin: "", radMax: "", availabilityNote: "" };
+}
+
+function ensureMinimumRoomRows(rows: RoomOptionRow[], minimum = 4): RoomOptionRow[] {
+  const next = [...rows];
+  while (next.length < minimum) next.push(emptyRoomOptionRow());
+  return next;
+}
+
 type UpsertForm = {
   // core
   name: string;
@@ -149,16 +159,15 @@ function listToLines(list?: string[] | null): string {
 
 function toRoomRows(list?: RoomOption[] | null): RoomOptionRow[] {
   const src = list ?? [];
-  if (!src.length)
-    return [{ roomType: "", bathroomType: "", radMin: "", radMax: "", availabilityNote: "" }];
+  if (!src.length) return ensureMinimumRoomRows([]);
 
-  return src.map((r) => ({
+  return ensureMinimumRoomRows(src.map((r) => ({
     roomType: (r.roomType ?? "") as string,
     bathroomType: (r.bathroomType ?? "") as string,
     radMin: r.radMin == null ? "" : String(r.radMin),
     radMax: r.radMax == null ? "" : String(r.radMax),
     availabilityNote: (r.availabilityNote ?? "") as string,
-  }));
+  })));
 }
 
 function parseOptionalNumber(raw: string): number | undefined {
@@ -256,7 +265,7 @@ function emptyForm(): UpsertForm {
     otherTagsText: "",
     languagesText: "",
 
-    roomOptions: [{ roomType: "", bathroomType: "", radMin: "", radMax: "", availabilityNote: "" }],
+    roomOptions: ensureMinimumRoomRows([]),
   };
 }
 
@@ -323,6 +332,8 @@ export default function AdminNursingHomes() {
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
+  const [scanning, setScanning] = useState(false);
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
   const [currentMeta, setCurrentMeta] = useState<{
     websiteSaysVacancies?: string | null;
     facilityConfirmedVacancies?: string | null;
@@ -428,6 +439,64 @@ export default function AdminNursingHomes() {
     const ct = res.headers.get("content-type") || "";
     if (!ct.includes("application/json")) return {} as T;
     return (await res.json()) as T;
+  }
+
+  async function handleScan() {
+    const url = form.website.trim();
+    if (!url) return;
+    setScanning(true);
+    setScanMessage(null);
+    try {
+      const data = await apiFetch<Record<string, unknown>>("/api/admin/scan-facility", {
+        method: "POST",
+        body: JSON.stringify({ url }),
+      });
+      setForm((p) => ({
+        ...p,
+        name:               String(data.name || p.name),
+        oneLineDescription: String(data.oneLineDescription || p.oneLineDescription),
+        description:        String(data.description || p.description),
+        addressLine1:       String(data.addressLine1 || p.addressLine1),
+        suburb:             String(data.suburb || p.suburb),
+        state:              String(data.state || p.state),
+        postcode:           String(data.postcode || p.postcode),
+        phone:              String(data.phone || p.phone),
+        email:              String(data.email || p.email),
+        featureTagsText:    [
+          ...linesToList(p.featureTagsText),
+          ...((data.careTypes as string[]) || []),
+          ...((data.specialties as string[]) || []),
+          ...((data.featureHighlights as string[]) || []),
+          ...((data.alliedHealth as string[]) || []),
+        ].filter((v, i, a) => v && a.indexOf(v) === i).join("\n"),
+        otherTagsText:      [
+          ...linesToList(p.otherTagsText),
+          ...((data.amenities as string[]) || []),
+          ...((data.roomTypes as string[]) || []),
+        ].filter((v, i, a) => v && a.indexOf(v) === i).join("\n"),
+        languagesText:      [
+          ...linesToList(p.languagesText),
+          ...((data.languages as string[]) || []),
+        ].filter((v, i, a) => v && a.indexOf(v) === i).join("\n"),
+        internalNotes: [
+          p.internalNotes,
+          data.visitingHours ? `Visiting hours: ${data.visitingHours}` : "",
+          data.admissionsProcess ? `Admissions: ${data.admissionsProcess}` : "",
+          data.waitingListInfo ? `Waiting list: ${data.waitingListInfo}` : "",
+          data.transportNotes ? `Transport: ${data.transportNotes}` : "",
+          data.bedsCount ? `Beds: ${data.bedsCount}` : "",
+          data.starRating ? `Star rating: ${data.starRating}` : "",
+          (data.nearbyHospitals as string[] | undefined)?.length
+            ? `Nearby hospitals: ${(data.nearbyHospitals as string[]).join(", ")}`
+            : "",
+        ].filter(Boolean).join("\n").trim(),
+      }));
+      setScanMessage("Scan complete — review fields below before saving.");
+    } catch (e: unknown) {
+      setScanMessage(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setScanning(false);
+    }
   }
 
   async function refreshList() {
@@ -1527,7 +1596,7 @@ export default function AdminNursingHomes() {
             </Grid2>
 
             {form.primaryImageUrl ? (
-              <div style={{ marginTop: 12 }}>
+              <div style={{ marginTop: 12, maxWidth: 320 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
                   <div style={labelStyle}>Primary Photo Preview</div>
                   <button
@@ -1544,9 +1613,12 @@ export default function AdminNursingHomes() {
                   alt="Primary"
                   style={{
                     width: "100%",
-                    maxWidth: 520,
+                    maxWidth: 320,
+                    maxHeight: 220,
                     borderRadius: 12,
                     border: "1px solid #e5e7eb",
+                    objectFit: "cover",
+                    display: "block",
                   }}
                 />
               </div>
@@ -1637,7 +1709,38 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, website: v }))}
                 disabled={disabled}
               />
-              <div />
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-end" }}>
+                {form.website.trim() && (
+                  <button
+                    type="button"
+                    onClick={handleScan}
+                    disabled={scanning || disabled}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: scanning ? "#94a3b8" : "#0f766e",
+                      color: "white",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: scanning ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {scanning ? "Scanning…" : "AI Scan Website"}
+                  </button>
+                )}
+                {scanMessage && (
+                  <p style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: scanMessage.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
+                    fontWeight: 600,
+                  }}>
+                    {scanMessage}
+                  </p>
+                )}
+              </div>
             </Grid2>
 
             <SectionTitle text="Vacancies Section" />
@@ -1908,7 +2011,7 @@ export default function AdminNursingHomes() {
                       <td style={td}>
                         <button
                           type="button"
-                          disabled={disabled || form.roomOptions.length <= 1}
+                          disabled={disabled || form.roomOptions.length <= 4}
                           onClick={() => {
                             setForm((p) => ({
                               ...p,
@@ -1935,7 +2038,7 @@ export default function AdminNursingHomes() {
                     ...p,
                     roomOptions: [
                       ...p.roomOptions,
-                      { roomType: "", bathroomType: "", radMin: "", radMax: "", availabilityNote: "" },
+                      emptyRoomOptionRow(),
                     ],
                   }))
                 }
