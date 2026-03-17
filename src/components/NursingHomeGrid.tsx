@@ -3,14 +3,18 @@ import { useMemo, useState } from "react";
 export type NursingHomeListItem = {
   id: number;
   name: string | null;
+  providerName?: string | null;
   suburb: string | null;
   state: string | null;
   postcode: string | null;
   website: string | null;
-  tags: string | null;
+  tags: string[] | string | null;
   primaryImageUrl?: string | null;
   oneLineDescription?: string | null;
   availabilityStatus?: "available" | "waitlist" | "full" | null;
+  careTypes?: string[] | null;
+  specialties?: string[] | null;
+  beds?: number | null;
 };
 
 const AVAILABILITY_BADGE: Record<string, { label: string; bg: string; color: string }> = {
@@ -26,6 +30,14 @@ function parseTags(tags: string | null | undefined): string[] {
     .map((t) => t.trim())
     .filter(Boolean)
     .slice(0, 5);
+}
+
+function normalizeList(list?: string[] | string | null): string[] {
+  if (!list) return [];
+  if (Array.isArray(list)) {
+    return list.map((item) => (item ?? "").trim()).filter(Boolean).slice(0, 6);
+  }
+  return parseTags(list).slice(0, 6);
 }
 
 function navTo(path: string) {
@@ -53,7 +65,7 @@ export default function NursingHomeGrid(props: {
       const su = (x.suburb ?? "").toLowerCase();
       const st = (x.state ?? "").toLowerCase();
       const pc = (x.postcode ?? "").toLowerCase();
-      const tags = (x.tags ?? "").toLowerCase();
+      const tags = normalizeList(x.tags).join(" ").toLowerCase();
       const desc = (x.oneLineDescription ?? "").toLowerCase();
 
       const matchSearch =
@@ -125,9 +137,13 @@ export default function NursingHomeGrid(props: {
           </div>
         ) : null}
 
-        <div className="nh-grid" style={{ marginTop: 14, display: "grid", gap: 16 }}>
+        <div className="nh-grid" style={{ marginTop: 18, display: "grid", gap: 18 }}>
           {filtered.map((nh) => {
-            const tagList = parseTags(nh.tags);
+            const tagList = [
+              ...normalizeList(nh.careTypes),
+              ...normalizeList(nh.specialties),
+              ...normalizeList(nh.tags),
+            ].filter((tag, index, all) => all.indexOf(tag) === index).slice(0, 5);
             const titleText = (nh.name ?? "Unnamed facility").trim();
             const locationText = `${(nh.suburb ?? "").trim()}${nh.state ? `, ${nh.state}` : ""}${nh.postcode ? ` ${nh.postcode}` : ""}`.trim();
 
@@ -139,12 +155,12 @@ export default function NursingHomeGrid(props: {
                   borderRadius: 16,
                   border: "1px solid #dbe3ed",
                   overflow: "hidden",
-                  boxShadow: "0 6px 20px rgba(15, 23, 42, 0.06)",
+                  boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
                   display: "flex",
                   flexDirection: "column",
                 }}
               >
-                <div style={{ position: "relative", height: 190, background: "#dbeafe" }}>
+                <div style={{ position: "relative", height: 214, background: "#dbeafe" }}>
                   {nh.primaryImageUrl ? (
                     <img
                       src={nh.primaryImageUrl}
@@ -156,7 +172,7 @@ export default function NursingHomeGrid(props: {
                       style={{
                         width: "100%",
                         height: "100%",
-                        background: "linear-gradient(135deg, #0b3b5b 0%, #2aa3df 100%)",
+                        background: "linear-gradient(140deg, #0b3b5b 0%, #0f766e 100%)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -176,10 +192,10 @@ export default function NursingHomeGrid(props: {
                         position: "absolute",
                         left: 12,
                         top: 12,
-                        background: "rgba(11,59,91,0.9)",
+                        background: "rgba(8,15,28,0.74)",
                         color: "white",
                         borderRadius: 999,
-                        padding: "6px 10px",
+                        padding: "6px 11px",
                         fontSize: 12,
                         fontWeight: 800,
                       }}
@@ -201,6 +217,7 @@ export default function NursingHomeGrid(props: {
                         fontSize: 11,
                         fontWeight: 800,
                         letterSpacing: "0.03em",
+                        boxShadow: "0 10px 18px rgba(0,0,0,0.08)",
                       }}
                     >
                       {AVAILABILITY_BADGE[nh.availabilityStatus].label}
@@ -208,26 +225,38 @@ export default function NursingHomeGrid(props: {
                   ) : null}
                 </div>
 
-                <div style={{ padding: 14, flex: "1 1 auto" }}>
-                  <h3 style={{ margin: 0, fontWeight: 900, fontSize: 20, lineHeight: 1.2, color: "#0b3b5b" }}>{titleText}</h3>
+                <div style={{ padding: 16, flex: "1 1 auto", display: "grid", gap: 10 }}>
+                  <div style={{ display: "grid", gap: 4 }}>
+                    {nh.providerName ? (
+                      <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b", fontWeight: 800 }}>
+                        {nh.providerName}
+                      </div>
+                    ) : null}
+                    <h3 style={{ margin: 0, fontWeight: 900, fontSize: 22, lineHeight: 1.18, color: "#0b3b5b" }}>{titleText}</h3>
+                  </div>
 
-                  <p style={{ margin: "8px 0 0", color: "#475569", fontSize: 14, lineHeight: 1.45 }}>
+                  <p style={{ margin: 0, color: "#475569", fontSize: 14, lineHeight: 1.6 }}>
                     {(nh.oneLineDescription || "Browse full facility details, services, and availability information.").slice(0, 140)}
                   </p>
 
+                  <div style={{ display: "flex", gap: 16, flexWrap: "wrap", color: "#526072", fontSize: 13, fontWeight: 700 }}>
+                    {nh.beds ? <span>{nh.beds} beds</span> : null}
+                    {locationText ? <span>{locationText}</span> : null}
+                  </div>
+
                   {tagList.length ? (
-                    <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                       {tagList.map((t) => (
                         <span
                           key={t}
                           style={{
                             fontSize: 12,
                             fontWeight: 800,
-                            color: "#0D9488",
-                            border: "1px solid #0D9488",
+                            color: "#0f766e",
+                            border: "1px solid #bde7e2",
                             borderRadius: 999,
                             padding: "5px 9px",
-                            background: "#ffffff",
+                            background: "#eef9f7",
                           }}
                         >
                           {t}
@@ -237,12 +266,12 @@ export default function NursingHomeGrid(props: {
                   ) : null}
                 </div>
 
-                <div style={{ padding: 14, display: "flex", gap: 10, alignItems: "center" }}>
+                <div style={{ padding: 16, display: "flex", gap: 10, alignItems: "center" }}>
                   <button
                     onClick={() => navTo(`/options/${nh.id}`)}
                     style={{
-                      padding: "10px 12px",
-                      borderRadius: 10,
+                      padding: "12px 14px",
+                      borderRadius: 999,
                       border: "1px solid #0b3b5b",
                       background: "#0b3b5b",
                       color: "white",
@@ -260,8 +289,8 @@ export default function NursingHomeGrid(props: {
                       target="_blank"
                       rel="noreferrer"
                       style={{
-                        padding: "10px 12px",
-                        borderRadius: 10,
+                        padding: "12px 14px",
+                        borderRadius: 999,
                         border: "1px solid #cbd5e1",
                         background: "white",
                         color: "#0b3b5b",
