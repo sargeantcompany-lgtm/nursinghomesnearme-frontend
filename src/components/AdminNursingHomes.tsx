@@ -1863,6 +1863,11 @@ export default function AdminNursingHomes() {
               </button>
             </div>
 
+            <SectionTitle text="Live Public Card Preview" />
+            <div style={{ marginTop: 10 }}>
+              <PreviewFacilityCard form={form} currentId={currentId} />
+            </div>
+
             <SectionTitle text="Admin-only (not shown to families)" />
             <Grid2>
               <Field
@@ -1982,6 +1987,213 @@ function StatusChip({ tone, text }: { tone: "green" | "red" | "blue"; text: stri
     >
       {text}
     </span>
+  );
+}
+
+function PreviewFacilityCard({ form, currentId }: { form: UpsertForm; currentId: number | null }) {
+  const previewTags = [
+    ...linesToList(form.featureTagsText),
+    ...linesToList(form.otherTagsText),
+    ...linesToList(form.languagesText),
+  ]
+    .filter((tag, index, list) => list.indexOf(tag) === index)
+    .slice(0, 6);
+
+  const previewRooms = form.roomOptions
+    .filter((room) => room.roomType.trim() || room.radMin.trim() || room.radMax.trim() || room.availabilityNote.trim())
+    .slice(0, 3);
+
+  const location = [form.suburb.trim(), form.state.trim(), form.postcode.trim()].filter(Boolean).join(", ");
+  const vacancyLabel =
+    form.websiteSaysVacancies === "yes"
+      ? "Vacancy available"
+      : form.websiteSaysVacancies === "no"
+        ? "Currently full"
+        : "Availability updating";
+  const vacancyTone =
+    form.websiteSaysVacancies === "yes"
+      ? { background: "#dcfce7", color: "#166534" }
+      : form.websiteSaysVacancies === "no"
+        ? { background: "#fee2e2", color: "#991b1b" }
+        : { background: "#dbeafe", color: "#1d4ed8" };
+
+  return (
+    <div
+      style={{
+        border: "1px solid #dbe3ed",
+        borderRadius: 18,
+        overflow: "hidden",
+        background: "white",
+        boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
+      }}
+    >
+      <div style={{ position: "relative", height: 240, background: "#dbeafe" }}>
+        {form.primaryImageUrl.trim() ? (
+          <img
+            src={form.primaryImageUrl.trim()}
+            alt={form.name.trim() || "Facility preview"}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              background: "linear-gradient(140deg, #0b3b5b 0%, #0f766e 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <img
+              src="/nursing-homes-near-me-logo.png"
+              alt="Nursing Homes Near Me"
+              style={{
+                width: 86,
+                height: 86,
+                objectFit: "contain",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.92)",
+                padding: 10,
+              }}
+            />
+          </div>
+        )}
+
+        {location ? (
+          <div
+            style={{
+              position: "absolute",
+              left: 14,
+              top: 14,
+              background: "rgba(8,15,28,0.74)",
+              color: "white",
+              borderRadius: 999,
+              padding: "6px 12px",
+              fontSize: 12,
+              fontWeight: 800,
+            }}
+          >
+            {location}
+          </div>
+        ) : null}
+
+        <div
+          style={{
+            position: "absolute",
+            right: 14,
+            top: 14,
+            borderRadius: 999,
+            padding: "6px 12px",
+            fontSize: 12,
+            fontWeight: 800,
+            ...vacancyTone,
+          }}
+        >
+          {vacancyLabel}
+        </div>
+      </div>
+
+      <div style={{ padding: 18, display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gap: 4 }}>
+          {form.status ? (
+            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b", fontWeight: 800 }}>
+              {form.status}
+            </div>
+          ) : null}
+          <h3 style={{ margin: 0, fontWeight: 900, fontSize: 26, lineHeight: 1.18, color: "#0b3b5b" }}>
+            {form.name.trim() || "Facility name preview"}
+          </h3>
+          {form.website.trim() ? (
+            <div style={{ fontSize: 13, color: "#475569", wordBreak: "break-word" }}>{form.website.trim()}</div>
+          ) : null}
+        </div>
+
+        <p style={{ margin: 0, color: "#475569", fontSize: 14, lineHeight: 1.7 }}>
+          {(form.oneLineDescription.trim() ||
+            "This is the live public card preview. As you fill out the nursing home details, this updates automatically.").slice(0, 220)}
+        </p>
+
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", color: "#526072", fontSize: 13, fontWeight: 700 }}>
+          {form.activeVacancies.trim() ? <span>{form.activeVacancies.trim()} vacancies</span> : null}
+          {location ? <span>{location}</span> : null}
+        </div>
+
+        {previewTags.length ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {previewTags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#0f766e",
+                  border: "1px solid #bde7e2",
+                  borderRadius: 999,
+                  padding: "5px 9px",
+                  background: "#eef9f7",
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {(form.phone.trim() || form.email.trim() || form.website.trim() || currentId != null) ? (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {form.phone.trim() ? (
+              <a href={`tel:${form.phone.trim()}`} style={previewActionPill}>
+                Call
+              </a>
+            ) : null}
+            {form.email.trim() ? (
+              <a href={`mailto:${form.email.trim()}`} style={previewActionPill}>
+                Email
+              </a>
+            ) : null}
+            {form.website.trim() ? (
+              <a href={form.website.trim()} target="_blank" rel="noreferrer" style={previewActionPill}>
+                Website
+              </a>
+            ) : null}
+            {currentId != null ? (
+              <a href={facilityPreviewPath(currentId)} target="_blank" rel="noreferrer" style={previewActionPillStrong}>
+                Open full preview
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+
+        {previewRooms.length ? (
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 14,
+              background: "#f8fafc",
+              padding: 14,
+              display: "grid",
+              gap: 10,
+            }}
+          >
+            <div style={{ fontWeight: 800, color: "#0b3b5b" }}>Room snapshot</div>
+            {previewRooms.map((room, index) => {
+              const price = [room.radMin.trim(), room.radMax.trim()].filter(Boolean).join(" - ");
+              return (
+                <div key={`${room.roomType}-${index}`} style={{ fontSize: 13, color: "#334155" }}>
+                  <div style={{ fontWeight: 700 }}>{room.roomType.trim() || `Room option ${index + 1}`}</div>
+                  <div>
+                    {[room.bathroomType.trim(), price ? `RAD ${price}` : "", room.availabilityNote.trim()]
+                      .filter(Boolean)
+                      .join(" · ") || "Room details to be added"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -2145,6 +2357,24 @@ const secondaryBtn: CSSProperties = {
   color: "#0b3b5b",
   cursor: "pointer",
   fontWeight: 700,
+};
+
+const previewActionPill: CSSProperties = {
+  padding: "8px 11px",
+  borderRadius: 999,
+  border: "1px solid #d7e0ea",
+  background: "#f8fbfd",
+  color: "#0b3b5b",
+  textDecoration: "none",
+  fontWeight: 800,
+  fontSize: 12,
+};
+
+const previewActionPillStrong: CSSProperties = {
+  ...previewActionPill,
+  background: "#0b3b5b",
+  border: "1px solid #0b3b5b",
+  color: "white",
 };
 
 const dangerBtn: CSSProperties = {
