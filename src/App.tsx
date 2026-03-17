@@ -593,6 +593,18 @@ function LoginPage() {
         robots="noindex,follow"
       />
       <div style={{ maxWidth: 520, margin: "0 auto", background: "white", border: "1px solid #e5e7eb", borderRadius: 14, padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+          <img
+            src="/nursing-homes-near-me-logo.png"
+            alt="Nursing Homes Near Me"
+            style={{
+              width: "100%",
+              maxWidth: 260,
+              height: "auto",
+              display: "block",
+            }}
+          />
+        </div>
         <h1 style={{ marginTop: 0, color: "#0b3b5b" }}>Client Login</h1>
         <p style={{ color: "#475569", marginTop: 0, fontSize: 14 }}>
           Sign in to view your nursing home matches and submission details.
