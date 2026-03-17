@@ -1046,12 +1046,12 @@ export default function AdminNursingHomes() {
             </label>
 
             <a
-              href="/facility_profile_import_template.csv"
+              href="/facility_combined_import_template.csv"
               target="_blank"
               rel="noreferrer"
               style={{ ...secondaryBtn, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
             >
-              Download CSV Template
+              Download Combined Template
             </a>
 
             <a
