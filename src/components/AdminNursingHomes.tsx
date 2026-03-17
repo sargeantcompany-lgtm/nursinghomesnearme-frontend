@@ -290,6 +290,10 @@ function formatDateTime(value?: string | null): string {
   });
 }
 
+function facilityPreviewPath(id?: number | null): string {
+  return id == null ? "/options" : `/options/${id}`;
+}
+
 export default function AdminNursingHomes() {
   const [token, setToken] = useState<string>(() => {
     const saved = localStorage.getItem("nhnm_admin_token");
@@ -1225,6 +1229,22 @@ export default function AdminNursingHomes() {
                           {nh.oneLineDescription}
                         </div>
                       ) : null}
+                      <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <a
+                          href={facilityPreviewPath(nh.id)}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            ...secondaryBtn,
+                            padding: "6px 10px",
+                            fontSize: 12,
+                            textDecoration: "none",
+                          }}
+                        >
+                          Preview full card
+                        </a>
+                      </div>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                         <StatusChip
                           tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
@@ -1352,6 +1372,22 @@ export default function AdminNursingHomes() {
               </div>
               {loadingOne ? <span style={{ color: "#64748b" }}>Loading…</span> : null}
             </div>
+
+            {currentId != null ? (
+              <div style={{ marginTop: 10, marginBottom: 2, display: "flex", justifyContent: "flex-end" }}>
+                <a
+                  href={facilityPreviewPath(currentId)}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    ...secondaryBtn,
+                    textDecoration: "none",
+                  }}
+                >
+                  Preview Full Card
+                </a>
+              </div>
+            ) : null}
 
             <SectionTitle text="Option List Fields" />
             <Grid2>
