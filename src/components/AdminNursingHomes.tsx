@@ -7,7 +7,11 @@ import AdminTopNav from "./AdminTopNav";
 type NursingHomeListItem = {
   id: number;
   name: string;
+  facilityRowId?: string | null;
+  providerName?: string | null;
   oneLineDescription?: string | null;
+  phone?: string | null;
+  website?: string | null;
   suburb?: string | null;
   state?: string | null;
   postcode?: string | null;
@@ -1211,15 +1215,29 @@ export default function AdminNursingHomes() {
                       <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
                         {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
                       </div>
+                      {nh.providerName ? (
+                        <div style={{ marginTop: 6, fontSize: 12, color: "#334155" }}>
+                          <strong>Provider:</strong> {nh.providerName}
+                        </div>
+                      ) : null}
+                      {nh.oneLineDescription ? (
+                        <div style={{ marginTop: 6, fontSize: 12, color: "#475569" }}>
+                          {nh.oneLineDescription}
+                        </div>
+                      ) : null}
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
                         <StatusChip
                           tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
                           text={nh.canReceiveWeeklyCheck ? "Email ready" : "No email"}
                         />
-                        <StatusChip tone="blue" text={`Website: ${nh.websiteSaysVacancies ?? "unknown"}`} />
-                        <StatusChip tone="blue" text={`Facility: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
+                        <StatusChip tone="blue" text={`Website scan: ${nh.websiteSaysVacancies ?? "unknown"}`} />
+                        <StatusChip tone="blue" text={`Facility reply: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
                       </div>
                       <div style={{ marginTop: 10, fontSize: 12, color: "#334155" }}>
+                        <div><strong>Website:</strong> {nh.website || "Missing"}</div>
+                        <div><strong>Email:</strong> {nh.email || "Missing"}</div>
+                        <div><strong>Phone:</strong> {nh.phone || "Missing"}</div>
+                        <div><strong>Facility row:</strong> {nh.facilityRowId || "Not linked"}</div>
                         <div><strong>Weekly check:</strong> {outreachStatus}</div>
                         <div><strong>Last sent:</strong> {formatDateTime(nh.lastOutreachSentAt)}</div>
                         <div><strong>Last reply:</strong> {formatDateTime(nh.lastOutreachReplyAt)}</div>
