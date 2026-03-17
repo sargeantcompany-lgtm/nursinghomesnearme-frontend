@@ -334,6 +334,9 @@ export default function AdminNursingHomes() {
   const [form, setForm] = useState<UpsertForm>(emptyForm());
   const [scanning, setScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [scanningVacancies, setScanningVacancies] = useState(false);
+  const [vacancyScanProgress, setVacancyScanProgress] = useState<{ done: number; total: number } | null>(null);
+  const [vacancyScanResults, setVacancyScanResults] = useState<Array<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>>([]);
   const [currentMeta, setCurrentMeta] = useState<{
     websiteSaysVacancies?: string | null;
     facilityConfirmedVacancies?: string | null;
@@ -496,6 +499,58 @@ export default function AdminNursingHomes() {
       setScanMessage(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setScanning(false);
+    }
+  }
+
+  async function handleScanAllVacancies() {
+    const withWebsite = list.filter((nh) => nh.website?.trim());
+    if (!withWebsite.length) {
+      setNotice("No facilities with a website URL found.");
+      return;
+    }
+    setScanningVacancies(true);
+    setVacancyScanProgress({ done: 0, total: withWebsite.length });
+    setVacancyScanResults([]);
+    const found: typeof vacancyScanResults = [];
+    for (let i = 0; i < withWebsite.length; i++) {
+      const nh = withWebsite[i];
+      try {
+        const result = await apiFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
+          "/api/admin/scan-vacancy",
+          { method: "POST", body: JSON.stringify({ facilityId: nh.id }) },
+        );
+        setList((prev) =>
+          prev.map((f) =>
+            f.id === nh.id
+              ? { ...f, websiteSaysVacancies: result.websiteSaysVacancies, websiteCheckedAt: new Date().toISOString() }
+              : f,
+          ),
+        );
+        if (result.websiteSaysVacancies === "yes") {
+          found.push(result);
+          setVacancyScanResults([...found]);
+        }
+      } catch {
+        // skip failed facilities silently
+      }
+      setVacancyScanProgress({ done: i + 1, total: withWebsite.length });
+    }
+    setScanningVacancies(false);
+    setNotice(`Vacancy scan complete. ${found.length} facilit${found.length === 1 ? "y" : "ies"} showing vacancies on their website.`);
+  }
+
+  async function patchVacancyConfirmation(facilityId: number, confirmed: "yes" | "no") {
+    await apiFetch(`/api/admin/nursing-homes/${facilityId}/vacancy`, {
+      method: "PATCH",
+      body: JSON.stringify({ facilityConfirmedVacancies: confirmed, facilityConfirmedAt: new Date().toISOString() }),
+    });
+    setList((prev) =>
+      prev.map((f) =>
+        f.id === facilityId ? { ...f, facilityConfirmedVacancies: confirmed, facilityConfirmedAt: new Date().toISOString() } : f,
+      ),
+    );
+    if (confirmed === "yes") {
+      setVacancyScanResults((prev) => prev.filter((r) => r.facilityId !== facilityId));
     }
   }
 
@@ -1153,6 +1208,22 @@ export default function AdminNursingHomes() {
                   : "Send Weekly Check to Selected"}
             </button>
 
+            <button
+              onClick={() => handleScanAllVacancies()}
+              disabled={disabled || scanningVacancies}
+              style={{
+                ...secondaryBtn,
+                background: scanningVacancies ? "#94a3b8" : "#0f766e",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+              }}
+            >
+              {scanningVacancies
+                ? `Scanning… ${vacancyScanProgress ? `${vacancyScanProgress.done}/${vacancyScanProgress.total}` : ""}`
+                : "Scan All Vacancies (AI)"}
+            </button>
+
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>
               API: {API_BASE}
             </div>
@@ -1184,6 +1255,139 @@ export default function AdminNursingHomes() {
           {error ? <Alert color="#991b1b" bg="#fee2e2" title="Error" text={error} /> : null}
           {notice ? <Alert color="#166534" bg="#dcfce7" title="OK" text={notice} /> : null}
         </div>
+
+        {/* Vacancy Queue — AI scan results awaiting facility confirmation */}
+        {(() => {
+          const queueItems = list.filter(
+            (nh) => nh.websiteSaysVacancies === "yes" && nh.facilityConfirmedVacancies !== "yes",
+          );
+          if (!queueItems.length && !vacancyScanResults.length) return null;
+          return (
+            <div
+              style={{
+                marginBottom: 24,
+                background: "#f0fdf4",
+                border: "1px solid #86efac",
+                borderRadius: 14,
+                padding: 18,
+              }}
+            >
+              <div style={{ fontWeight: 900, fontSize: 18, color: "#14532d", marginBottom: 4 }}>
+                Vacancies Found — Confirm with Facility
+              </div>
+              <div style={{ color: "#166534", fontSize: 13, marginBottom: 14 }}>
+                These facilities show vacancies on their website but haven't been confirmed by the facility yet. Call or email each one to confirm, then click "Confirmed".
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {queueItems.map((nh) => {
+                  const scanResult = vacancyScanResults.find((r) => r.facilityId === nh.id);
+                  return (
+                    <div
+                      key={nh.id}
+                      style={{
+                        background: "white",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: 10,
+                        padding: "12px 16px",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ fontWeight: 700, color: "#0b3b5b", fontSize: 15 }}>{nh.name}</div>
+                        <div style={{ color: "#475569", fontSize: 13 }}>
+                          {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
+                        </div>
+                        {scanResult?.vacancySummary && (
+                          <div style={{ marginTop: 4, color: "#166534", fontSize: 13, fontStyle: "italic" }}>
+                            "{scanResult.vacancySummary}"
+                          </div>
+                        )}
+                        {nh.websiteCheckedAt && (
+                          <div style={{ marginTop: 2, color: "#94a3b8", fontSize: 12 }}>
+                            Scanned: {new Date(nh.websiteCheckedAt).toLocaleString("en-AU")}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                        {nh.website && (
+                          <a
+                            href={nh.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              border: "1px solid #cbd5e1",
+                              background: "#f8fafc",
+                              color: "#0b3b5b",
+                              fontWeight: 600,
+                              fontSize: 13,
+                              textDecoration: "none",
+                            }}
+                          >
+                            View Website
+                          </a>
+                        )}
+                        {nh.phone && (
+                          <a
+                            href={`tel:${nh.phone}`}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              border: "1px solid #cbd5e1",
+                              background: "#f8fafc",
+                              color: "#0b3b5b",
+                              fontWeight: 600,
+                              fontSize: 13,
+                              textDecoration: "none",
+                            }}
+                          >
+                            {nh.phone}
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => patchVacancyConfirmation(nh.id, "yes").catch((e) => setError(getErrorMessage(e)))}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: 8,
+                            border: "none",
+                            background: "#16a34a",
+                            color: "white",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Confirmed
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => patchVacancyConfirmation(nh.id, "no").catch((e) => setError(getErrorMessage(e)))}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: 8,
+                            border: "1px solid #fca5a5",
+                            background: "white",
+                            color: "#991b1b",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Not available
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {showFacilitiesBoard ? (
           <div

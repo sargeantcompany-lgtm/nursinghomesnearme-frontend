@@ -606,6 +606,18 @@ app.get("/api/my-options/:token", async (req, res) => {
   });
 });
 
+app.get("/api/nursing-homes/suburb/:suburb", async (req, res) => {
+  const suburb = String(req.params.suburb || "").trim();
+  const result = await query(
+    `SELECT * FROM nursing_homes
+     WHERE UPPER(COALESCE(status, 'ACTIVE')) = 'ACTIVE'
+       AND UPPER(suburb) = UPPER($1)
+     ORDER BY name ASC`,
+    [suburb],
+  );
+  return res.json(result.rows.map((row) => publicHomeListItem(row)));
+});
+
 app.get("/api/nursing-homes", async (req, res) => {
   const suburbQuery = String(req.query.suburb || "").trim();
   const homesResult = await query(
@@ -965,6 +977,8 @@ app.get("/api/admin/nursing-homes", adminAuth, async (_req, res) => {
     result.rows.map((row) => ({
       id: Number(row.id),
       name: row.name,
+      facilityRowId: row.facility_row_id,
+      providerName: row.provider_name,
       oneLineDescription: row.one_line_description,
       suburb: row.suburb,
       state: row.state,
@@ -973,6 +987,17 @@ app.get("/api/admin/nursing-homes", adminAuth, async (_req, res) => {
       longitude: row.longitude,
       status: row.status,
       primaryImageUrl: row.primary_image_url,
+      phone: row.phone,
+      email: row.email,
+      website: row.website,
+      websiteSaysVacancies: row.website_says_vacancies,
+      facilityConfirmedVacancies: row.facility_confirmed_vacancies,
+      websiteCheckedAt: row.website_checked_at,
+      facilityConfirmedAt: row.facility_confirmed_at,
+      conflictFlag: row.conflict_flag,
+      lastOutreachSentAt: row.last_outreach_sent_at,
+      lastOutreachReplyAt: row.last_outreach_reply_at,
+      canReceiveWeeklyCheck: !!row.email,
     })),
   );
 });
@@ -1091,6 +1116,25 @@ app.put("/api/admin/nursing-homes/:id", adminAuth, async (req, res) => {
   return res.json({ id: Number(row.id), name: row.name });
 });
 
+app.patch("/api/admin/nursing-homes/:id/vacancy", adminAuth, async (req, res) => {
+  const { facilityConfirmedVacancies, facilityConfirmedAt } = req.body || {};
+  const validValues = ["yes", "no", "unknown"];
+  const confirmed = validValues.includes(facilityConfirmedVacancies) ? facilityConfirmedVacancies : null;
+  if (!confirmed) return res.status(400).json({ message: "facilityConfirmedVacancies must be yes, no, or unknown." });
+
+  const result = await query(
+    `UPDATE nursing_homes
+     SET facility_confirmed_vacancies = $2,
+         facility_confirmed_at = $3
+     WHERE id = $1
+     RETURNING id, name, facility_confirmed_vacancies, facility_confirmed_at`,
+    [req.params.id, confirmed, facilityConfirmedAt ?? new Date().toISOString()],
+  );
+  const row = result.rows[0];
+  if (!row) return res.status(404).json({ message: "Facility not found." });
+  return res.json({ id: Number(row.id), facilityConfirmedVacancies: row.facility_confirmed_vacancies });
+});
+
 app.delete("/api/admin/nursing-homes/:id", adminAuth, async (req, res) => {
   await query("DELETE FROM nursing_homes WHERE id = $1", [req.params.id]);
   return res.status(204).send();
@@ -1182,6 +1226,144 @@ app.post("/api/admin/nursing-homes/import", adminAuth, async (req, res) => {
   }
 
   return res.json({ created, updated, skipped });
+});
+
+app.post("/api/admin/scan-facility", adminAuth, async (req, res) => {
+  if (!env.firecrawlApiKey) {
+    return res.status(503).json({ message: "Firecrawl API key not configured." });
+  }
+  const url = String(req.body?.url || "").trim();
+  if (!url) return res.status(400).json({ message: "url is required." });
+
+  const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.firecrawlApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url,
+      formats: ["extract"],
+      extract: {
+        prompt: `Extract all available information about this aged care / nursing home facility. Be thorough and capture everything published on the page.`,
+        schema: {
+          type: "object",
+          properties: {
+            name:                { type: "string", description: "Full facility name" },
+            providerName:        { type: "string", description: "Organisation or provider name that operates the facility" },
+            oneLineDescription:  { type: "string", description: "One sentence summary of the facility" },
+            description:         { type: "string", description: "Full about/overview description of the facility" },
+            addressLine1:        { type: "string", description: "Street address" },
+            suburb:              { type: "string", description: "Suburb" },
+            state:               { type: "string", description: "State abbreviation e.g. QLD, NSW, VIC" },
+            postcode:            { type: "string", description: "Postcode" },
+            phone:               { type: "string", description: "Main phone number" },
+            email:               { type: "string", description: "Contact email address" },
+            careTypes:           { type: "array", items: { type: "string" }, description: "Care types offered e.g. Permanent Residential, Respite, Dementia, Palliative" },
+            specialties:         { type: "array", items: { type: "string" }, description: "Clinical specialties or focus areas" },
+            alliedHealth:        { type: "array", items: { type: "string" }, description: "Allied health services available e.g. Physiotherapy, Occupational Therapy, Podiatry, Dietitian" },
+            languages:           { type: "array", items: { type: "string" }, description: "Languages spoken by staff" },
+            amenities:           { type: "array", items: { type: "string" }, description: "Facility amenities e.g. Garden, Café, Chapel, Library, Gym, Hair Salon" },
+            roomTypes:           { type: "array", items: { type: "string" }, description: "Types of rooms available e.g. Single, Shared, Studio, Deluxe" },
+            radFrom:             { type: "number", description: "Minimum RAD (Refundable Accommodation Deposit) in AUD if published" },
+            radTo:               { type: "number", description: "Maximum RAD in AUD if published" },
+            visitingHours:       { type: "string", description: "Visiting hours policy" },
+            admissionsProcess:   { type: "string", description: "How to apply or admission process description" },
+            starRating:          { type: "number", description: "Star rating out of 5 if mentioned" },
+            bedsCount:           { type: "number", description: "Total number of beds or residents if mentioned" },
+            featureHighlights:   { type: "array", items: { type: "string" }, description: "Key selling points or feature highlights of the facility" },
+            waitingListInfo:     { type: "string", description: "Any information about waiting lists" },
+            transportNotes:      { type: "string", description: "Transport or location access notes" },
+            nearbyHospitals:     { type: "array", items: { type: "string" }, description: "Nearby hospitals mentioned" },
+          },
+        },
+      },
+    }),
+  });
+
+  if (!scrapeRes.ok) {
+    const err = await scrapeRes.text().catch(() => "Unknown error");
+    return res.status(502).json({ message: `Firecrawl error: ${err}` });
+  }
+
+  const data = await scrapeRes.json();
+  return res.json(data?.extract ?? data?.data?.extract ?? {});
+});
+
+app.post("/api/admin/scan-vacancy", adminAuth, async (req, res) => {
+  if (!env.firecrawlApiKey) {
+    return res.status(503).json({ message: "Firecrawl API key not configured." });
+  }
+  const facilityId = Number(req.body?.facilityId);
+  if (!facilityId) return res.status(400).json({ message: "facilityId is required." });
+
+  const facilityResult = await query("SELECT id, name, website FROM nursing_homes WHERE id = $1", [facilityId]);
+  const facility = facilityResult.rows[0];
+  if (!facility) return res.status(404).json({ message: "Facility not found." });
+
+  const url = String(facility.website || "").trim();
+  if (!url) return res.status(400).json({ message: "This facility has no website URL set." });
+
+  const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.firecrawlApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url,
+      formats: ["extract"],
+      extract: {
+        prompt: `Check this aged care / nursing home website for current bed vacancies or room availability. Look for any mention of available rooms, vacancies, waiting lists, "enquire now", admissions, or similar. Return a concise summary.`,
+        schema: {
+          type: "object",
+          properties: {
+            hasVacancy: {
+              type: "string",
+              enum: ["yes", "no", "unknown"],
+              description: "yes if the page explicitly mentions current vacancies or available beds; no if it says currently full or no vacancies; unknown if unclear",
+            },
+            vacancySummary: {
+              type: "string",
+              description: "One or two sentences summarising what the website says about availability",
+            },
+            rawExcerpt: {
+              type: "string",
+              description: "The exact text from the page that indicates vacancy status (max 300 chars)",
+            },
+          },
+        },
+      },
+    }),
+  });
+
+  if (!scrapeRes.ok) {
+    const err = await scrapeRes.text().catch(() => "Unknown error");
+    return res.status(502).json({ message: `Firecrawl error: ${err}` });
+  }
+
+  const data = await scrapeRes.json();
+  const extract = data?.extract ?? data?.data?.extract ?? {};
+  const hasVacancy = extract.hasVacancy ?? "unknown";
+  const checkedAt = new Date().toISOString();
+
+  await query(
+    `UPDATE nursing_homes
+     SET website_says_vacancies = $1,
+         website_checked_at = $2,
+         website_source_url = $3
+     WHERE id = $4`,
+    [hasVacancy, checkedAt, url, facilityId],
+  );
+
+  return res.json({
+    facilityId,
+    facilityName: facility.name,
+    websiteSaysVacancies: hasVacancy,
+    websiteCheckedAt: checkedAt,
+    vacancySummary: extract.vacancySummary ?? null,
+    rawExcerpt: extract.rawExcerpt ?? null,
+  });
 });
 
 app.post("/api/admin/nursing-homes/import-location-centers", adminAuth, async (req, res) => {
