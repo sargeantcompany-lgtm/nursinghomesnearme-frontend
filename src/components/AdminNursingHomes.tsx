@@ -422,6 +422,24 @@ export default function AdminNursingHomes() {
     setShowFacilitiesBoard(true);
   }
 
+  // localFetch: always hits the Node.js server (same origin), ignores API_BASE.
+  // Use this for endpoints that only exist in server/index.mjs (e.g. scan-facility, scan-vacancy).
+  async function localFetch<T>(path: string, init?: RequestInit): Promise<T> {
+    const headers = new Headers(init?.headers);
+    if (init?.body && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+    if (token.trim()) headers.set("X-Admin-Token", token.trim());
+    const res = await fetch(path, { ...init, headers });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`${res.status} ${res.statusText}${text ? ` — ${text}` : ""}`);
+    }
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) return {} as T;
+    return (await res.json()) as T;
+  }
+
   async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const headers = new Headers(init?.headers);
     const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
@@ -450,7 +468,7 @@ export default function AdminNursingHomes() {
     setScanning(true);
     setScanMessage(null);
     try {
-      const data = await apiFetch<Record<string, unknown>>("/api/admin/scan-facility", {
+      const data = await localFetch<Record<string, unknown>>("/api/admin/scan-facility", {
         method: "POST",
         body: JSON.stringify({ url }),
       });
@@ -515,7 +533,7 @@ export default function AdminNursingHomes() {
     for (let i = 0; i < withWebsite.length; i++) {
       const nh = withWebsite[i];
       try {
-        const result = await apiFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
+        const result = await localFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
           "/api/admin/scan-vacancy",
           { method: "POST", body: JSON.stringify({ facilityId: nh.id }) },
         );
@@ -540,7 +558,7 @@ export default function AdminNursingHomes() {
   }
 
   async function patchVacancyConfirmation(facilityId: number, confirmed: "yes" | "no") {
-    await apiFetch(`/api/admin/nursing-homes/${facilityId}/vacancy`, {
+    await localFetch(`/api/admin/nursing-homes/${facilityId}/vacancy`, {
       method: "PATCH",
       body: JSON.stringify({ facilityConfirmedVacancies: confirmed, facilityConfirmedAt: new Date().toISOString() }),
     });
