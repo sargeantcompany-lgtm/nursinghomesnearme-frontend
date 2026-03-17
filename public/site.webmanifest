@@ -1,0 +1,22 @@
+{
+  "name": "Nursing Homes Near Me",
+  "short_name": "NursingHomesNearMe",
+  "description": "Real aged-care vacancies for Gold Coast families.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b3b5b",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -15,24 +15,53 @@ export default function BlogPost() {
   const canonicalUrl = `https://www.nursinghomesnearme.com.au/blog/${post.slug}`;
   const schema = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description,
-    image: `https://www.nursinghomesnearme.com.au${post.image}`,
-    url: canonicalUrl,
-    mainEntityOfPage: canonicalUrl,
-    author: {
-      "@type": "Organization",
-      name: "Nursing Homes Near Me",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Nursing Homes Near Me",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://www.nursinghomesnearme.com.au/favicon-512.png",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        headline: post.title,
+        description,
+        image: `https://www.nursinghomesnearme.com.au${post.image}`,
+        url: canonicalUrl,
+        mainEntityOfPage: canonicalUrl,
+        datePublished: post.datePublished,
+        dateModified: post.datePublished,
+        author: {
+          "@type": "Organization",
+          name: "Nursing Homes Near Me",
+        },
+        publisher: {
+          "@type": "Organization",
+          name: "Nursing Homes Near Me",
+          logo: {
+            "@type": "ImageObject",
+            url: "https://www.nursinghomesnearme.com.au/favicon-512.png",
+          },
+        },
       },
-    },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://www.nursinghomesnearme.com.au/",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Blog",
+            item: "https://www.nursinghomesnearme.com.au/blog",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: post.title,
+            item: canonicalUrl,
+          },
+        ],
+      },
+    ],
   };
 
   return (

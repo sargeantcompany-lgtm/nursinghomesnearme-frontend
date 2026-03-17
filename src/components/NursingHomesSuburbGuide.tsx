@@ -51,6 +51,29 @@ export default function NursingHomesSuburbGuide({
           },
         ],
       },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: SITE_URL + "/",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Gold Coast Nursing Homes",
+            item: SITE_URL + "/nursing-homes-gold-coast",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: `${suburb} Nursing Homes`,
+            item: pageUrl,
+          },
+        ],
+      },
     ],
   };
 

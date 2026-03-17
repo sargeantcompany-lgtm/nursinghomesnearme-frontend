@@ -18,6 +18,14 @@ const distDir = path.join(projectRoot, "dist");
 
 const app = express();
 
+// Redirect non-www to www in production
+app.use((req, res, next) => {
+  if (req.hostname === "nursinghomesnearme.com.au") {
+    return res.redirect(301, `https://www.nursinghomesnearme.com.au${req.originalUrl}`);
+  }
+  next();
+});
+
 app.use(
   cors({
     origin: env.allowedOrigin || true,

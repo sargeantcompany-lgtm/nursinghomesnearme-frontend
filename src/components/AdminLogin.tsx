@@ -1,6 +1,7 @@
 // src/components/AdminLogin.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SeoHead from "./SeoHead";
 import { API_BASE } from "../lib/runtimeConfig";
 
 export default function AdminLogin() {
@@ -98,6 +99,12 @@ export default function AdminLogin() {
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
+      <SeoHead
+        title="Admin Login | Nursing Homes Near Me"
+        description=""
+        canonicalUrl=""
+        robots="noindex,nofollow"
+      />
       <div style={shell}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <h1 style={{ margin: 0, color: "#0b3b5b" }}>Admin Login</h1>

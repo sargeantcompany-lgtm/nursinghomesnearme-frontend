@@ -65,6 +65,8 @@ export default function SeoHead({
       setMetaName("twitter:image", imageUrl);
     }
 
+    setMetaProperty("og:locale", "en_AU");
+    setMetaProperty("og:site_name", "Nursing Homes Near Me");
     setMetaProperty("og:type", ogType);
     setMetaProperty("og:title", title);
     setMetaProperty("og:description", description);

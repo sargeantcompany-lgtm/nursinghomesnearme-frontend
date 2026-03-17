@@ -30,6 +30,7 @@ export default function BlogIndex() {
       headline: post.title,
       url: `https://www.nursinghomesnearme.com.au/blog/${post.slug}`,
       image: `https://www.nursinghomesnearme.com.au${post.image}`,
+      datePublished: post.datePublished,
     })),
   };
 
@@ -98,6 +99,7 @@ export default function BlogIndex() {
               <img
                 src={post.image}
                 alt={post.title}
+                loading="lazy"
                 style={{
                   width: "100%",
                   height: 180,

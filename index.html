@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,12 +16,14 @@
 
     <!-- Brand -->
     <meta name="theme-color" content="#0b3b5b" />
-    <!-- Favicons (place these files in /public) -->
-    <link rel="icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-512.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Open Graph -->
+    <meta property="og:locale" content="en_AU" />
+    <meta property="og:site_name" content="Nursing Homes Near Me" />
     <meta property="og:type" content="website" />
     <meta
       property="og:title"
@@ -62,33 +64,15 @@
       // Google Ads
       gtag("config", "AW-17834783900");
 
-      // If you add GA4 later, keep the same loader above and add this line:
-      // gtag("config", "G-XXXXXXXXXX");
+      // GA4
+      gtag("config", "G-8GYDPNPD49");
     </script>
 
-    <!-- Bing UET (replace later) -->
+    <!-- Bing UET -->
     <script>
-      (function (w, d, t, r, u) {
-        var f, n, i;
-        (w[u] = w[u] || []),
-          (f = function () {
-            var o = { ti: "UET_TAG_ID" };
-            (o.q = w[u]), (w[u] = new UET(o)), w[u].push("pageLoad");
-          }),
-          (n = d.createElement(t)),
-          (n.src = r),
-          (n.async = 1),
-          (n.onload =
-            n.onreadystatechange =
-            function () {
-              var s = this.readyState;
-              (!s || s === "loaded" || s === "complete") &&
-                (f(), (n.onload = n.onreadystatechange = null));
-            }),
-          (i = d.getElementsByTagName(t)[0]),
-          i.parentNode.insertBefore(n, i);
-      })(window, document, "script", "https://bat.bing.com/bat.js", "uetq");
+      (function(w,d,t,u,o){w[u]=w[u]||[],o.ts=(new Date).getTime();var n=d.createElement(t);n.src="https://bat.bing.net/bat.js?ti="+o.ti+("uetq"!=u?"&q="+u:""),n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&"loaded"!==s&&"complete"!==s||(o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad"),n.onload=n.onreadystatechange=null)};var i=d.getElementsByTagName(t)[0];i.parentNode.insertBefore(n,i);})(window,document,"script","uetq",{ti:"97214716",enableAutoSpaTracking:true});
     </script>
+    <script>window.uetq=window.uetq||[];window.uetq.push('consent','default',{'ad_storage':'denied'});</script>
 
     <!-- Meta Pixel -->
     <script>

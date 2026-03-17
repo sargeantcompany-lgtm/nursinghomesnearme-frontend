@@ -13,6 +13,10 @@ export default function SiteStructuredData() {
           name: "Nursing Homes Near Me",
           url: SITE_URL,
           email: "info@nursinghomesnearme.com.au",
+          logo: {
+            "@type": "ImageObject",
+            url: `${SITE_URL}/favicon-512.png`,
+          },
           areaServed: {
             "@type": "AdministrativeArea",
             name: "Gold Coast, Queensland, Australia",
@@ -33,6 +37,21 @@ export default function SiteStructuredData() {
           areaServed: {
             "@type": "AdministrativeArea",
             name: "Gold Coast, Queensland, Australia",
+          },
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${SITE_URL}/#website`,
+          url: SITE_URL,
+          name: "Nursing Homes Near Me",
+          publisher: { "@id": `${SITE_URL}/#organization` },
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${SITE_URL}/blog?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
           },
         },
       ],

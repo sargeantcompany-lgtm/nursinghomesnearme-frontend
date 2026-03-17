@@ -746,7 +746,7 @@ export default function ClientWorkflowDashboard() {
             <div style={card}>
               <h2 style={{ marginTop: 0, color: "#0b3b5b" }}>Facility updates</h2>
               <div style={{ color: "#475569", marginBottom: 10 }}>
-                Select facilities and request tours, then submit for approval.
+                Review the closest matches, open the full profile for more detail, and choose who you want us to contact.
               </div>
               <div style={{ marginBottom: 12 }}>
                 <button onClick={submitSelections} disabled={submitting} style={submitBtn}>
@@ -754,10 +754,10 @@ export default function ClientWorkflowDashboard() {
                 </button>
               </div>
               {!data.matches.length ? <div style={{ color: "#64748b" }}>No facility matches yet.</div> : null}
-              <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+              <div style={{ display: "grid", gap: 22, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
                 {data.matches.map((m) => (
                   <div key={m.id} style={facilityCard}>
-                    <div style={{ position: "relative", height: 206, background: "#dbeafe" }}>
+                    <div style={facilityHero}>
                       {m.primaryImageUrl ? (
                         <img
                           src={m.primaryImageUrl}
@@ -765,30 +765,15 @@ export default function ClientWorkflowDashboard() {
                           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         />
                       ) : (
-                        <div
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            background: "linear-gradient(140deg, #0b3b5b 0%, #0f766e 100%)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
+                        <div style={facilityHeroFallback}>
                           <img
                             src="/nursing-homes-near-me-logo.png"
                             alt="Nursing Homes Near Me"
-                            style={{
-                              width: 76,
-                              height: 76,
-                              objectFit: "contain",
-                              borderRadius: 10,
-                              background: "rgba(255,255,255,0.9)",
-                              padding: 10,
-                            }}
+                            style={facilityFallbackLogo}
                           />
                         </div>
                       )}
+                      <div style={facilityHeroOverlay} />
                       {locationLabel(m) ? (
                         <div style={facilityLocationPill}>{locationLabel(m)}</div>
                       ) : null}
@@ -803,8 +788,8 @@ export default function ClientWorkflowDashboard() {
                       </div>
                     </div>
 
-                    <div style={{ padding: 16, display: "grid", gap: 10 }}>
-                      <div style={{ display: "grid", gap: 4 }}>
+                    <div style={{ padding: 18, display: "grid", gap: 14 }}>
+                      <div style={{ display: "grid", gap: 6 }}>
                         {m.providerName ? (
                           <div style={facilityProvider}>{m.providerName}</div>
                         ) : null}
@@ -845,24 +830,32 @@ export default function ClientWorkflowDashboard() {
                         </div>
                       ) : null}
 
-                      <div>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                         <a
                           href={`/options/${m.nursingHomeId}`}
                           target="_blank"
                           rel="noreferrer"
                           style={facilityPreviewLink}
                         >
-                          View facility details
+                          Open full profile
                         </a>
+                        {m.enquirySentAt ? (
+                          <span style={facilityLastTouched}>Contacted {new Date(m.enquirySentAt).toLocaleDateString()}</span>
+                        ) : null}
                       </div>
                     </div>
 
-                    <div style={{ padding: "0 16px 16px", display: "grid", gap: 10 }}>
-                      <div style={{ marginTop: 2, color: "#334155", fontSize: 13 }}>
-                        Status: {titleForStatus(m.facilityResponseStatus || m.status)}
+                    <div style={facilityResponsePanel}>
+                      <div style={{ display: "grid", gap: 4 }}>
+                        <div style={facilityResponseHeading}>Facility response</div>
+                        <div style={facilityResponseText}>Status: {titleForStatus(m.facilityResponseStatus || m.status)}</div>
+                        {m.waitlistStatus && m.waitlistStatus !== "not_requested" ? (
+                          <div style={facilityResponseText}>Waitlist: {m.waitlistStatus}</div>
+                        ) : null}
+                        {m.facilityNotes ? <div style={facilityNotes}>{m.facilityNotes}</div> : null}
                       </div>
-                      <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+                        <label style={facilityToggleLabel}>
                           <input
                             type="checkbox"
                             checked={m.clientSelected}
@@ -874,9 +867,9 @@ export default function ClientWorkflowDashboard() {
                               })
                             }
                           />
-                          Send enquiry
+                          Contact facility
                         </label>
-                        <label style={{ display: "flex", alignItems: "center", gap: 6, opacity: m.clientSelected ? 1 : 0.6 }}>
+                        <label style={{ ...facilityToggleLabel, opacity: m.clientSelected ? 1 : 0.58 }}>
                           <input
                             type="checkbox"
                             checked={m.tourRequested}
@@ -886,10 +879,6 @@ export default function ClientWorkflowDashboard() {
                           Request tour
                         </label>
                       </div>
-                      {m.waitlistStatus && m.waitlistStatus !== "not_requested" ? (
-                        <div style={{ color: "#334155", fontSize: 13 }}>Waitlist: {m.waitlistStatus}</div>
-                      ) : null}
-                      {m.facilityNotes ? <div style={{ color: "#475569" }}>Notes: {m.facilityNotes}</div> : null}
                     </div>
                   </div>
                 ))}
@@ -921,22 +910,53 @@ const submitBtn: React.CSSProperties = {
 
 const facilityCard: React.CSSProperties = {
   background: "white",
-  border: "1px solid #dbe3ed",
-  borderRadius: 16,
+  border: "1px solid #d7e4ec",
+  borderRadius: 22,
   overflow: "hidden",
-  boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
+  boxShadow: "0 24px 54px rgba(15, 23, 42, 0.08)",
   display: "flex",
   flexDirection: "column",
+};
+
+const facilityHero: React.CSSProperties = {
+  position: "relative",
+  height: 224,
+  background: "#dbeafe",
+};
+
+const facilityHeroFallback: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  background: "linear-gradient(140deg, #0b3b5b 0%, #0f766e 100%)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
+const facilityFallbackLogo: React.CSSProperties = {
+  width: 92,
+  height: 92,
+  objectFit: "contain",
+  borderRadius: 16,
+  background: "rgba(255,255,255,0.9)",
+  padding: 12,
+};
+
+const facilityHeroOverlay: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  background: "linear-gradient(180deg, rgba(7,15,31,0.02) 0%, rgba(7,15,31,0.38) 100%)",
+  pointerEvents: "none",
 };
 
 const facilityLocationPill: React.CSSProperties = {
   position: "absolute",
   left: 12,
   top: 12,
-  background: "rgba(8,15,28,0.74)",
+  background: "rgba(8,15,28,0.72)",
   color: "white",
   borderRadius: 999,
-  padding: "6px 11px",
+  padding: "7px 12px",
   fontSize: 12,
   fontWeight: 800,
 };
@@ -953,17 +973,17 @@ const facilityStatusPill: React.CSSProperties = {
 };
 
 const facilityProvider: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  color: "#64748b",
+  letterSpacing: "0.12em",
+  color: "#0f766e",
   fontWeight: 800,
 };
 
 const facilityTitle: React.CSSProperties = {
   fontWeight: 900,
-  fontSize: 22,
-  lineHeight: 1.18,
+  fontSize: 26,
+  lineHeight: 1.12,
   color: "#0b3b5b",
 };
 
@@ -971,7 +991,7 @@ const facilityDescription: React.CSSProperties = {
   margin: 0,
   color: "#475569",
   fontSize: 14,
-  lineHeight: 1.6,
+  lineHeight: 1.65,
 };
 
 const facilityMetaRow: React.CSSProperties = {
@@ -980,7 +1000,7 @@ const facilityMetaRow: React.CSSProperties = {
   flexWrap: "wrap",
   color: "#526072",
   fontSize: 13,
-  fontWeight: 700,
+  fontWeight: 800,
 };
 
 const facilityTag: React.CSSProperties = {
@@ -994,7 +1014,7 @@ const facilityTag: React.CSSProperties = {
 };
 
 const facilityActionPill: React.CSSProperties = {
-  padding: "8px 11px",
+  padding: "9px 12px",
   borderRadius: 999,
   border: "1px solid #d7e0ea",
   background: "#f8fbfd",
@@ -1007,7 +1027,51 @@ const facilityActionPill: React.CSSProperties = {
 const facilityPreviewLink: React.CSSProperties = {
   color: "#0b3b5b",
   fontWeight: 800,
-  textDecoration: "underline",
+  textDecoration: "none",
+  borderBottom: "2px solid #a7d6d0",
+  paddingBottom: 2,
+};
+
+const facilityLastTouched: React.CSSProperties = {
+  fontSize: 12,
+  color: "#64748b",
+  fontWeight: 700,
+};
+
+const facilityResponsePanel: React.CSSProperties = {
+  margin: "0 18px 18px",
+  borderRadius: 18,
+  border: "1px solid #dce6ee",
+  background: "linear-gradient(180deg, #f8fbfd 0%, #f2f8fb 100%)",
+  padding: 16,
+  display: "grid",
+  gap: 14,
+};
+
+const facilityResponseHeading: React.CSSProperties = {
+  color: "#0b3b5b",
+  fontWeight: 900,
+  fontSize: 14,
+};
+
+const facilityResponseText: React.CSSProperties = {
+  color: "#334155",
+  fontSize: 13,
+};
+
+const facilityNotes: React.CSSProperties = {
+  color: "#475569",
+  fontSize: 13,
+  lineHeight: 1.55,
+};
+
+const facilityToggleLabel: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  color: "#0f172a",
+  fontWeight: 700,
+  fontSize: 14,
 };
 
 const input: React.CSSProperties = {

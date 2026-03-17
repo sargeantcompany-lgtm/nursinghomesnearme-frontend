@@ -3,6 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../lib/runtimeConfig";
 import AdminTopNav from "./AdminTopNav";
+import SeoHead from "./SeoHead";
 
 export default function AdminMenu() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function AdminMenu() {
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
+      <SeoHead title="Admin" description="" canonicalUrl="" robots="noindex,nofollow" />
       <div style={shell}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <h1 style={{ margin: 0, color: "#0b3b5b" }}>Admin</h1>
