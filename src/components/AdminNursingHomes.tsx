@@ -1046,12 +1046,12 @@ export default function AdminNursingHomes() {
             </label>
 
             <a
-              href="/facility_combined_import_template.csv"
+              href="/facility_full_card_scanner_template.csv"
               target="_blank"
               rel="noreferrer"
               style={{ ...secondaryBtn, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
             >
-              Download Combined Template
+              Download Full Card Template
             </a>
 
             <a
