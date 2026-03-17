@@ -512,7 +512,13 @@ export default function AdminNursingHomes() {
             : "",
         ].filter(Boolean).join("\n").trim(),
       }));
-      setScanMessage("Scan complete — review fields below before saving.");
+      const fieldsFound = [data.name, data.description, data.oneLineDescription, data.phone, data.email, data.addressLine1]
+        .filter(Boolean).length;
+      if (fieldsFound === 0) {
+        setScanMessage("Scan returned no data — Firecrawl may not have been able to read this page. Check FIRECRAWL_API_KEY is set in Railway and try again.");
+      } else {
+        setScanMessage(`Scan complete — ${fieldsFound} field(s) populated. Review below before saving.`);
+      }
     } catch (e: unknown) {
       setScanMessage(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
