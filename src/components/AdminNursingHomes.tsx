@@ -319,6 +319,7 @@ export default function AdminNursingHomes() {
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("ALL");
   const [showFacilitiesBoard, setShowFacilitiesBoard] = useState(false);
+  const [facilitiesBoardView, setFacilitiesBoardView] = useState<"ops" | "cards">("ops");
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
@@ -396,6 +397,7 @@ export default function AdminNursingHomes() {
   const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
   function jumpToFacilitiesBoard() {
+    setFacilitiesBoardView("ops");
     setShowFacilitiesBoard(true);
   }
 
@@ -1135,10 +1137,43 @@ export default function AdminNursingHomes() {
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <div style={{ fontWeight: 800, color: "#0b3b5b", fontSize: 22 }}>All Facilities</div>
                 <div style={{ color: "#64748b", fontSize: 13 }}>
-                  View all facilities by state and open one straight into the editor.
+                  Switch between the operations board and the public small-card gallery.
                 </div>
                 <button type="button" onClick={() => setShowFacilitiesBoard(false)} style={{ ...secondaryBtn, marginLeft: "auto" }}>
                   Close
+                </button>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setFacilitiesBoardView("ops")}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    border: facilitiesBoardView === "ops" ? "1px solid #0b3b5b" : "1px solid #cbd5e1",
+                    background: facilitiesBoardView === "ops" ? "#0b3b5b" : "white",
+                    color: facilitiesBoardView === "ops" ? "white" : "#0b3b5b",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  Operations Board
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFacilitiesBoardView("cards")}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    border: facilitiesBoardView === "cards" ? "1px solid #0b3b5b" : "1px solid #cbd5e1",
+                    background: facilitiesBoardView === "cards" ? "#0b3b5b" : "white",
+                    color: facilitiesBoardView === "cards" ? "white" : "#0b3b5b",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  Small Card Gallery
                 </button>
               </div>
 
@@ -1167,107 +1202,117 @@ export default function AdminNursingHomes() {
                 })}
               </div>
 
-              <div
-                style={{
-                  marginTop: 14,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                  gap: 12,
-                }}
-              >
-                {filteredList.slice(0, 120).map((nh) => {
-                  const outreachStatus = !nh.canReceiveWeeklyCheck
-                    ? "Missing facility email"
-                    : nh.lastOutreachSentAt
-                      ? nh.lastOutreachReplyAt
-                        ? "Weekly check sent and replied"
-                        : "Weekly check sent, waiting reply"
-                      : "Ready for weekly check";
-                  return (
-                    <button
-                      key={`board-${nh.id}`}
-                      type="button"
-                      onClick={() => {
-                        setSelectedId(nh.id);
-                        setShowFacilitiesBoard(false);
-                      }}
-                      style={{
-                        textAlign: "left",
-                        padding: 14,
-                        borderRadius: 14,
-                        border: selectedId === nh.id ? "1px solid #0b3b5b" : "1px solid #e5e7eb",
-                        background: selectedId === nh.id ? "#eff6ff" : "white",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                        <div style={{ fontWeight: 800, color: "#0f172a" }}>{nh.name}</div>
-                        <span
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: 999,
-                            background: nh.conflictFlag ? "#fee2e2" : "#dcfce7",
-                            color: nh.conflictFlag ? "#991b1b" : "#166534",
-                            fontSize: 12,
-                            fontWeight: 800,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {nh.conflictFlag ? "Conflict" : "Stable"}
-                        </span>
-                      </div>
-                      <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
-                        {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
-                      </div>
-                      {nh.providerName ? (
-                        <div style={{ marginTop: 6, fontSize: 12, color: "#334155" }}>
-                          <strong>Provider:</strong> {nh.providerName}
+              {facilitiesBoardView === "ops" ? (
+                <div
+                  style={{
+                    marginTop: 14,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                    gap: 12,
+                  }}
+                >
+                  {filteredList.slice(0, 120).map((nh) => {
+                    const outreachStatus = !nh.canReceiveWeeklyCheck
+                      ? "Missing facility email"
+                      : nh.lastOutreachSentAt
+                        ? nh.lastOutreachReplyAt
+                          ? "Weekly check sent and replied"
+                          : "Weekly check sent, waiting reply"
+                        : "Ready for weekly check";
+                    return (
+                      <button
+                        key={`board-${nh.id}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedId(nh.id);
+                          setShowFacilitiesBoard(false);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          padding: 14,
+                          borderRadius: 14,
+                          border: selectedId === nh.id ? "1px solid #0b3b5b" : "1px solid #e5e7eb",
+                          background: selectedId === nh.id ? "#eff6ff" : "white",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                          <div style={{ fontWeight: 800, color: "#0f172a" }}>{nh.name}</div>
+                          <span
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: 999,
+                              background: nh.conflictFlag ? "#fee2e2" : "#dcfce7",
+                              color: nh.conflictFlag ? "#991b1b" : "#166534",
+                              fontSize: 12,
+                              fontWeight: 800,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {nh.conflictFlag ? "Conflict" : "Stable"}
+                          </span>
                         </div>
-                      ) : null}
-                      {nh.oneLineDescription ? (
-                        <div style={{ marginTop: 6, fontSize: 12, color: "#475569" }}>
-                          {nh.oneLineDescription}
+                        <div style={{ color: "#475569", fontSize: 13, marginTop: 4 }}>
+                          {[nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ")}
                         </div>
-                      ) : null}
-                      <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <a
-                          href={facilityPreviewPath(nh.id)}
-                          target="_blank"
-                          rel="noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            ...secondaryBtn,
-                            padding: "6px 10px",
-                            fontSize: 12,
-                            textDecoration: "none",
-                          }}
-                        >
-                          Preview full card
-                        </a>
-                      </div>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                        <StatusChip
-                          tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
-                          text={nh.canReceiveWeeklyCheck ? "Email ready" : "No email"}
-                        />
-                        <StatusChip tone="blue" text={`Website scan: ${nh.websiteSaysVacancies ?? "unknown"}`} />
-                        <StatusChip tone="blue" text={`Facility reply: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
-                      </div>
-                      <div style={{ marginTop: 10, fontSize: 12, color: "#334155" }}>
-                        <div><strong>Website:</strong> {nh.website || "Missing"}</div>
-                        <div><strong>Email:</strong> {nh.email || "Missing"}</div>
-                        <div><strong>Phone:</strong> {nh.phone || "Missing"}</div>
-                        <div><strong>Facility row:</strong> {nh.facilityRowId || "Not linked"}</div>
-                        <div><strong>Weekly check:</strong> {outreachStatus}</div>
-                        <div><strong>Last sent:</strong> {formatDateTime(nh.lastOutreachSentAt)}</div>
-                        <div><strong>Last reply:</strong> {formatDateTime(nh.lastOutreachReplyAt)}</div>
-                        <div><strong>Website checked:</strong> {formatDateTime(nh.websiteCheckedAt)}</div>
-                        <div><strong>Facility confirmed:</strong> {formatDateTime(nh.facilityConfirmedAt)}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                        {nh.providerName ? (
+                          <div style={{ marginTop: 6, fontSize: 12, color: "#334155" }}>
+                            <strong>Provider:</strong> {nh.providerName}
+                          </div>
+                        ) : null}
+                        {nh.oneLineDescription ? (
+                          <div style={{ marginTop: 6, fontSize: 12, color: "#475569" }}>
+                            {nh.oneLineDescription}
+                          </div>
+                        ) : null}
+                        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <a
+                            href={facilityPreviewPath(nh.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              ...secondaryBtn,
+                              padding: "6px 10px",
+                              fontSize: 12,
+                              textDecoration: "none",
+                            }}
+                          >
+                            Preview full card
+                          </a>
+                        </div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                          <StatusChip
+                            tone={nh.canReceiveWeeklyCheck ? "green" : "red"}
+                            text={nh.canReceiveWeeklyCheck ? "Email ready" : "No email"}
+                          />
+                          <StatusChip tone="blue" text={`Website scan: ${nh.websiteSaysVacancies ?? "unknown"}`} />
+                          <StatusChip tone="blue" text={`Facility reply: ${nh.facilityConfirmedVacancies ?? "unknown"}`} />
+                        </div>
+                        <div style={{ marginTop: 10, fontSize: 12, color: "#334155" }}>
+                          <div><strong>Website:</strong> {nh.website || "Missing"}</div>
+                          <div><strong>Email:</strong> {nh.email || "Missing"}</div>
+                          <div><strong>Phone:</strong> {nh.phone || "Missing"}</div>
+                          <div><strong>Facility row:</strong> {nh.facilityRowId || "Not linked"}</div>
+                          <div><strong>Weekly check:</strong> {outreachStatus}</div>
+                          <div><strong>Last sent:</strong> {formatDateTime(nh.lastOutreachSentAt)}</div>
+                          <div><strong>Last reply:</strong> {formatDateTime(nh.lastOutreachReplyAt)}</div>
+                          <div><strong>Website checked:</strong> {formatDateTime(nh.websiteCheckedAt)}</div>
+                          <div><strong>Facility confirmed:</strong> {formatDateTime(nh.facilityConfirmedAt)}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <SmallCardGallery
+                  items={filteredList.slice(0, 120)}
+                  onEdit={(id) => {
+                    setSelectedId(id);
+                    setShowFacilitiesBoard(false);
+                  }}
+                />
+              )}
 
               {filteredList.length > 120 ? (
                 <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
@@ -2193,6 +2238,168 @@ function PreviewFacilityCard({ form, currentId }: { form: UpsertForm; currentId:
           </div>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function SmallCardGallery({
+  items,
+  onEdit,
+}: {
+  items: NursingHomeListItem[];
+  onEdit: (id: number) => void;
+}) {
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: 16,
+      }}
+    >
+      {items.map((nh) => {
+        const locationText = [nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ");
+        const vacancyLabel =
+          nh.websiteSaysVacancies === "yes"
+            ? "Vacancy available"
+            : nh.websiteSaysVacancies === "no"
+              ? "Currently full"
+              : "Availability updating";
+        const vacancyTone =
+          nh.websiteSaysVacancies === "yes"
+            ? { background: "#dcfce7", color: "#166534" }
+            : nh.websiteSaysVacancies === "no"
+              ? { background: "#fee2e2", color: "#991b1b" }
+              : { background: "#dbeafe", color: "#1d4ed8" };
+
+        return (
+          <article
+            key={`gallery-${nh.id}`}
+            style={{
+              background: "white",
+              borderRadius: 16,
+              border: "1px solid #dbe3ed",
+              overflow: "hidden",
+              boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ position: "relative", height: 214, background: "#dbeafe" }}>
+              {nh.primaryImageUrl ? (
+                <img
+                  src={nh.primaryImageUrl}
+                  alt={nh.name ?? "Facility"}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    background: "linear-gradient(140deg, #0b3b5b 0%, #0f766e 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <img
+                    src="/nursing-homes-near-me-logo.png"
+                    alt="Nursing Homes Near Me"
+                    style={{
+                      width: 78,
+                      height: 78,
+                      objectFit: "contain",
+                      borderRadius: 10,
+                      background: "rgba(255,255,255,0.9)",
+                      padding: 10,
+                    }}
+                  />
+                </div>
+              )}
+
+              {locationText ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: 12,
+                    background: "rgba(8,15,28,0.74)",
+                    color: "white",
+                    borderRadius: 999,
+                    padding: "6px 11px",
+                    fontSize: 12,
+                    fontWeight: 800,
+                  }}
+                >
+                  {locationText}
+                </div>
+              ) : null}
+
+              <div
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: 12,
+                  borderRadius: 999,
+                  padding: "5px 10px",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  boxShadow: "0 10px 18px rgba(0,0,0,0.08)",
+                  ...vacancyTone,
+                }}
+              >
+                {vacancyLabel}
+              </div>
+            </div>
+
+            <div style={{ padding: 16, display: "grid", gap: 10, flex: "1 1 auto" }}>
+              <div style={{ display: "grid", gap: 4 }}>
+                {nh.providerName ? (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "#64748b",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {nh.providerName}
+                  </div>
+                ) : null}
+                <h3 style={{ margin: 0, fontWeight: 900, fontSize: 22, lineHeight: 1.18, color: "#0b3b5b" }}>
+                  {nh.name ?? "Unnamed facility"}
+                </h3>
+              </div>
+
+              <p style={{ margin: 0, color: "#475569", fontSize: 14, lineHeight: 1.6 }}>
+                {(nh.oneLineDescription || "Previewing the customer-facing small facility card.").slice(0, 140)}
+              </p>
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {nh.phone ? <a href={`tel:${nh.phone}`} style={previewActionPill}>Call</a> : null}
+                {nh.email ? <a href={`mailto:${nh.email}`} style={previewActionPill}>Email</a> : null}
+                {nh.website ? (
+                  <a href={nh.website} target="_blank" rel="noreferrer" style={previewActionPill}>
+                    Website
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            <div style={{ padding: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => onEdit(nh.id)} style={secondaryBtn}>
+                Edit facility
+              </button>
+              <a href={facilityPreviewPath(nh.id)} target="_blank" rel="noreferrer" style={previewActionPillStrong}>
+                Open full preview
+              </a>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
