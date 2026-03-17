@@ -7,6 +7,8 @@ export type NursingHomeListItem = {
   suburb: string | null;
   state: string | null;
   postcode: string | null;
+  phone?: string | null;
+  email?: string | null;
   website: string | null;
   tags: string[] | string | null;
   primaryImageUrl?: string | null;
@@ -266,7 +268,66 @@ export default function NursingHomeGrid(props: {
                   ) : null}
                 </div>
 
-                <div style={{ padding: 16, display: "flex", gap: 10, alignItems: "center" }}>
+                <div style={{ padding: 16, display: "grid", gap: 10 }}>
+                  {(nh.phone || nh.email || nh.website) ? (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {nh.phone ? (
+                        <a
+                          href={`tel:${nh.phone}`}
+                          style={{
+                            padding: "8px 11px",
+                            borderRadius: 999,
+                            border: "1px solid #d7e0ea",
+                            background: "#f8fbfd",
+                            color: "#0b3b5b",
+                            textDecoration: "none",
+                            fontWeight: 800,
+                            fontSize: 12,
+                          }}
+                        >
+                          Call
+                        </a>
+                      ) : null}
+                      {nh.email ? (
+                        <a
+                          href={`mailto:${nh.email}`}
+                          style={{
+                            padding: "8px 11px",
+                            borderRadius: 999,
+                            border: "1px solid #d7e0ea",
+                            background: "#f8fbfd",
+                            color: "#0b3b5b",
+                            textDecoration: "none",
+                            fontWeight: 800,
+                            fontSize: 12,
+                          }}
+                        >
+                          Email
+                        </a>
+                      ) : null}
+                      {nh.website ? (
+                        <a
+                          href={nh.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            padding: "8px 11px",
+                            borderRadius: 999,
+                            border: "1px solid #d7e0ea",
+                            background: "#f8fbfd",
+                            color: "#0b3b5b",
+                            textDecoration: "none",
+                            fontWeight: 800,
+                            fontSize: 12,
+                          }}
+                        >
+                          Website
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <button
                     onClick={() => navTo(`/options/${nh.id}`)}
                     style={{
@@ -296,12 +357,13 @@ export default function NursingHomeGrid(props: {
                         color: "#0b3b5b",
                         textDecoration: "none",
                         fontWeight: 800,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      Website
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                      Open site
                     </a>
                   ) : null}
+                  </div>
                 </div>
               </article>
             );

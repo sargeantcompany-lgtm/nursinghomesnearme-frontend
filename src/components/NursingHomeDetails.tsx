@@ -25,6 +25,7 @@ type NursingHomePublicDetails = {
   addressLine1: string | null;
   addressLine2?: string | null;
   phone?: string | null;
+  email?: string | null;
   website: string | null;
   governmentListingUrl?: string | null;
   sourcePrimary?: string | null;
@@ -214,6 +215,7 @@ export default function NursingHomeDetails() {
                       </a>
                     ) : null}
                     {data.phone ? <a href={`tel:${data.phone}`} style={heroSubtleButton}>Call facility</a> : null}
+                    {data.email ? <a href={`mailto:${data.email}`} style={heroSubtleButton}>Email facility</a> : null}
                     {data.governmentListingUrl ? (
                       <a href={data.governmentListingUrl} target="_blank" rel="noreferrer" style={heroSubtleButton}>
                         Government listing
@@ -318,8 +320,20 @@ export default function NursingHomeDetails() {
                   <div style={sideStack}>
                     <Fact label="Address" value={[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ") || "Not listed"} />
                     <Fact label="Phone" value={data.phone || "Not listed"} />
+                    <Fact label="Email" value={data.email || "Not listed"} />
                     <Fact label="Website" value={data.website || "Not listed"} />
                   </div>
+                  {(data.phone || data.email || data.website) ? (
+                    <div style={{ ...heroActions, marginTop: 16 }}>
+                      {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
+                      {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Send email</a> : null}
+                      {data.website ? (
+                        <a href={data.website} target="_blank" rel="noreferrer" style={contactPill}>
+                          Contact via website
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </InfoPanel>
 
                 <InfoPanel title="Why this page matters">
@@ -572,6 +586,16 @@ const heroSubtleButton: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.35)",
   fontWeight: 800,
   textDecoration: "none",
+};
+
+const contactPill: React.CSSProperties = {
+  padding: "10px 13px",
+  borderRadius: 999,
+  border: "1px solid #d7e0ea",
+  background: "#f8fbfd",
+  color: "#0b3b5b",
+  textDecoration: "none",
+  fontWeight: 800,
 };
 
 const heroAside: React.CSSProperties = {
