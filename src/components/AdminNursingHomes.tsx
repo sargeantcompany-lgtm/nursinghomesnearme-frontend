@@ -396,6 +396,13 @@ export default function AdminNursingHomes() {
 
   const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
+  function removeGalleryUrl(url: string) {
+    setForm((p) => ({
+      ...p,
+      galleryImageUrlsText: listToLines(linesToList(p.galleryImageUrlsText).filter((item) => item !== url)),
+    }));
+  }
+
   function jumpToFacilitiesBoard() {
     setFacilitiesBoardView("ops");
     setShowFacilitiesBoard(true);
@@ -1521,7 +1528,17 @@ export default function AdminNursingHomes() {
 
             {form.primaryImageUrl ? (
               <div style={{ marginTop: 12 }}>
-                <div style={labelStyle}>Primary Photo Preview</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+                  <div style={labelStyle}>Primary Photo Preview</div>
+                  <button
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, primaryImageUrl: "" }))}
+                    style={secondaryBtn}
+                    disabled={disabled}
+                  >
+                    Clear primary photo
+                  </button>
+                </div>
                 <img
                   src={form.primaryImageUrl}
                   alt="Primary"
@@ -1729,7 +1746,27 @@ export default function AdminNursingHomes() {
                             (e.currentTarget as HTMLImageElement).style.display = "none";
                           }}
                         />
-                        <div style={{ padding: 8, fontSize: 11, color: "#64748b", wordBreak: "break-all" }}>{u}</div>
+                        <div style={{ padding: 8, display: "grid", gap: 8 }}>
+                          <div style={{ fontSize: 11, color: "#64748b", wordBreak: "break-all" }}>{u}</div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button
+                              type="button"
+                              onClick={() => setForm((p) => ({ ...p, primaryImageUrl: u }))}
+                              style={secondaryBtn}
+                              disabled={disabled}
+                            >
+                              Set as primary
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeGalleryUrl(u)}
+                              style={{ ...secondaryBtn, color: "#991b1b", borderColor: "#fecaca", background: "#fff7f7" }}
+                              disabled={disabled}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
