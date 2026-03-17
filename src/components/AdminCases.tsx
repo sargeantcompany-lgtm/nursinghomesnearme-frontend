@@ -130,6 +130,8 @@ type ClientCase = {
 
   internalCaseNotes?: string | null;
   active?: boolean;
+  homeCareReferralPending?: boolean;
+  propertySupportReferralPending?: boolean;
 
   fullList?: FacilityItem[];
   shortList?: FacilityItem[];
@@ -636,7 +638,7 @@ export default function AdminCases() {
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <h1 style={{ margin: 0, color: "#0b3b5b" }}>Admin: Case Files</h1>
+        <h1 style={{ margin: 0, color: "#0b3b5b" }}>Admin: Client Manager</h1>
         <p style={{ marginTop: 8, color: "#334155" }}>
           Case file editor + email send. Facilities in case: Short={shortCount} / Full={fullCount}
         </p>
@@ -869,6 +871,27 @@ export default function AdminCases() {
                     ]}
                   />
                 </Grid2>
+
+                {(current.homeCareReferralPending || current.propertySupportReferralPending) ? (
+                  <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                    {current.homeCareReferralPending ? (
+                      <Alert
+                        color="#0f766e"
+                        bg="#ecfeff"
+                        title="Home care follow-up"
+                        text="This client has a home care pathway pending. Review interim support options while residential vacancies are limited."
+                      />
+                    ) : null}
+                    {current.propertySupportReferralPending ? (
+                      <Alert
+                        color="#7c2d12"
+                        bg="#fff7ed"
+                        title="Property support follow-up"
+                        text="This client has property support pending. Use this case to coordinate sale / property help alongside placement work."
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <SectionTitle text="ACAT + care profile" />
                 <Grid2>
