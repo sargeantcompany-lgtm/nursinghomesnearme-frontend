@@ -494,6 +494,7 @@ export default function ClientWorkflowDashboard() {
     setConfirmPassword("");
     setNotice("");
     setIntakeNotice("");
+    window.location.href = "/";
   }
 
   return (
