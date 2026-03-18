@@ -221,6 +221,8 @@ export default function ClientWorkflowDashboard() {
   const [notice, setNotice] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [placementForName, setPlacementForName] = useState("");
   const [placementForDob, setPlacementForDob] = useState("");
@@ -418,6 +420,7 @@ export default function ClientWorkflowDashboard() {
     setProfileSaving(true);
     setError("");
     setNotice("");
+    setIntakeNotice("");
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
       if (authToken) headers.set("X-Client-Auth", authToken);
@@ -472,7 +475,7 @@ export default function ClientWorkflowDashboard() {
       setData(next);
       setIntake(getResidentialIntakeFromSnapshot(next));
       localStorage.setItem(intakeStorageKey, JSON.stringify(intake));
-      setNotice("Client snapshot saved.");
+      setNotice("Your details have been updated.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save profile");
     } finally {
@@ -484,39 +487,26 @@ export default function ClientWorkflowDashboard() {
     setIntake((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function saveResidentialIntake() {
-    setProfileSaving(true);
-    setError("");
+  function logoutDashboard() {
+    sessionStorage.removeItem(authStorageKey);
+    setAuthToken("");
+    setPassword("");
+    setConfirmPassword("");
     setNotice("");
     setIntakeNotice("");
-    try {
-      const headers = new Headers({ "Content-Type": "application/json" });
-      if (authToken) headers.set("X-Client-Auth", authToken);
-
-      const next = await apiFetch<WorkflowSnapshot>(`/api/workflow/client/${token}/profile`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ residentialIntake: intake }),
-      });
-      setData(next);
-      setIntake(getResidentialIntakeFromSnapshot(next));
-      localStorage.setItem(intakeStorageKey, JSON.stringify(intake));
-      setIntakeNotice("Residential questions saved.");
-    } catch {
-      // Fallback for older API versions: still keep browser save.
-      localStorage.setItem(intakeStorageKey, JSON.stringify(intake));
-      setIntakeNotice("Saved on this device (server API update pending).");
-    } finally {
-      setProfileSaving(false);
-    }
   }
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #f8fafc 0%, #eef6ff 100%)", padding: 20 }}>
       <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 4px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 4px", flexWrap: "wrap" }}>
           <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ height: 42 }} />
           <div style={{ color: "#0b3b5b", fontWeight: 900, fontSize: 22 }}>Client Dashboard</div>
+          {data.authenticated ? (
+            <button onClick={logoutDashboard} style={{ ...secondaryActionBtn, marginLeft: "auto" }}>
+              Log out
+            </button>
+          ) : null}
         </div>
 
         {!data.dashboardPasswordSet ? (
@@ -526,19 +516,31 @@ export default function ClientWorkflowDashboard() {
               Set a password to secure your dashboard.
             </div>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password (min 8 characters)"
               style={input}
             />
+            <label style={passwordToggleRow}>
+              <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
+              <span>Show password</span>
+            </label>
             <input
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm password"
               style={{ ...input, marginTop: 8 }}
             />
+            <label style={passwordToggleRow}>
+              <input
+                type="checkbox"
+                checked={showConfirmPassword}
+                onChange={(e) => setShowConfirmPassword(e.target.checked)}
+              />
+              <span>Show confirm password</span>
+            </label>
             <div style={{ marginTop: 10 }}>
               <button onClick={setDashboardPassword} disabled={authLoading} style={submitBtn}>
                 {authLoading ? "Saving..." : "Set password"}
@@ -554,12 +556,16 @@ export default function ClientWorkflowDashboard() {
               Enter your dashboard password to continue.
             </div>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               style={input}
             />
+            <label style={passwordToggleRow}>
+              <input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} />
+              <span>Show password</span>
+            </label>
             <div style={{ marginTop: 10 }}>
               <button onClick={loginDashboard} disabled={authLoading} style={submitBtn}>
                 {authLoading ? "Logging in..." : "Log in"}
@@ -571,7 +577,19 @@ export default function ClientWorkflowDashboard() {
         {data.authenticated ? (
           <>
             <div style={card}>
-              <h2 style={{ marginTop: 0, color: "#0b3b5b" }}>Your submitted information</h2>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                <div>
+                  <h2 style={{ marginTop: 0, marginBottom: 6, color: "#0b3b5b" }}>Update your details</h2>
+                  <div style={{ color: "#475569" }}>
+                    Keep your profile, placement details, and residential application answers together in one box.
+                  </div>
+                </div>
+                <button onClick={saveProfileSnapshot} disabled={profileSaving} style={submitBtn}>
+                  {profileSaving ? "Saving..." : "Save details"}
+                </button>
+              </div>
+
+              <div style={{ marginTop: 18, marginBottom: 8, color: "#0b3b5b", fontWeight: 800 }}>Your information</div>
               <div style={twoColGrid}>
                 <TextField label="Your name" value={contactName} onChange={setContactName} placeholder="Your name" />
                 <TextField label="Your email" value={email} onChange={setEmail} placeholder="Email" />
@@ -600,13 +618,8 @@ export default function ClientWorkflowDashboard() {
                   />
                 </label>
               </div>
-            </div>
 
-            <div style={card}>
-              <h2 style={{ marginTop: 0, color: "#0b3b5b" }}>Client snapshot</h2>
-              <div style={{ color: "#475569", marginBottom: 10 }}>
-                Full name of person needing placement
-              </div>
+              <div style={{ marginTop: 18, marginBottom: 8, color: "#0b3b5b", fontWeight: 800 }}>Person needing placement</div>
               <input
                 value={placementForName}
                 onChange={(e) => setPlacementForName(e.target.value)}
@@ -629,16 +642,8 @@ export default function ClientWorkflowDashboard() {
                 onChange={(e) => setPlacementForDob(e.target.value)}
                 style={input}
               />
-              <div style={{ marginTop: 10 }}>
-                <button onClick={saveProfileSnapshot} disabled={profileSaving} style={submitBtn}>
-                  {profileSaving ? "Saving..." : "Save snapshot"}
-                </button>
-                {notice ? <span style={{ marginLeft: 10, color: "#166534" }}>{notice}</span> : null}
-              </div>
-            </div>
 
-            <div style={card}>
-              <h2 style={{ marginTop: 0, color: "#0b3b5b" }}>Residential application questions</h2>
+              <div style={{ marginTop: 18, marginBottom: 8, color: "#0b3b5b", fontWeight: 800 }}>Residential application questions</div>
               <div style={{ color: "#475569", marginBottom: 10 }}>
                 Use this to collect answers typically required for residential application forms.
               </div>
@@ -719,9 +724,7 @@ export default function ClientWorkflowDashboard() {
               </div>
 
               <div style={{ marginTop: 10 }}>
-                <button onClick={saveResidentialIntake} disabled={profileSaving} style={submitBtn}>
-                  {profileSaving ? "Saving..." : "Save residential questions"}
-                </button>
+                {notice ? <span style={{ color: "#166534", fontWeight: 600 }}>{notice}</span> : null}
                 {intakeNotice ? <span style={{ marginLeft: 10, color: "#166534" }}>{intakeNotice}</span> : null}
               </div>
             </div>
@@ -903,6 +906,25 @@ const submitBtn: React.CSSProperties = {
   color: "white",
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const secondaryActionBtn: React.CSSProperties = {
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid #cbd5e1",
+  background: "white",
+  color: "#0b3b5b",
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const passwordToggleRow: React.CSSProperties = {
+  marginTop: 8,
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  color: "#475569",
+  fontSize: 13,
 };
 
 const facilityCard: React.CSSProperties = {
