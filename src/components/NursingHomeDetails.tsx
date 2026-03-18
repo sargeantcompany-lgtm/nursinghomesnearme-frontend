@@ -92,6 +92,58 @@ function availabilityTone(status?: string | null): { label: string; bg: string; 
   }
 }
 
+function cleanText(value?: string | null): string {
+  if (!value) return "";
+  return value
+    .replace(/cafÃ©/gi, "cafe")
+    .replace(/â€¢/g, "•")
+    .replace(/â€“/g, "–")
+    .replace(/â€”/g, "—")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanWebsiteUrl(value?: string | null): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return raw.split("?")[0].trim();
+  }
+}
+
+function cleanDescription(value?: string | null, fallback?: string | null): string {
+  const base = cleanText(value) || cleanText(fallback);
+  if (!base) return "";
+  const trimmed = base
+    .replace(/skip to content/gi, "")
+    .replace(/search for:/gi, "")
+    .replace(/\b(book a tour|menu|careers|contact)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const sentences = trimmed
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/^(search for|skip to content|home\b)/i.test(part));
+  return sentences.slice(0, 4).join(" ") || trimmed;
+}
+
+function pickBestImages(data: NursingHomePublicDetails | null): string[] {
+  if (!data) return [];
+  const combined = uniqueList([
+    data.primaryImageUrl ?? "",
+    ...(data.galleryImageUrls ?? []),
+    ...(data.images ?? []),
+  ]);
+  const score = (url: string) => (url.toLowerCase().includes("logo") ? 0 : 1);
+  return [...combined].sort((a, b) => score(b) - score(a));
+}
+
 function niceCurrency(value?: number | null): string {
   if (value == null || !Number.isFinite(value)) return "";
   return new Intl.NumberFormat("en-AU", {
@@ -141,15 +193,7 @@ export default function NursingHomeDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const images = useMemo(() => {
-    if (!data) return [] as string[];
-    const combined = [
-      data.primaryImageUrl ?? "",
-      ...(data.galleryImageUrls ?? []),
-      ...(data.images ?? []),
-    ];
-    return uniqueList(combined);
-  }, [data]);
+  const images = useMemo(() => pickBestImages(data), [data]);
 
   const tags = useMemo(
     () => uniqueList([...(data?.featureTags ?? []), ...(data?.otherTags ?? []), ...(data?.tags ?? [])]).slice(0, 10),
@@ -163,6 +207,11 @@ export default function NursingHomeDetails() {
   const availability = availabilityTone(data?.availabilityStatus);
   const pageLocation = locationLabel(data);
   const heroImage = images[heroIndex] || "";
+  const cleanProvider = cleanText(data?.providerName);
+  const cleanOneLine = cleanDescription(data?.oneLineDescription);
+  const cleanOverview = cleanDescription(data?.description, data?.oneLineDescription) || "Full facility profile coming soon.";
+  const cleanWebsite = cleanWebsiteUrl(data?.website);
+  const cleanGovernmentListing = cleanWebsiteUrl(data?.governmentListingUrl);
 
   return (
     <div style={pageWrap}>
@@ -202,22 +251,22 @@ export default function NursingHomeDetails() {
                   {availability ? <span style={{ ...pillBase, background: availability.bg, color: availability.color }}>{availability.label}</span> : null}
                   <h1 style={heroTitle}>{data.name ?? "Unnamed facility"}</h1>
                   <div style={heroSubline}>
-                    {data.providerName ? <span>{data.providerName}</span> : null}
+                    {cleanProvider ? <span>{cleanProvider}</span> : null}
                     {data.providerName && pageLocation ? <span>•</span> : null}
                     {pageLocation ? <span>{pageLocation}</span> : null}
                   </div>
-                  {data.oneLineDescription ? <p style={heroDescription}>{data.oneLineDescription}</p> : null}
+                  {cleanOneLine ? <p style={heroDescription}>{cleanOneLine}</p> : null}
 
                   <div style={heroActions}>
-                    {data.website ? (
-                      <a href={data.website} target="_blank" rel="noreferrer" style={heroLinkButton}>
+                    {cleanWebsite ? (
+                      <a href={cleanWebsite} target="_blank" rel="noreferrer" style={heroLinkButton}>
                         Visit website
                       </a>
                     ) : null}
                     {data.phone ? <a href={`tel:${data.phone}`} style={heroSubtleButton}>Call facility</a> : null}
                     {data.email ? <a href={`mailto:${data.email}`} style={heroSubtleButton}>Email facility</a> : null}
-                    {data.governmentListingUrl ? (
-                      <a href={data.governmentListingUrl} target="_blank" rel="noreferrer" style={heroSubtleButton}>
+                    {cleanGovernmentListing ? (
+                      <a href={cleanGovernmentListing} target="_blank" rel="noreferrer" style={heroSubtleButton}>
                         Government listing
                       </a>
                     ) : null}
@@ -256,7 +305,7 @@ export default function NursingHomeDetails() {
               <div style={{ display: "grid", gap: 18 }}>
                 <InfoPanel title="Overview">
                   <p style={bodyText}>
-                    {data.description || data.oneLineDescription || "Full facility profile coming soon."}
+                    {cleanOverview}
                   </p>
                 </InfoPanel>
 
@@ -321,14 +370,14 @@ export default function NursingHomeDetails() {
                     <Fact label="Address" value={[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ") || "Not listed"} />
                     <Fact label="Phone" value={data.phone || "Not listed"} />
                     <Fact label="Email" value={data.email || "Not listed"} />
-                    <Fact label="Website" value={data.website || "Not listed"} />
+                    <Fact label="Website" value={cleanWebsite || "Not listed"} />
                   </div>
-                  {(data.phone || data.email || data.website) ? (
+                  {(data.phone || data.email || cleanWebsite) ? (
                     <div style={{ ...heroActions, marginTop: 16 }}>
                       {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
                       {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Send email</a> : null}
-                      {data.website ? (
-                        <a href={data.website} target="_blank" rel="noreferrer" style={contactPill}>
+                      {cleanWebsite ? (
+                        <a href={cleanWebsite} target="_blank" rel="noreferrer" style={contactPill}>
                           Contact via website
                         </a>
                       ) : null}
