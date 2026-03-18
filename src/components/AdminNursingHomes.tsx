@@ -55,6 +55,7 @@ type NursingHome = {
 
   phone?: string | null;
   website?: string | null;
+  governmentListingUrl?: string | null;
   websiteSaysVacancies?: string | null;
   facilityConfirmedVacancies?: string | null;
   websiteCheckedAt?: string | null;
@@ -118,6 +119,7 @@ type UpsertForm = {
 
   phone: string;
   website: string;
+  governmentListingUrl: string;
   websiteSaysVacancies: string;
   facilityConfirmedVacancies: string;
   websiteCheckedAt: string;
@@ -244,6 +246,7 @@ function emptyForm(): UpsertForm {
 
     phone: "",
     website: "",
+    governmentListingUrl: "",
     websiteSaysVacancies: "unknown",
     facilityConfirmedVacancies: "unknown",
     websiteCheckedAt: "",
@@ -632,6 +635,7 @@ export default function AdminNursingHomes() {
 
         phone: (nh.phone ?? "") as string,
         website: (nh.website ?? "") as string,
+        governmentListingUrl: (nh.governmentListingUrl ?? "") as string,
         websiteSaysVacancies: (nh.websiteSaysVacancies ?? "unknown") as string,
         facilityConfirmedVacancies: (nh.facilityConfirmedVacancies ?? "unknown") as string,
         websiteCheckedAt: (nh.websiteCheckedAt ?? "") as string,
@@ -691,6 +695,7 @@ export default function AdminNursingHomes() {
 
         phone: form.phone.trim() || null,
         website: form.website.trim() || null,
+        governmentListingUrl: form.governmentListingUrl.trim() || null,
         websiteSaysVacancies: form.websiteSaysVacancies,
         facilityConfirmedVacancies: form.facilityConfirmedVacancies,
         websiteCheckedAt: form.websiteCheckedAt.trim() || null,
@@ -1652,6 +1657,12 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, website: v }))}
                 disabled={disabled}
               />
+              <Field
+                label="Government listing"
+                value={form.governmentListingUrl}
+                onChange={(v) => setForm((p) => ({ ...p, governmentListingUrl: v }))}
+                disabled={disabled}
+              />
               <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-end" }}>
                 {form.website.trim() && (
                   <button
@@ -1677,7 +1688,7 @@ export default function AdminNursingHomes() {
                   <p style={{
                     margin: 0,
                     fontSize: 12,
-                    color: scanMessage.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
+                    color: scanMessage?.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
                     fontWeight: 600,
                   }}>
                     {scanMessage}
@@ -1847,6 +1858,7 @@ export default function AdminNursingHomes() {
               </div>
             ) : null}
 
+            {false ? (<>
             <SectionTitle text="Website Scan Tools" />
             <Grid2>
               <Field
@@ -1892,7 +1904,7 @@ export default function AdminNursingHomes() {
                   <p style={{
                     margin: 0,
                     fontSize: 12,
-                    color: scanMessage.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
+                    color: scanMessage?.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
                     fontWeight: 600,
                   }}>
                     {scanMessage}
@@ -1901,6 +1913,7 @@ export default function AdminNursingHomes() {
               </div>
             </Grid2>
 
+            </>) : null}
             <SectionTitle text="Vacancies Section" />
             <Grid2>
               <SelectInput
@@ -1935,18 +1948,6 @@ export default function AdminNursingHomes() {
                 label="Facility confirmed at (ISO)"
                 value={form.facilityConfirmedAt}
                 onChange={(v) => setForm((p) => ({ ...p, facilityConfirmedAt: v }))}
-                disabled={disabled}
-              />
-              <Field
-                label="Website source URL"
-                value={form.websiteSourceUrl}
-                onChange={(v) => setForm((p) => ({ ...p, websiteSourceUrl: v }))}
-                disabled={disabled}
-              />
-              <Field
-                label="Facility confirmation source"
-                value={form.facilityConfirmationSource}
-                onChange={(v) => setForm((p) => ({ ...p, facilityConfirmationSource: v }))}
                 disabled={disabled}
               />
               <label style={{ display: "block" }}>
@@ -2225,7 +2226,18 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, verifiedAt: v }))}
                 disabled={disabled}
               />
-              <div />
+              <Field
+                label="Scan source URL"
+                value={form.websiteSourceUrl}
+                onChange={(v) => setForm((p) => ({ ...p, websiteSourceUrl: v }))}
+                disabled={disabled}
+              />
+              <Field
+                label="Facility confirmation source"
+                value={form.facilityConfirmationSource}
+                onChange={(v) => setForm((p) => ({ ...p, facilityConfirmationSource: v }))}
+                disabled={disabled}
+              />
             </Grid2>
 
             <div style={{ marginTop: 12 }}>
