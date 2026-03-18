@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api";
 
 type MatchSummary = {
@@ -213,6 +213,7 @@ export default function ClientWorkflowDashboard() {
   const token = useMemo(() => getTokenFromPath(), []);
   const authStorageKey = useMemo(() => `nhnm_workflow_auth_${token}`, [token]);
   const intakeStorageKey = useMemo(() => `nhnm_workflow_intake_${token}`, [token]);
+  const [authToken, setAuthToken] = useState(() => sessionStorage.getItem(authStorageKey) ?? "");
   const [data, setData] = useState<WorkflowSnapshot | null>(null);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<number | null>(null);
@@ -239,10 +240,9 @@ export default function ClientWorkflowDashboard() {
   const [intake, setIntake] = useState<ResidentialIntake>(() => emptyResidentialIntake());
   const [intakeNotice, setIntakeNotice] = useState("");
 
-  const currentAuthToken = useCallback(
-    () => sessionStorage.getItem(authStorageKey) ?? "",
-    [authStorageKey],
-  );
+  useEffect(() => {
+    setAuthToken(sessionStorage.getItem(authStorageKey) ?? "");
+  }, [authStorageKey]);
 
   useEffect(() => {
     if (!token) {
@@ -251,7 +251,6 @@ export default function ClientWorkflowDashboard() {
     }
 
     const headers = new Headers();
-    const authToken = currentAuthToken();
     if (authToken) headers.set("X-Client-Auth", authToken);
 
     apiFetch<WorkflowSnapshot>(`/api/workflow/client/${token}`, { headers })
@@ -274,7 +273,7 @@ export default function ClientWorkflowDashboard() {
         setIntake(getResidentialIntakeFromSnapshot(snapshot));
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed"));
-  }, [token, currentAuthToken]);
+  }, [token, authToken]);
 
   useEffect(() => {
     const raw = localStorage.getItem(intakeStorageKey);
@@ -298,7 +297,6 @@ export default function ClientWorkflowDashboard() {
     setNotice("");
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
-      const authToken = currentAuthToken();
       if (authToken) headers.set("X-Client-Auth", authToken);
       const next = await apiFetch<WorkflowSnapshot>(`/api/workflow/client/${token}/matches/${matchId}`, {
         method: "PATCH",
@@ -318,7 +316,6 @@ export default function ClientWorkflowDashboard() {
     setNotice("");
     try {
       const headers = new Headers();
-      const authToken = currentAuthToken();
       if (authToken) headers.set("X-Client-Auth", authToken);
       const next = await apiFetch<WorkflowSnapshot>(`/api/workflow/client/${token}/submit-selections`, {
         method: "POST",
@@ -351,6 +348,7 @@ export default function ClientWorkflowDashboard() {
         body: JSON.stringify({ password }),
       });
       sessionStorage.setItem(authStorageKey, result.authToken);
+      setAuthToken(result.authToken);
       setData(result.snapshot);
       setPlacementForName(result.snapshot.placementForName || "");
       setContactName(result.snapshot.contactName || "");
@@ -390,6 +388,7 @@ export default function ClientWorkflowDashboard() {
         body: JSON.stringify({ password }),
       });
       sessionStorage.setItem(authStorageKey, result.authToken);
+      setAuthToken(result.authToken);
       setData(result.snapshot);
       setPlacementForName(result.snapshot.placementForName || "");
       setContactName(result.snapshot.contactName || "");
@@ -421,7 +420,6 @@ export default function ClientWorkflowDashboard() {
     setNotice("");
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
-      const authToken = currentAuthToken();
       if (authToken) headers.set("X-Client-Auth", authToken);
       const payload = {
         contactName: contactName.trim(),
@@ -493,7 +491,6 @@ export default function ClientWorkflowDashboard() {
     setIntakeNotice("");
     try {
       const headers = new Headers({ "Content-Type": "application/json" });
-      const authToken = currentAuthToken();
       if (authToken) headers.set("X-Client-Auth", authToken);
 
       const next = await apiFetch<WorkflowSnapshot>(`/api/workflow/client/${token}/profile`, {
