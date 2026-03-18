@@ -439,6 +439,7 @@ export default function AdminNursingHomes() {
     if (!ct.includes("application/json")) return {} as T;
     return (await res.json()) as T;
   }
+  void localFetch;
 
   async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const headers = new Headers(init?.headers);
@@ -468,7 +469,7 @@ export default function AdminNursingHomes() {
     setScanning(true);
     setScanMessage(null);
     try {
-      const data = await apiFetch<Record<string, unknown>>("/api/admin/scan-facility", {
+      const data = await apiFetch<Record<string, unknown>>("/api/admin/nursing-homes/scan-facility", {
         method: "POST",
         body: JSON.stringify({ url }),
       });
@@ -540,7 +541,7 @@ export default function AdminNursingHomes() {
       const nh = withWebsite[i];
       try {
         const result = await apiFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
-          "/api/admin/scan-vacancy",
+          "/api/admin/nursing-homes/scan-vacancy",
           { method: "POST", body: JSON.stringify({ facilityId: nh.id }) },
         );
         setList((prev) =>
@@ -566,7 +567,11 @@ export default function AdminNursingHomes() {
   async function patchVacancyConfirmation(facilityId: number, confirmed: "yes" | "no") {
     await apiFetch(`/api/admin/nursing-homes/${facilityId}/vacancy`, {
       method: "PATCH",
-      body: JSON.stringify({ facilityConfirmedVacancies: confirmed, facilityConfirmedAt: new Date().toISOString() }),
+      body: JSON.stringify({
+        facilityConfirmedVacancies: confirmed,
+        facilityConfirmedAt: new Date().toISOString(),
+        facilityConfirmationSource: "admin_manual",
+      }),
     });
     setList((prev) =>
       prev.map((f) =>
@@ -577,6 +582,7 @@ export default function AdminNursingHomes() {
       setVacancyScanResults((prev) => prev.filter((r) => r.facilityId !== facilityId));
     }
   }
+  void patchVacancyConfirmation;
 
   async function refreshList() {
     setError("");
