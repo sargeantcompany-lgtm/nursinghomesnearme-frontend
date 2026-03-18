@@ -468,7 +468,7 @@ export default function AdminNursingHomes() {
     setScanning(true);
     setScanMessage(null);
     try {
-      const data = await localFetch<Record<string, unknown>>("/api/admin/scan-facility", {
+      const data = await apiFetch<Record<string, unknown>>("/api/admin/scan-facility", {
         method: "POST",
         body: JSON.stringify({ url }),
       });
@@ -539,7 +539,7 @@ export default function AdminNursingHomes() {
     for (let i = 0; i < withWebsite.length; i++) {
       const nh = withWebsite[i];
       try {
-        const result = await localFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
+        const result = await apiFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
           "/api/admin/scan-vacancy",
           { method: "POST", body: JSON.stringify({ facilityId: nh.id }) },
         );
@@ -564,7 +564,7 @@ export default function AdminNursingHomes() {
   }
 
   async function patchVacancyConfirmation(facilityId: number, confirmed: "yes" | "no") {
-    await localFetch(`/api/admin/nursing-homes/${facilityId}/vacancy`, {
+    await apiFetch(`/api/admin/nursing-homes/${facilityId}/vacancy`, {
       method: "PATCH",
       body: JSON.stringify({ facilityConfirmedVacancies: confirmed, facilityConfirmedAt: new Date().toISOString() }),
     });
