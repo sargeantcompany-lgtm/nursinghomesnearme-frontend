@@ -18,6 +18,18 @@ type FacilityItem = {
   sortOrder?: number | null;
 };
 
+type FacilitySearchResult = {
+  id: number;
+  name: string;
+  providerName?: string | null;
+  suburb: string;
+  state: string;
+  postcode?: string | null;
+  oneLineDescription?: string | null;
+  phone?: string | null;
+  website?: string | null;
+};
+
 type CaseSummaryApi = {
   id: number;
   clientEmail: string;
@@ -335,6 +347,8 @@ export default function AdminCases() {
   const [creating, setCreating] = useState(false);
   const [sending, setSending] = useState<null | "short" | "full">(null);
   const [sendingDashboardLink, setSendingDashboardLink] = useState(false);
+  const [searchingFacilities, setSearchingFacilities] = useState(false);
+  const [addingFacilityId, setAddingFacilityId] = useState<number | null>(null);
 
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -345,10 +359,21 @@ export default function AdminCases() {
   const [newCaseEmail, setNewCaseEmail] = useState("");
   const [newCaseName, setNewCaseName] = useState("");
   const [newCaseSuburb, setNewCaseSuburb] = useState("");
+  const [facilitySearchQuery, setFacilitySearchQuery] = useState("");
+  const [facilitySearchSuburb, setFacilitySearchSuburb] = useState("");
+  const [facilitySearchState, setFacilitySearchState] = useState("QLD");
+  const [facilitySearchResults, setFacilitySearchResults] = useState<FacilitySearchResult[]>([]);
 
   const sortedList = useMemo(() => {
     return [...list].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
   }, [list]);
+
+  const existingFacilityIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const item of current?.fullList ?? []) ids.add(item.nursingHomeId);
+    for (const item of current?.shortList ?? []) ids.add(item.nursingHomeId);
+    return ids;
+  }, [current]);
 
   async function refreshList() {
     setError("");
@@ -611,6 +636,50 @@ export default function AdminCases() {
     }
   }
 
+  async function searchFacilities() {
+    setError("");
+    setNotice("");
+    setSearchingFacilities(true);
+    try {
+      const params = new URLSearchParams();
+      if (facilitySearchQuery.trim()) params.set("q", facilitySearchQuery.trim());
+      if (facilitySearchSuburb.trim()) params.set("suburb", facilitySearchSuburb.trim());
+      if (facilitySearchState.trim()) params.set("state", facilitySearchState.trim());
+      params.set("limit", "40");
+
+      const results = await adminFetch<FacilitySearchResult[]>(
+        `/api/admin/cases/facilities/search?${params.toString()}`,
+        token,
+      );
+      setFacilitySearchResults(results ?? []);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setSearchingFacilities(false);
+    }
+  }
+
+  async function addFacilityToCase(nursingHomeId: number, listType: ListType) {
+    if (!current) return;
+    setError("");
+    setNotice("");
+    setAddingFacilityId(nursingHomeId);
+    try {
+      await adminFetch(`/api/admin/cases/${current.id}/facilities`, token, {
+        method: "POST",
+        body: JSON.stringify({ nursingHomeId, listType }),
+      });
+      await loadOne(current.id);
+      setNotice(
+        `${listType === "SHORT" ? "Shortlisted" : "Added"} facility for ${current.clientName || current.clientEmail}.`,
+      );
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setAddingFacilityId(null);
+    }
+  }
+
   useEffect(() => {
     localStorage.setItem("nhnm_admin_token", token);
   }, [token]);
@@ -625,6 +694,14 @@ export default function AdminCases() {
     loadOne(selectedId).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
+
+  useEffect(() => {
+    if (!current) return;
+    const preferred = toStr(current.preferredSuburbArea || current.clientSuburb).trim();
+    if (preferred) {
+      setFacilitySearchSuburb(preferred);
+    }
+  }, [current?.id, current?.preferredSuburbArea, current?.clientSuburb]);
 
   const disabled = loadingList || loadingOne || saving || creating || sending != null;
 
@@ -782,6 +859,103 @@ export default function AdminCases() {
                 <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   <FacilityList title="Short list (emailed)" items={current.shortList ?? []} />
                   <FacilityList title="Full list (emailed)" items={current.fullList ?? []} />
+                </div>
+
+                <SectionTitle text="Facility finder" />
+                <div style={{ ...cardStyle, padding: 12, background: "#f8fafc" }}>
+                  <div style={{ color: "#475569", fontSize: 13, marginBottom: 10 }}>
+                    Search all facilities by suburb or name, attach them to this client, and include them in the next dashboard/email send.
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 120px 160px", gap: 10 }}>
+                    <input
+                      value={facilitySearchQuery}
+                      onChange={(e) => setFacilitySearchQuery(e.target.value)}
+                      placeholder="Search facility or provider name"
+                      style={inputStyle}
+                    />
+                    <input
+                      value={facilitySearchSuburb}
+                      onChange={(e) => setFacilitySearchSuburb(e.target.value)}
+                      placeholder="Suburb"
+                      style={inputStyle}
+                    />
+                    <input
+                      value={facilitySearchState}
+                      onChange={(e) => setFacilitySearchState(e.target.value.toUpperCase())}
+                      placeholder="State"
+                      style={inputStyle}
+                    />
+                    <button onClick={() => searchFacilities()} disabled={disabled || searchingFacilities} style={primaryBtn}>
+                      {searchingFacilities ? "Searching..." : "Search facilities"}
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                    {!facilitySearchResults.length ? (
+                      <div style={{ fontSize: 13, color: "#64748b" }}>
+                        {searchingFacilities
+                          ? "Looking up nearby facilities..."
+                          : "Run a suburb search to add facilities into this case."}
+                      </div>
+                    ) : (
+                      facilitySearchResults.map((facility) => {
+                        const alreadyAdded = existingFacilityIds.has(facility.id);
+                        return (
+                          <div
+                            key={facility.id}
+                            style={{
+                              border: "1px solid #dbeafe",
+                              borderRadius: 12,
+                              background: "#fff",
+                              padding: 12,
+                              display: "grid",
+                              gridTemplateColumns: "1fr auto",
+                              gap: 12,
+                              alignItems: "center",
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 800, color: "#0b3b5b" }}>{facility.name}</div>
+                              <div style={{ fontSize: 13, color: "#475569", marginTop: 4 }}>
+                                {[facility.providerName, [facility.suburb, facility.state, facility.postcode].filter(Boolean).join(" ")].filter(Boolean).join(" • ")}
+                              </div>
+                              {facility.oneLineDescription ? (
+                                <div style={{ fontSize: 13, color: "#334155", marginTop: 6 }}>
+                                  {facility.oneLineDescription}
+                                </div>
+                              ) : null}
+                              <div style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>
+                                {[facility.phone, facility.website].filter(Boolean).join(" • ")}
+                              </div>
+                            </div>
+
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                              {alreadyAdded ? (
+                                <span style={pillMuted}>Already in case</span>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => addFacilityToCase(facility.id, "FULL")}
+                                    disabled={disabled || addingFacilityId === facility.id}
+                                    style={secondaryBtn}
+                                  >
+                                    {addingFacilityId === facility.id ? "Adding..." : "Add to FULL"}
+                                  </button>
+                                  <button
+                                    onClick={() => addFacilityToCase(facility.id, "SHORT")}
+                                    disabled={disabled || addingFacilityId === facility.id}
+                                    style={primaryBtn}
+                                  >
+                                    {addingFacilityId === facility.id ? "Adding..." : "Add to SHORT"}
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
 
                 <SectionTitle text="Status" />
@@ -1162,6 +1336,17 @@ const secondaryBtn: CSSProperties = {
   background: "white",
   color: "#0b3b5b",
   cursor: "pointer",
+  fontWeight: 700,
+};
+
+const pillMuted: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "8px 10px",
+  borderRadius: 999,
+  background: "#e2e8f0",
+  color: "#334155",
+  fontSize: 12,
   fontWeight: 700,
 };
 
