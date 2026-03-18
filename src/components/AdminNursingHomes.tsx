@@ -1613,7 +1613,7 @@ export default function AdminNursingHomes() {
               </div>
             ) : null}
 
-            <SectionTitle text="Option List Fields" />
+            <SectionTitle text="Core Facility Details" />
             <Grid2>
               <Field
                 label="Name *"
@@ -1640,7 +1640,62 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, oneLineDescription: v }))}
                 disabled={disabled}
               />
-              <div />
+              <Field
+                label="Address"
+                value={form.addressLine1}
+                onChange={(v) => setForm((p) => ({ ...p, addressLine1: v }))}
+                disabled={disabled}
+              />
+              <Field
+                label="Website"
+                value={form.website}
+                onChange={(v) => setForm((p) => ({ ...p, website: v }))}
+                disabled={disabled}
+              />
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-end" }}>
+                {form.website.trim() && (
+                  <button
+                    type="button"
+                    onClick={handleScan}
+                    disabled={scanning || disabled}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: scanning ? "#94a3b8" : "#0f766e",
+                      color: "white",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: scanning ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {scanning ? "Scanning…" : "AI Scan Website"}
+                  </button>
+                )}
+                {scanMessage && (
+                  <p style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: scanMessage.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
+                    fontWeight: 600,
+                  }}>
+                    {scanMessage}
+                  </p>
+                )}
+              </div>
+              <Field
+                label="Phone"
+                value={form.phone}
+                onChange={(v) => setForm((p) => ({ ...p, phone: v }))}
+                disabled={disabled}
+              />
+              <Field
+                label="Email"
+                value={form.email}
+                onChange={(v) => setForm((p) => ({ ...p, email: v }))}
+                disabled={disabled}
+              />
               <Field
                 label="Suburb *"
                 value={form.suburb}
@@ -1792,7 +1847,7 @@ export default function AdminNursingHomes() {
               </div>
             ) : null}
 
-            <SectionTitle text="Facility Details Fields" />
+            <SectionTitle text="Website Scan Tools" />
             <Grid2>
               <Field
                 label="Address"
@@ -2158,12 +2213,6 @@ export default function AdminNursingHomes() {
 
             <SectionTitle text="Admin-only (not shown to families)" />
             <Grid2>
-              <Field
-                label="Email"
-                value={form.email}
-                onChange={(v) => setForm((p) => ({ ...p, email: v }))}
-                disabled={disabled}
-              />
               <Field
                 label="Active Vacancies (number)"
                 value={form.activeVacancies}
