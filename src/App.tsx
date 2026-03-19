@@ -23,6 +23,7 @@ import NursingHomesGoldCoast from "./components/NursingHomesGoldCoast";
 import NursingHomesSouthport from "./components/NursingHomesSouthport";
 import NursingHomesRobina from "./components/NursingHomesRobina";
 import NursingHomesBurleigh from "./components/NursingHomesBurleigh";
+import NursingHomesNerang from "./components/NursingHomesNerang";
 import SiteStructuredData from "./components/SiteStructuredData";
 import SeoHead from "./components/SeoHead";
 import FacilityRespond from "./components/FacilityRespond";
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/nursing-homes-southport" element={<NursingHomesSouthport />} />
         <Route path="/nursing-homes-robina" element={<NursingHomesRobina />} />
         <Route path="/nursing-homes-burleigh" element={<NursingHomesBurleigh />} />
+        <Route path="/nursing-homes-nerang" element={<NursingHomesNerang />} />
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/facility/respond/:matchResponseToken" element={<FacilityRespond />} />
@@ -202,6 +204,56 @@ const sharedPageStyles = `
     font-weight: 500;
     text-align: left;
   }
+  .seoCtaCard {
+    width: 100%;
+    max-width: 900px;
+    margin: 28px auto 0;
+    padding: 28px 30px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #0b3b5b 0%, #145374 62%, #1a6b72 100%);
+    color: white;
+    box-sizing: border-box;
+    box-shadow: 0 18px 48px rgba(11, 59, 91, 0.18);
+  }
+  .seoCtaEyebrow {
+    display: inline-block;
+    margin: 0 0 10px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .seoCtaTitle {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.12;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .seoCtaText {
+    margin: 12px 0 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.84);
+    max-width: 700px;
+  }
+  .seoCtaLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    background: white;
+    color: #0b3b5b;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 15px;
+  }
   .bottomSpace { height: 40px; }
   .bottomStrip {
     width: 100%;
@@ -270,6 +322,9 @@ const sharedPageStyles = `
     .stepItem { justify-content: center; }
     .stepImg { width: 100%; max-width: 520px; }
     .stepImg--border { padding: 8px; }
+    .seoCtaCard { padding: 22px 20px; border-radius: 18px; }
+    .seoCtaTitle { font-size: 24px; }
+    .seoCtaText { font-size: 15px; }
     .bottomStrip { border-radius: 10px; flex-direction: column; align-items: flex-start; }
     .footerRight { text-align: left; justify-content: flex-start; }
     .flag { width: 26px; }
@@ -381,6 +436,18 @@ function HomePage() {
             property appraisals, conveyancers, and solicitors (Power of Attorney, wills, and estate planning). We
             can also assist with antique collectors, auctioneers, and valuers if needed.
           </p>
+        </section>
+
+        <section className="seoCtaCard" aria-label="Aged care pathway finder">
+          <div className="seoCtaEyebrow">Free planning tool</div>
+          <h2 className="seoCtaTitle">Not sure where to start with aged care?</h2>
+          <p className="seoCtaText">
+            Use our ACAT Pathway Finder to get a clearer next step in around 4 minutes, including wait times by
+            state, phone scripts, funding amounts, and the pathways most families never hear about.
+          </p>
+          <a className="seoCtaLink" href="/acat-pathway-finder.html">
+            Find your pathway in 4 minutes →
+          </a>
         </section>
 
         <div className="bottomSpace" />

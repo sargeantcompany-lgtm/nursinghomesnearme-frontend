@@ -31,10 +31,22 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.nursinghomesnearme.com.au/nursing-homes-nerang</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.nursinghomesnearme.com.au/referral</loc>
     <lastmod>2026-03-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.nursinghomesnearme.com.au/acat-pathway-finder.html</loc>
+    <lastmod>2026-03-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.nursinghomesnearme.com.au/blog</loc>
@@ -101,6 +113,12 @@
     <lastmod>2025-05-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.nursinghomesnearme.com.au/blog/aged-care-fees-2026-australia-what-families-pay</loc>
+    <lastmod>2026-03-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.nursinghomesnearme.com.au/privacy</loc>
