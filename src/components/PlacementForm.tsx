@@ -99,11 +99,13 @@ const Btn = ({
     onClick={onClick}
     disabled={disabled}
     className={[
-      "rounded-2xl px-5 py-3 text-sm font-semibold transition",
-      disabled ? "opacity-50 cursor-not-allowed" : "hover:opacity-90",
+      "rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-150",
+      disabled
+        ? "opacity-50 cursor-not-allowed"
+        : "hover:shadow-md active:scale-95",
       variant === "primary"
-        ? "bg-[#0D9488] text-white"
-        : "bg-[#F5F1E8] text-[#1E3A5F] border border-[#E5E7EB]",
+        ? "bg-[#0D9488] text-white hover:bg-[#0f7a6e]"
+        : "bg-[#F5F1E8] text-[#1E3A5F] border border-[#E5E7EB] hover:bg-[#EDE9DF]",
     ].join(" ")}
   >
     {children}
@@ -123,9 +125,26 @@ const Radio = ({
   label: string;
   onChange: () => void;
 }) => (
-  <label className="flex items-center gap-3 p-4 rounded-2xl border border-[#E5E7EB] hover:bg-[#FAFAF7] cursor-pointer">
-    <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="h-4 w-4" />
-    <span className="text-[#1F2937]">{label}</span>
+  <label
+    className={[
+      "flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all",
+      checked
+        ? "bg-[#0D9488]/10 border-[#0D9488] shadow-sm"
+        : "border-[#E5E7EB] hover:bg-[#FAFAF7] hover:border-[#0D9488]/30",
+    ].join(" ")}
+  >
+    <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="sr-only" />
+    <div
+      className={[
+        "h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all",
+        checked ? "border-[#0D9488] bg-[#0D9488]" : "border-[#CBD5E1]",
+      ].join(" ")}
+    >
+      {checked && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+    </div>
+    <span className={["font-medium transition-colors", checked ? "text-[#0D9488]" : "text-[#1F2937]"].join(" ")}>
+      {label}
+    </span>
   </label>
 );
 
@@ -138,27 +157,57 @@ const Check = ({
   label: string;
   onChange: () => void;
 }) => (
-  <label className="flex items-start gap-3 p-4 rounded-2xl border border-[#E5E7EB] hover:bg-[#FAFAF7] cursor-pointer">
-    <input type="checkbox" checked={checked} onChange={onChange} className="h-4 w-4 mt-0.5 flex-shrink-0" />
-    <span className="text-[#1F2937]">{label}</span>
+  <label
+    className={[
+      "flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all",
+      checked
+        ? "bg-[#0D9488]/10 border-[#0D9488] shadow-sm"
+        : "border-[#E5E7EB] hover:bg-[#FAFAF7] hover:border-[#0D9488]/30",
+    ].join(" ")}
+  >
+    <div
+      className={[
+        "h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all",
+        checked ? "border-[#0D9488] bg-[#0D9488]" : "border-[#CBD5E1]",
+      ].join(" ")}
+    >
+      {checked && (
+        <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 10 10">
+          <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
+    <input type="checkbox" checked={checked} onChange={onChange} className="sr-only" />
+    <span className={["font-medium transition-colors", checked ? "text-[#0D9488]" : "text-[#1F2937]"].join(" ")}>
+      {label}
+    </span>
   </label>
 );
 
+const STEP_LABELS = ["Your details", "Care needs", "Budget & funding", "Review"];
+
 function Steps({ current, total }: { current: number; total: number }) {
   return (
-    <div className="flex items-center gap-2 mb-6">
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          className={[
-            "h-2 flex-1 rounded-full transition-all",
-            i < current ? "bg-[#0D9488]" : "bg-[#E5E7EB]",
-          ].join(" ")}
-        />
-      ))}
-      <span className="text-xs text-[#64748B] whitespace-nowrap ml-1">
-        Step {current} of {total}
-      </span>
+    <div className="mb-6">
+      <div className="flex items-center gap-1.5 mb-2">
+        {Array.from({ length: total }).map((_, i) => (
+          <div
+            key={i}
+            className={[
+              "h-2 flex-1 rounded-full transition-all duration-300",
+              i < current ? "bg-[#0D9488]" : "bg-[#E5E7EB]",
+            ].join(" ")}
+          />
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-[#0D9488]">
+          {STEP_LABELS[current - 1]}
+        </span>
+        <span className="text-xs text-[#94A3B8]">
+          Step {current} of {total}
+        </span>
+      </div>
     </div>
   );
 }
@@ -358,6 +407,17 @@ export default function PlacementForm() {
   return (
     <div className="bg-white px-2 py-2">
       <div className="max-w-4xl mx-auto w-full">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mb-4 px-1">
+          {["Free service", "No referral fees", "Independent advice", "Real people, not a call centre"].map((t) => (
+            <span key={t} className="flex items-center gap-1.5 text-xs font-semibold text-[#0D9488]">
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6.5" stroke="#0D9488" strokeWidth="1.2" />
+                <path d="M4 7l2 2 4-4" stroke="#0D9488" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {t}
+            </span>
+          ))}
+        </div>
         <Steps current={step} total={totalSteps} />
 
         {step > 1 && step <= totalSteps && (

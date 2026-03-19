@@ -237,6 +237,11 @@ const sharedPageStyles = `
     flex-direction: column;
     justify-content: space-between;
     cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .homePathCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 56px rgba(11, 59, 91, 0.22);
   }
   .homePathCard--search {
     background: linear-gradient(135deg, #0b3b5b 0%, #145374 100%);
@@ -280,6 +285,54 @@ const sharedPageStyles = `
     font-weight: 800;
     font-size: 14px;
     width: fit-content;
+  }
+  .trustBar {
+    width: 100%;
+    max-width: 760px;
+    margin: 14px auto 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: #f0fdf9;
+    border: 1px solid #99f6e4;
+    border-radius: 16px;
+    padding: 12px 20px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+  }
+  .trustBarItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 100px;
+    padding: 4px 8px;
+  }
+  .trustBarNum {
+    font-size: 20px;
+    font-weight: 900;
+    color: #0D9488;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .trustBarLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .trustBarDivider {
+    width: 1px;
+    height: 32px;
+    background: #99f6e4;
+    flex-shrink: 0;
+  }
+  @media (max-width: 640px) {
+    .trustBarDivider { display: none; }
+    .trustBarItem { min-width: 45%; }
   }
   .bottomSpace { height: 40px; }
   .bottomStrip {
@@ -433,6 +486,16 @@ function HomePage() {
 
       <main className="pageWrap">
         <img src="/nursinghomesnearme-woman.png" alt="Nursing Homes Near Me" className="heroImg" />
+
+        <div className="trustBar">
+          <div className="trustBarItem"><span className="trustBarNum">205+</span><span className="trustBarLabel">Facilities in database</span></div>
+          <div className="trustBarDivider" />
+          <div className="trustBarItem"><span className="trustBarNum">Free</span><span className="trustBarLabel">No cost, no referral fees</span></div>
+          <div className="trustBarDivider" />
+          <div className="trustBarItem"><span className="trustBarNum">Local</span><span className="trustBarLabel">Gold Coast specialists</span></div>
+          <div className="trustBarDivider" />
+          <div className="trustBarItem"><span className="trustBarNum">Fast</span><span className="trustBarLabel">Urgent placements welcome</span></div>
+        </div>
 
         <section className="underHeroWrap" aria-label="Introduction">
           <h1 className="underHeroH1">Nursing Homes Near Me</h1>

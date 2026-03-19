@@ -485,7 +485,8 @@ function pick(q, val) {
   // highlight
   const s = document.getElementById('s'+q);
   if(s) s.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
-  if(event && event.currentTarget) event.currentTarget.classList.add('sel');
+  const currentEvent = typeof event !== 'undefined' ? event : null;
+  if(currentEvent && currentEvent.currentTarget) currentEvent.currentTarget.classList.add('sel');
   
   setTimeout(()=>{
     // Skip Q7 if not assessed
@@ -1046,6 +1047,10 @@ function normText(s) {
     .replace(/â†/g, '←')
     .replace(/cafÃ©/g, 'café');
 }
+document.querySelectorAll('button').forEach((btn) => {
+  if (!btn.getAttribute('type')) btn.setAttribute('type', 'button');
+});
+
 </script>
 </body>
 </html>
