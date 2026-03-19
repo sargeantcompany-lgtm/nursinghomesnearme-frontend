@@ -6,15 +6,39 @@ type Circle = {
   id: string;
   firstName: string;
   lastName: string;
+  dateOfBirth: string | null;
   address: string | null;
   suburb: string | null;
   state: string | null;
   postcode: string | null;
-  allergies: string | null;
-  medicalConditions: string | null;
+  medicareNumber: string | null;
+  medicareExpiry: string | null;
   gpName: string | null;
   gpPhone: string | null;
+  hospitalPreference: string | null;
+  allergies: string | null;
+  medicalConditions: string | null;
+  favouriteTv: string | null;
+  foodLikes: string | null;
+  foodDislikes: string | null;
+  teaCoffeePreference: string | null;
+  musicPreference: string | null;
+  religion: string | null;
   carerNotes: string | null;
+  spareKeyHolders: string | null;
+  homeEntryNotes: string | null;
+  billManagerName: string | null;
+  billManagerPhone: string | null;
+  healthInsurance: string | null;
+  healthInsuranceNumber: string | null;
+  poaName: string | null;
+  poaPhone: string | null;
+  poaRelationship: string | null;
+  guardianName: string | null;
+  guardianPhone: string | null;
+  ambulanceCover: boolean;
+  ambulanceMembership: string | null;
+  hasPets: boolean;
   subscriptionStatus: string | null;
 };
 
@@ -24,6 +48,7 @@ type Member = {
   role: string;
   relationship: string | null;
   isCircleManager: boolean;
+  isPoa: boolean;
   avatarColour: string | null;
   responsibilities: string | null;
 };
@@ -43,377 +68,116 @@ type Task = {
   priority: string | null;
 };
 
+type Need = {
+  id: string;
+  title: string;
+  description: string | null;
+  frequency: string | null;
+  icon: string | null;
+  status: string;
+  assignedTo: string | null;
+  assignedName: string | null;
+  coverageNotes: string | null;
+  isChsp: boolean;
+  chspServiceType: string | null;
+  lastCompleted: string | null;
+  nextDue: string | null;
+};
+
+type Bill = {
+  id: string;
+  name: string;
+  provider: string | null;
+  icon: string | null;
+  amount: number | null;
+  dueDate: string | null;
+  frequency: string | null;
+  isDirectDebit: boolean;
+  handledBy: string | null;
+  handledByName: string | null;
+  notes: string | null;
+  status: string;
+};
+
+type Update = {
+  id: string;
+  postedBy: string | null;
+  postedByName: string | null;
+  createdAt: string;
+  message: string;
+  updateType: string;
+  isAlert: boolean;
+};
+
 type LaunchPayload = {
   circle: Circle;
   currentMember: Member | null;
   members: Member[];
   todayTasks: Task[];
+  needs: Need[];
+  bills: Bill[];
+  updates: Update[];
 };
 
 type TabKey = "today" | "needs" | "about" | "circle" | "bills";
 
-const shellStyles = `
-  .ccPage {
-    min-height: 100vh;
-    background: linear-gradient(180deg, #f7f2ea 0%, #fffdf9 45%, #f7f2ea 100%);
-    padding: 24px 16px 40px;
-    box-sizing: border-box;
-  }
-  .ccShell {
-    max-width: 430px;
-    margin: 0 auto;
-    background: #fffdf9;
-    border: 1px solid #e8e0d0;
-    border-radius: 32px;
-    overflow: hidden;
-    box-shadow: 0 24px 60px rgba(26, 32, 53, 0.18);
-  }
-  .ccTopbar {
-    background: #1a2035;
-    color: white;
-    padding: 16px 18px 14px;
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
-  }
-  .ccTopbarLeft {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    min-width: 0;
-  }
-  .ccAvatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #e8563a, #c48a12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    flex: 0 0 auto;
-  }
-  .ccTopbarTitle {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1.05;
-  }
-  .ccTopbarSub {
-    color: rgba(255,255,255,0.65);
-    font-size: 12px;
-    margin-top: 4px;
-  }
-  .ccEmergency {
-    background: linear-gradient(90deg, #7b1a1a, #9c2626);
-    color: #fecaca;
-    font-size: 12px;
-    font-weight: 800;
-    padding: 10px 18px;
-    letter-spacing: 0.03em;
-  }
-  .ccTabs {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    background: white;
-    border-bottom: 1px solid #e8e0d0;
-  }
-  .ccTab {
-    border: 0;
-    background: transparent;
-    padding: 12px 4px 11px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    color: #94a3b8;
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 3px solid transparent;
-  }
-  .ccTabActive {
-    color: #e8563a;
-    border-bottom-color: #e8563a;
-  }
-  .ccPane {
-    padding: 16px 16px 26px;
-  }
-  .ccDateHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .ccDateMain {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: #1a2035;
-  }
-  .ccDateSub {
-    font-size: 13px;
-    color: #64748b;
-    margin-top: 4px;
-  }
-  .ccGhostBtn {
-    border: 0;
-    background: #fff2ef;
-    color: #e8563a;
-    border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 800;
-  }
-  .ccSummary {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-  .ccSummaryCell {
-    background: white;
-    border: 1px solid #e8e0d0;
-    border-radius: 14px;
-    padding: 12px 8px;
-    text-align: center;
-  }
-  .ccSummaryNum {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1;
-    color: #1a2035;
-  }
-  .ccSummaryUrgent {
-    color: #e8563a;
-  }
-  .ccSummaryLbl {
-    margin-top: 4px;
-    font-size: 10px;
-    color: #64748b;
-    line-height: 1.2;
-  }
-  .ccSectionLabel {
-    margin: 18px 0 10px;
-    color: #94a3b8;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  .ccTaskList {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .ccTaskCard {
-    position: relative;
-    background: white;
-    border: 1px solid #e8e0d0;
-    border-left: 4px solid #c48a12;
-    border-radius: 16px;
-    padding: 14px 14px 14px 12px;
-    display: grid;
-    grid-template-columns: 44px 42px 1fr auto;
-    gap: 10px;
-    align-items: start;
-  }
-  .ccTaskUrgent { border-left-color: #e8563a; }
-  .ccTaskDone { border-left-color: #3d7a5e; opacity: 0.72; }
-  .ccTaskTime {
-    color: #64748b;
-    font-size: 11px;
-    font-weight: 800;
-    text-align: center;
-    line-height: 1.15;
-    padding-top: 3px;
-  }
-  .ccTaskIcon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: #fff2ef;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-  }
-  .ccTaskTitle {
-    font-size: 15px;
-    font-weight: 800;
-    color: #1e1e2e;
-    line-height: 1.3;
-  }
-  .ccTaskDesc {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #64748b;
-    line-height: 1.5;
-  }
-  .ccTaskWho {
-    display: inline-flex;
-    align-items: center;
-    margin-top: 6px;
-    padding: 4px 9px;
-    border-radius: 999px;
-    background: #f7f2ea;
-    color: #1e1e2e;
-    font-size: 11px;
-    font-weight: 800;
-  }
-  .ccTaskActions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-end;
-  }
-  .ccClaimBtn, .ccDoneBtn {
-    border: 0;
-    border-radius: 999px;
-    padding: 8px 12px;
-    color: white;
-    font-size: 11px;
-    font-weight: 800;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .ccClaimBtn { background: #e8563a; }
-  .ccDoneBtn { background: #3d7a5e; }
-  .ccDoneMark {
-    color: #3d7a5e;
-    font-size: 18px;
-    font-weight: 900;
-  }
-  .ccCard {
-    background: white;
-    border: 1px solid #e8e0d0;
-    border-radius: 18px;
-    padding: 16px;
-  }
-  .ccCircleCard {
-    background: linear-gradient(135deg, #1a2035, #2d3555);
-    color: white;
-    border-radius: 22px;
-    padding: 18px;
-    margin-bottom: 14px;
-  }
-  .ccCircleName {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 24px;
-    font-weight: 700;
-  }
-  .ccCircleMeta {
-    margin-top: 8px;
-    font-size: 13px;
-    color: rgba(255,255,255,0.72);
-    line-height: 1.55;
-  }
-  .ccChipRow {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .ccChip {
-    border-radius: 999px;
-    padding: 5px 10px;
-    font-size: 11px;
-    font-weight: 800;
-    background: rgba(255,255,255,0.11);
-    border: 1px solid rgba(255,255,255,0.14);
-  }
-  .ccChipAlert {
-    background: rgba(192,57,43,0.35);
-    color: #fecaca;
-    border-color: rgba(192,57,43,0.5);
-  }
-  .ccMemberList {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .ccMemberCard {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    background: white;
-    border: 1px solid #e8e0d0;
-    border-radius: 16px;
-    padding: 14px;
-  }
-  .ccMemberAvatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 800;
-    flex: 0 0 auto;
-  }
-  .ccMemberName {
-    font-size: 15px;
-    font-weight: 800;
-    color: #1e1e2e;
-  }
-  .ccMemberMeta {
-    margin-top: 3px;
-    font-size: 12px;
-    color: #64748b;
-    line-height: 1.45;
-  }
-  .ccPill {
-    display: inline-flex;
-    margin-top: 6px;
-    padding: 3px 8px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 800;
-    background: #fff2ef;
-    color: #e8563a;
-  }
-  .ccEmpty {
-    background: white;
-    border: 1px dashed #d8cfc0;
-    border-radius: 18px;
-    padding: 22px 18px;
-    text-align: center;
-    color: #64748b;
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  .ccError {
-    max-width: 430px;
-    margin: 20px auto 0;
-    padding: 14px 16px;
-    border-radius: 14px;
-    background: #fef2f2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-    font-size: 13px;
-  }
-  @media (max-width: 480px) {
-    .ccPage { padding: 0; }
-    .ccShell { border-radius: 0; border-left: 0; border-right: 0; min-height: 100vh; }
-    .ccSummary { grid-template-columns: repeat(2, 1fr); }
-    .ccTaskCard { grid-template-columns: 40px 40px 1fr; }
-    .ccTaskActions { grid-column: 3; align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
-  }
+const styles = `
+  .ccPage{min-height:100vh;background:linear-gradient(180deg,#f7f2ea 0%,#fffdf9 45%,#f7f2ea 100%);padding:24px 16px 40px;box-sizing:border-box}
+  .ccShell{max-width:430px;margin:0 auto;background:#fffdf9;border:1px solid #e8e0d0;border-radius:32px;overflow:hidden;box-shadow:0 24px 60px rgba(26,32,53,.18)}
+  .ccTopbar{background:#1a2035;color:#fff;padding:16px 18px 14px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+  .ccTopbarLeft{display:flex;gap:12px;align-items:center;min-width:0}
+  .ccAvatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e8563a,#c48a12);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex:0 0 auto}
+  .ccTopbarTitle{font-family:Georgia,"Times New Roman",serif;font-size:20px;font-weight:700;line-height:1.05}
+  .ccTopbarSub{color:rgba(255,255,255,.65);font-size:12px;margin-top:4px}
+  .ccEmergency{background:linear-gradient(90deg,#7b1a1a,#9c2626);color:#fecaca;font-size:12px;font-weight:800;padding:10px 18px;letter-spacing:.03em}
+  .ccTabs{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-bottom:1px solid #e8e0d0}
+  .ccTab{border:0;background:transparent;padding:12px 4px 11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-bottom:3px solid transparent}
+  .ccTabActive{color:#e8563a;border-bottom-color:#e8563a}
+  .ccPane{padding:16px 16px 26px}
+  .ccDateHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .ccDateMain{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:700;color:#1a2035}
+  .ccDateSub{font-size:13px;color:#64748b;margin-top:4px}
+  .ccGhostBtn,.ccActionBtn{border:0;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer}
+  .ccGhostBtn{background:#fff2ef;color:#e8563a}
+  .ccActionBtn{background:#e8563a;color:#fff}
+  .ccDoneBtn{background:#3d7a5e;color:#fff;border:0;border-radius:999px;padding:8px 12px;font-size:11px;font-weight:800;cursor:pointer}
+  .ccSummary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+  .ccSummaryCell,.ccCard,.ccTaskCard,.ccNeedCard,.ccBillCard,.ccUpdateCard,.ccMemberCard{background:#fff;border:1px solid #e8e0d0;border-radius:16px}
+  .ccSummaryCell{text-align:center;padding:12px 8px}
+  .ccSummaryNum{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:700;line-height:1;color:#1a2035}
+  .ccSummaryLbl{margin-top:4px;font-size:10px;color:#64748b;line-height:1.2}
+  .ccSectionLabel{margin:18px 0 10px;color:#94a3b8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+  .ccTaskList,.ccNeedList,.ccBillList,.ccUpdateList,.ccMemberList{display:flex;flex-direction:column;gap:10px}
+  .ccTaskCard{border-left:4px solid #c48a12;padding:14px;display:grid;grid-template-columns:44px 42px 1fr auto;gap:10px;align-items:start}
+  .ccTaskUrgent{border-left-color:#e8563a}.ccTaskDone{border-left-color:#3d7a5e;opacity:.72}
+  .ccTaskTime{color:#64748b;font-size:11px;font-weight:800;text-align:center;line-height:1.15;padding-top:3px}
+  .ccIcon{width:40px;height:40px;border-radius:12px;background:#fff2ef;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#e8563a;flex:0 0 auto}
+  .ccTaskTitle,.ccCardTitle,.ccMemberName{font-size:15px;font-weight:800;color:#1e1e2e;line-height:1.3}
+  .ccTaskDesc,.ccText,.ccMemberMeta{margin-top:4px;font-size:12px;color:#64748b;line-height:1.6}
+  .ccTaskWho,.ccMetaChip,.ccPill,.ccStatusPill{display:inline-flex;align-items:center;margin-top:6px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800}
+  .ccTaskWho,.ccMetaChip{background:#f7f2ea;color:#1e1e2e}
+  .ccPill{background:#fff2ef;color:#e8563a}
+  .ccStatusPill{text-transform:uppercase;letter-spacing:.06em;font-size:10px}
+  .ccStatusPending{background:#fff2ef;color:#e8563a}.ccStatusClaimed{background:#f7f2ea;color:#8a5a00}.ccStatusCovered,.ccStatusDone,.ccStatusAuto{background:#ecfdf3;color:#166534}.ccStatusOverdue{background:#fef2f2;color:#991b1b}.ccStatusDueSoon{background:#fff7ed;color:#9a3412}
+  .ccTaskActions,.ccNeedActions{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .ccCard{padding:16px}
+  .ccCircleCard{background:linear-gradient(135deg,#1a2035,#2d3555);color:#fff;border-radius:22px;padding:18px;margin-bottom:14px}
+  .ccCircleName{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:700}
+  .ccCircleMeta{margin-top:8px;font-size:13px;color:rgba(255,255,255,.72);line-height:1.55}
+  .ccChipRow,.ccInlineRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .ccChip{border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.14)}
+  .ccChipAlert{background:rgba(192,57,43,.35);color:#fecaca;border-color:rgba(192,57,43,.5)}
+  .ccGrid{display:grid;gap:12px}.ccGridTwo{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ccInfoLabel{font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+  .ccInfoValue{font-size:14px;font-weight:700;color:#1e1e2e;line-height:1.5}
+  .ccMemberCard{display:flex;gap:12px;align-items:center;padding:14px}
+  .ccMemberAvatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex:0 0 auto}
+  .ccBillAmount{margin-top:4px;font-family:Georgia,"Times New Roman",serif;font-size:22px;font-weight:700;color:#1a2035}
+  .ccUpdateTime{margin-top:6px;font-size:11px;color:#94a3b8;font-weight:700}
+  .ccEmpty{background:#fff;border:1px dashed #d8cfc0;border-radius:18px;padding:22px 18px;text-align:center;color:#64748b;font-size:14px;line-height:1.6}
+  .ccError{max-width:430px;margin:20px auto 0;padding:14px 16px;border-radius:14px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:13px}
+  @media (max-width:480px){.ccPage{padding:0}.ccShell{border-radius:0;border-left:0;border-right:0;min-height:100vh}.ccSummary{grid-template-columns:repeat(2,1fr)}.ccTaskCard{grid-template-columns:40px 40px 1fr}.ccTaskActions,.ccNeedActions{grid-column:3;align-items:flex-start;flex-direction:row;flex-wrap:wrap}.ccGridTwo{grid-template-columns:1fr}}
 `;
-
-const tabIcons: Record<TabKey, string> = {
-  today: "📅",
-  needs: "✅",
-  about: "💛",
-  circle: "👥",
-  bills: "💳",
-};
 
 const avatarColorMap: Record<string, string> = {
   coral: "linear-gradient(135deg, #e8563a, #f07058)",
@@ -429,6 +193,7 @@ export default function CareCircleApp() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [busyTaskId, setBusyTaskId] = React.useState<string | null>(null);
+  const [busyNeedId, setBusyNeedId] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -460,13 +225,7 @@ export default function CareCircleApp() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.message || `Failed to ${action} task`);
-      setData((current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          todayTasks: current.todayTasks.map((task) => (task.id === taskId ? body : task)),
-        };
-      });
+      await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to ${action} task`);
     } finally {
@@ -474,7 +233,31 @@ export default function CareCircleApp() {
     }
   }
 
+  async function claimNeed(needId: string) {
+    if (!data?.circle?.id || !data?.currentMember?.id) return;
+    setBusyNeedId(needId);
+    try {
+      const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/needs/${needId}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: data.currentMember.id }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.message || "Failed to claim need");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to claim need");
+    } finally {
+      setBusyNeedId(null);
+    }
+  }
+
   const todayTasks = data?.todayTasks ?? [];
+  const needs = data?.needs ?? [];
+  const bills = data?.bills ?? [];
+  const updates = data?.updates ?? [];
+  const members = data?.members ?? [];
+  const urgentTasks = todayTasks.filter((task) => task.priority === "urgent").length;
   const unclaimedCount = todayTasks.filter((task) => !task.assignedTo && task.status === "pending").length;
   const doneCount = todayTasks.filter((task) => task.status === "done").length;
   const visitCount = todayTasks.filter((task) => ["family_visit", "personal_care", "gp_appointment"].includes(task.taskType)).length;
@@ -483,57 +266,41 @@ export default function CareCircleApp() {
     <div className="ccPage">
       <SeoHead
         title="CareCircle | Daily care coordination for families"
-        description="CareCircle helps families coordinate visits, care tasks, and day-to-day support in one place."
+        description="CareCircle helps families coordinate visits, care tasks, updates, and practical care support in one place."
         canonicalUrl="https://www.nursinghomesnearme.com.au/carecircle"
         ogType="website"
         imageUrl="https://www.nursinghomesnearme.com.au/social-preview.png"
       />
-      <style>{shellStyles}</style>
-
+      <style>{styles}</style>
       {error ? <div className="ccError">{error}</div> : null}
-
       <div className="ccShell">
         <div className="ccTopbar">
           <div className="ccTopbarLeft">
-            <div className="ccAvatar">👵</div>
+            <div className="ccAvatar">CC</div>
             <div>
-              <div className="ccTopbarTitle">
-                {data ? `${data.circle.firstName}'s Circle` : "CareCircle"}
-              </div>
+              <div className="ccTopbarTitle">{data ? `${data.circle.firstName}'s Circle` : "CareCircle"}</div>
               <div className="ccTopbarSub">
                 {data?.circle.suburb && data?.circle.state
-                  ? `Safe at home · ${data.circle.suburb}, ${data.circle.state}`
+                  ? `Safe at home | ${data.circle.suburb}, ${data.circle.state}`
                   : "Daily care coordination for families"}
               </div>
             </div>
           </div>
           <button className="ccGhostBtn" onClick={load}>Refresh</button>
         </div>
-
         <div className="ccEmergency">
-          Emergency contacts · 000 · {data?.circle.gpName || "Family + GP"} · allergies visible on every screen
+          Emergency contacts | 000 | {data?.circle.gpName || "Family + GP"} | allergies visible on every screen
         </div>
-
         <div className="ccTabs">
           {(["today", "needs", "about", "circle", "bills"] as TabKey[]).map((key) => (
-            <button
-              key={key}
-              className={`ccTab ${tab === key ? "ccTabActive" : ""}`}
-              onClick={() => setTab(key)}
-            >
-              <span>{tabIcons[key]}</span>
-              <span>
-                {key === "about" ? "About Nan" : key.charAt(0).toUpperCase() + key.slice(1)}
-              </span>
+            <button key={key} className={`ccTab ${tab === key ? "ccTabActive" : ""}`} onClick={() => setTab(key)}>
+              <span>{key === "about" ? "A" : key[0].toUpperCase()}</span>
+              <span>{key === "about" ? "About Nan" : capitalize(key)}</span>
             </button>
           ))}
         </div>
-
         <div className="ccPane">
-          {loading && !data ? (
-            <div className="ccEmpty">Loading CareCircle...</div>
-          ) : null}
-
+          {loading && !data ? <div className="ccEmpty">Loading CareCircle...</div> : null}
           {!loading && data && tab === "today" ? (
             <>
               <div className="ccDateHeader">
@@ -541,28 +308,14 @@ export default function CareCircleApp() {
                   <div className="ccDateMain">{formatTodayHeader()}</div>
                   <div className="ccDateSub">{todayTasks.length} things happening today</div>
                 </div>
-                <button className="ccGhostBtn" type="button">Week →</button>
+                <button className="ccGhostBtn" type="button">Week view soon</button>
               </div>
-
               <div className="ccSummary">
-                <div className="ccSummaryCell">
-                  <div className="ccSummaryNum">{visitCount}</div>
-                  <div className="ccSummaryLbl">Visits today</div>
-                </div>
-                <div className="ccSummaryCell">
-                  <div className="ccSummaryNum ccSummaryUrgent">{unclaimedCount}</div>
-                  <div className="ccSummaryLbl">Unclaimed tasks</div>
-                </div>
-                <div className="ccSummaryCell">
-                  <div className="ccSummaryNum">{doneCount}</div>
-                  <div className="ccSummaryLbl">Done already</div>
-                </div>
-                <div className="ccSummaryCell">
-                  <div className="ccSummaryNum">{data.currentMember?.name?.split(" ")[0] || "You"}</div>
-                  <div className="ccSummaryLbl">Current member</div>
-                </div>
+                <div className="ccSummaryCell"><div className="ccSummaryNum">{visitCount}</div><div className="ccSummaryLbl">Visits today</div></div>
+                <div className="ccSummaryCell"><div className="ccSummaryNum">{unclaimedCount}</div><div className="ccSummaryLbl">Unclaimed tasks</div></div>
+                <div className="ccSummaryCell"><div className="ccSummaryNum">{doneCount}</div><div className="ccSummaryLbl">Done already</div></div>
+                <div className="ccSummaryCell"><div className="ccSummaryNum">{urgentTasks}</div><div className="ccSummaryLbl">Urgent today</div></div>
               </div>
-
               {(["morning", "afternoon", "evening"] as const).map((period) => {
                 const tasks = todayTasks.filter((task) => getPeriod(task.scheduledTime) === period);
                 if (!tasks.length) return null;
@@ -571,42 +324,25 @@ export default function CareCircleApp() {
                     <div className="ccSectionLabel">{period}</div>
                     <div className="ccTaskList">
                       {tasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className={[
-                            "ccTaskCard",
-                            task.priority === "urgent" ? "ccTaskUrgent" : "",
-                            task.status === "done" ? "ccTaskDone" : "",
-                          ].join(" ")}
-                        >
+                        <div key={task.id} className={["ccTaskCard", task.priority === "urgent" ? "ccTaskUrgent" : "", task.status === "done" ? "ccTaskDone" : ""].join(" ")}>
                           <div className="ccTaskTime">{formatTime(task.scheduledTime)}</div>
-                          <div className="ccTaskIcon">{task.icon || iconForTask(task.taskType)}</div>
+                          <div className="ccIcon">{taskGlyph(task.taskType)}</div>
                           <div>
                             <div className="ccTaskTitle">{task.title}</div>
                             {task.description ? <div className="ccTaskDesc">{task.description}</div> : null}
-                            <div className="ccTaskWho">
-                              {task.assignedName ? task.assignedName : "Unclaimed"}
-                            </div>
+                            <div className="ccTaskWho">{task.assignedName ? task.assignedName : "Unclaimed"}</div>
                           </div>
                           <div className="ccTaskActions">
                             {task.status === "done" ? (
-                              <div className="ccDoneMark">✓</div>
+                              <div className="ccDoneMark">Done</div>
                             ) : (
                               <>
                                 {!task.assignedTo ? (
-                                  <button
-                                    className="ccClaimBtn"
-                                    disabled={busyTaskId === task.id}
-                                    onClick={() => taskAction(task.id, "claim")}
-                                  >
+                                  <button className="ccActionBtn" disabled={busyTaskId === task.id} onClick={() => taskAction(task.id, "claim")}>
                                     {busyTaskId === task.id ? "Claiming..." : "Claim it"}
                                   </button>
                                 ) : null}
-                                <button
-                                  className="ccDoneBtn"
-                                  disabled={busyTaskId === task.id}
-                                  onClick={() => taskAction(task.id, "done")}
-                                >
+                                <button className="ccDoneBtn" disabled={busyTaskId === task.id} onClick={() => taskAction(task.id, "done")}>
                                   {busyTaskId === task.id ? "Saving..." : "Done"}
                                 </button>
                               </>
@@ -618,6 +354,58 @@ export default function CareCircleApp() {
                   </div>
                 );
               })}
+              <div className="ccSectionLabel">Recent updates</div>
+              <div className="ccUpdateList">
+                {updates.slice(0, 3).map((update) => (
+                  <div className="ccUpdateCard ccCard" key={update.id}>
+                    <div className="ccCardTitle">{update.postedByName || "Circle update"}</div>
+                    <div className="ccText">{update.message}</div>
+                    <div className="ccUpdateTime">{formatDateTime(update.createdAt)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          {!loading && data && tab === "needs" ? (
+            <>
+              <div className="ccDateHeader">
+                <div>
+                  <div className="ccDateMain">Needs board</div>
+                  <div className="ccDateSub">Recurring help the whole family can see and share</div>
+                </div>
+              </div>
+              <div className="ccNeedList">
+                {needs.map((need) => (
+                  <div className="ccNeedCard ccCard" key={need.id}>
+                    <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                      <div className="ccIcon">{needGlyph(need)}</div>
+                      <div style={{ flex: 1 }}>
+                        <div className="ccCardTitle">{need.title}</div>
+                        {need.description ? <div className="ccText">{need.description}</div> : null}
+                        <div className="ccInlineRow">
+                          {need.frequency ? <span className="ccMetaChip">{need.frequency}</span> : null}
+                          {need.assignedName ? <span className="ccMetaChip">{need.assignedName}</span> : null}
+                          {need.isChsp ? <span className="ccMetaChip">CHSP</span> : null}
+                        </div>
+                        {need.coverageNotes ? <div className="ccText">{need.coverageNotes}</div> : null}
+                        <div className={`ccStatusPill ${needStatusClass(need.status)}`}>{humanizeStatus(need.status)}</div>
+                        <div className="ccInlineRow">
+                          {need.lastCompleted ? <span className="ccMetaChip">Last done {formatShortDate(need.lastCompleted)}</span> : null}
+                          {need.nextDue ? <span className="ccMetaChip">Next due {formatShortDate(need.nextDue)}</span> : null}
+                        </div>
+                      </div>
+                      <div className="ccNeedActions">
+                        {!need.assignedTo && need.status !== "covered" ? (
+                          <button className="ccActionBtn" disabled={busyNeedId === need.id} onClick={() => claimNeed(need.id)}>
+                            {busyNeedId === need.id ? "Claiming..." : "Claim"}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </>
           ) : null}
 
@@ -632,49 +420,135 @@ export default function CareCircleApp() {
                 </div>
                 <div className="ccChipRow">
                   {data.circle.allergies ? <div className="ccChip ccChipAlert">{data.circle.allergies}</div> : null}
-                  {splitCsv(data.circle.medicalConditions).map((item) => (
-                    <div className="ccChip" key={item}>{item}</div>
-                  ))}
+                  {splitTextList(data.circle.medicalConditions).map((item) => <div className="ccChip" key={item}>{item}</div>)}
                 </div>
               </div>
+              <div className="ccGrid ccGridTwo">
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Medicare</div>
+                  <div className="ccInfoValue">{joinBits([data.circle.medicareNumber, data.circle.medicareExpiry ? `Exp ${data.circle.medicareExpiry}` : null]) || "Not added yet"}</div>
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Hospital</div>
+                  <div className="ccInfoValue">{data.circle.hospitalPreference || "Not added yet"}</div>
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Food + drink</div>
+                  <div className="ccInfoValue">{joinBits([data.circle.foodLikes, data.circle.teaCoffeePreference]) || "Not added yet"}</div>
+                  {data.circle.foodDislikes ? <div className="ccText">Avoid: {data.circle.foodDislikes}</div> : null}
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Comforts</div>
+                  <div className="ccInfoValue">{joinBits([data.circle.favouriteTv, data.circle.musicPreference, data.circle.religion]) || "Not added yet"}</div>
+                </div>
+              </div>
+              <div className="ccSectionLabel">Practical notes</div>
               <div className="ccCard">
-                <div className="ccSectionLabel" style={{ marginTop: 0 }}>Carer notes</div>
-                <div style={{ fontSize: 14, lineHeight: 1.7, color: "#475569" }}>
-                  {data.circle.carerNotes || "Circle notes will appear here."}
+                <div className="ccText">{data.circle.carerNotes || "Circle notes will appear here."}</div>
+                <div className="ccInlineRow">
+                  {data.circle.spareKeyHolders ? <span className="ccMetaChip">Keys: {data.circle.spareKeyHolders}</span> : null}
+                  {data.circle.homeEntryNotes ? <span className="ccMetaChip">Entry: {data.circle.homeEntryNotes}</span> : null}
+                  {data.circle.hasPets ? <span className="ccMetaChip">Pets at home</span> : null}
                 </div>
               </div>
             </>
           ) : null}
 
           {!loading && data && tab === "circle" ? (
-            <div className="ccMemberList">
-              {data.members.map((member) => (
-                <div className="ccMemberCard" key={member.id}>
-                  <div
-                    className="ccMemberAvatar"
-                    style={{ background: avatarColorMap[member.avatarColour || "coral"] || avatarColorMap.coral }}
-                  >
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="ccMemberName">{member.name}</div>
-                    <div className="ccMemberMeta">
-                      {joinBits([member.relationship, member.role])}
-                      {member.responsibilities ? <><br />{member.responsibilities}</> : null}
-                    </div>
-                    {member.isCircleManager ? <div className="ccPill">Circle manager</div> : null}
-                  </div>
+            <>
+              <div className="ccDateHeader">
+                <div>
+                  <div className="ccDateMain">Circle members</div>
+                  <div className="ccDateSub">Who is helping and who holds authority</div>
                 </div>
-              ))}
-            </div>
+              </div>
+              <div className="ccMemberList">
+                {members.map((member) => (
+                  <div className="ccMemberCard" key={member.id}>
+                    <div className="ccMemberAvatar" style={{ background: avatarColorMap[member.avatarColour || "coral"] || avatarColorMap.coral }}>
+                      {initials(member.name)}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div className="ccMemberName">{member.name}</div>
+                      <div className="ccMemberMeta">
+                        {joinBits([member.relationship, capitalize(member.role)])}
+                        {member.responsibilities ? <><br />{member.responsibilities}</> : null}
+                      </div>
+                      <div className="ccInlineRow">
+                        {member.isCircleManager ? <span className="ccPill">Circle manager</span> : null}
+                        {member.isPoa ? <span className="ccPill">POA</span> : null}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="ccSectionLabel">Legal + support</div>
+              <div className="ccGrid ccGridTwo">
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Power of attorney</div>
+                  <div className="ccInfoValue">{joinBits([data.circle.poaName, data.circle.poaRelationship]) || "Not added yet"}</div>
+                  {data.circle.poaPhone ? <div className="ccText">{data.circle.poaPhone}</div> : null}
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Guardian</div>
+                  <div className="ccInfoValue">{data.circle.guardianName || "Not added yet"}</div>
+                  {data.circle.guardianPhone ? <div className="ccText">{data.circle.guardianPhone}</div> : null}
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Ambulance cover</div>
+                  <div className="ccInfoValue">{data.circle.ambulanceCover ? "Covered" : "Unknown"}</div>
+                  {data.circle.ambulanceMembership ? <div className="ccText">{data.circle.ambulanceMembership}</div> : null}
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Health insurance</div>
+                  <div className="ccInfoValue">{data.circle.healthInsurance || "Not added yet"}</div>
+                  {data.circle.healthInsuranceNumber ? <div className="ccText">{data.circle.healthInsuranceNumber}</div> : null}
+                </div>
+              </div>
+            </>
           ) : null}
 
-          {!loading && data && (tab === "needs" || tab === "bills") ? (
-            <div className="ccEmpty">
-              {tab === "needs"
-                ? "Needs board is the next CareCircle build step. The Week 1 foundation is in place now through the live Today screen."
-                : "Bills is queued for the next CareCircle step. Today, circle data, and member data are now running from the real database."}
-            </div>
+          {!loading && data && tab === "bills" ? (
+            <>
+              <div className="ccDateHeader">
+                <div>
+                  <div className="ccDateMain">Bills and money</div>
+                  <div className="ccDateSub">Keep due dates and account handling visible for the family</div>
+                </div>
+              </div>
+              <div className="ccGrid ccGridTwo" style={{ marginBottom: "16px" }}>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Bill manager</div>
+                  <div className="ccInfoValue">{data.circle.billManagerName || "Not added yet"}</div>
+                  {data.circle.billManagerPhone ? <div className="ccText">{data.circle.billManagerPhone}</div> : null}
+                </div>
+                <div className="ccCard">
+                  <div className="ccInfoLabel">Subscription</div>
+                  <div className="ccInfoValue">{capitalize(data.circle.subscriptionStatus || "trial")}</div>
+                </div>
+              </div>
+              <div className="ccBillList">
+                {bills.map((bill) => (
+                  <div className="ccBillCard ccCard" key={bill.id}>
+                    <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                      <div className="ccIcon">{billGlyph(bill.name)}</div>
+                      <div style={{ flex: 1 }}>
+                        <div className="ccCardTitle">{bill.name}</div>
+                        <div className="ccText">{joinBits([bill.provider, bill.frequency ? capitalize(bill.frequency) : null])}</div>
+                        <div className="ccBillAmount">{formatCurrency(bill.amount)}</div>
+                        <div className={`ccStatusPill ${billStatusClass(bill.status)}`}>{humanizeStatus(bill.status)}</div>
+                        <div className="ccInlineRow">
+                          {bill.dueDate ? <span className="ccMetaChip">Due {formatShortDate(bill.dueDate)}</span> : null}
+                          {bill.handledByName ? <span className="ccMetaChip">Handled by {bill.handledByName}</span> : null}
+                          {bill.isDirectDebit ? <span className="ccMetaChip">Direct debit</span> : null}
+                        </div>
+                        {bill.notes ? <div className="ccText">{bill.notes}</div> : null}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : null}
         </div>
       </div>
@@ -682,23 +556,20 @@ export default function CareCircleApp() {
   );
 }
 
-function splitCsv(value: string | null | undefined) {
-  return (value || "")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function splitTextList(value: string | null | undefined) {
+  return (value || "").split(/[,|]/).map((item) => item.trim()).filter(Boolean);
 }
 
 function joinBits(parts: Array<string | null | undefined>) {
-  return parts.filter(Boolean).join(" · ");
+  return parts.filter(Boolean).join(" | ");
 }
 
 function formatTodayHeader() {
-  return new Intl.DateTimeFormat("en-AU", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(new Date());
+  return new Intl.DateTimeFormat("en-AU", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 }
 
 function formatTime(raw: string | null) {
@@ -711,6 +582,20 @@ function formatTime(raw: string | null) {
   return new Intl.DateTimeFormat("en-AU", { hour: "numeric", minute: "2-digit" }).format(date);
 }
 
+function formatShortDate(raw: string | null) {
+  if (!raw) return "";
+  return new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short" }).format(new Date(raw));
+}
+
+function formatDateTime(raw: string) {
+  return new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(raw));
+}
+
+function formatCurrency(value: number | null) {
+  if (value == null) return "Amount not set";
+  return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 2 }).format(value);
+}
+
 function getPeriod(raw: string | null) {
   if (!raw) return "afternoon";
   const hour = Number(raw.split(":")[0]);
@@ -719,19 +604,54 @@ function getPeriod(raw: string | null) {
   return "evening";
 }
 
-function iconForTask(taskType: string) {
+function initials(name: string) {
+  return name.split(" ").slice(0, 2).map((part) => part[0]?.toUpperCase() || "").join("");
+}
+
+function taskGlyph(taskType: string) {
   switch (taskType) {
-    case "meal":
-      return "🍽️";
-    case "medication":
-      return "💊";
-    case "personal_care":
-      return "🧼";
-    case "family_visit":
-      return "👨";
-    case "gp_appointment":
-      return "🩺";
-    default:
-      return "✅";
+    case "meal": return "ME";
+    case "medication": return "RX";
+    case "personal_care": return "PC";
+    case "family_visit": return "FV";
+    case "gp_appointment": return "GP";
+    default: return "TK";
+  }
+}
+
+function needGlyph(need: Need) {
+  if (need.isChsp) return "CH";
+  if (need.title.toLowerCase().includes("dog")) return "DW";
+  if (need.title.toLowerCase().includes("lunch")) return "LN";
+  return "ND";
+}
+
+function billGlyph(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes("electric")) return "EL";
+  if (lower.includes("phone") || lower.includes("internet")) return "PH";
+  if (lower.includes("rates")) return "RT";
+  if (lower.includes("medibank") || lower.includes("health")) return "HI";
+  return "BL";
+}
+
+function humanizeStatus(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function needStatusClass(status: string) {
+  switch (status) {
+    case "covered": return "ccStatusCovered";
+    case "claimed": return "ccStatusClaimed";
+    default: return "ccStatusPending";
+  }
+}
+
+function billStatusClass(status: string) {
+  switch (status) {
+    case "overdue": return "ccStatusOverdue";
+    case "due_soon": return "ccStatusDueSoon";
+    case "auto": return "ccStatusAuto";
+    default: return "ccStatusClaimed";
   }
 }
