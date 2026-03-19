@@ -339,6 +339,8 @@ export default function AdminNursingHomes() {
   const [scanMessage, setScanMessage] = useState<string | null>(null);
   const [scanningVacancies, setScanningVacancies] = useState(false);
   const [vacancyScanProgress, setVacancyScanProgress] = useState<{ done: number; total: number } | null>(null);
+  const [bulkGapFilling, setBulkGapFilling] = useState(false);
+  const [bulkGapFillProgress, setBulkGapFillProgress] = useState("");
   const [vacancyScanResults, setVacancyScanResults] = useState<Array<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>>([]);
   const [currentMeta, setCurrentMeta] = useState<{
     websiteSaysVacancies?: string | null;
@@ -527,6 +529,58 @@ export default function AdminNursingHomes() {
       setScanMessage(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setScanning(false);
+    }
+  }
+
+  async function handleGapFill() {
+    if (currentId == null) return;
+    setScanning(true);
+    setScanMessage(null);
+    try {
+      const updated = await apiFetch<Record<string, unknown>>(`/api/admin/nursing-homes/gap-fill/${currentId}`, {
+        method: "POST",
+      });
+      // Refresh form with saved data
+      setForm((p) => ({
+        ...p,
+        beds:               updated.beds != null ? String(updated.beds) : p.beds,
+        description:        String(updated.description || p.description),
+        oneLineDescription: String(updated.oneLineDescription || p.oneLineDescription),
+        radFrom:            updated.radFrom != null ? String(updated.radFrom) : p.radFrom,
+        radTo:              updated.radTo != null ? String(updated.radTo) : p.radTo,
+        dapFrom:            updated.dapFrom != null ? String(updated.dapFrom) : p.dapFrom,
+        dapTo:              updated.dapTo != null ? String(updated.dapTo) : p.dapTo,
+        phone:              String(updated.phone || p.phone),
+        email:              String(updated.email || p.email),
+        internalNotes:      String(updated.internalNotes || p.internalNotes),
+      }));
+      setScanMessage("Gap-fill complete — blanks filled from MyAgedCare + website and saved.");
+    } catch (e: unknown) {
+      setScanMessage(`Gap-fill failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  async function handleBulkGapFill() {
+    if (!window.confirm("This will scan all facilities with missing beds/description/pricing via Firecrawl and save directly to the database. Continue?")) return;
+    setBulkGapFilling(true);
+    setBulkGapFillProgress("");
+    setNotice(null);
+    setError(null);
+    try {
+      setBulkGapFillProgress("running…");
+      const result = await apiFetch<{ processed: number; filled: number; unchanged: number; errors: number; errorDetails: string[] }>(
+        "/api/admin/nursing-homes/bulk-gap-fill",
+        { method: "POST", body: JSON.stringify({}) }
+      );
+      setNotice(`Bulk gap-fill done: ${result.filled} filled, ${result.unchanged} unchanged, ${result.errors} errors.${result.errorDetails?.length ? " Errors: " + result.errorDetails.slice(0, 3).join("; ") : ""}`);
+      await refreshList();
+    } catch (e: unknown) {
+      setError(`Bulk gap-fill failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBulkGapFilling(false);
+      setBulkGapFillProgress("");
     }
   }
 
@@ -1259,6 +1313,20 @@ export default function AdminNursingHomes() {
                 : "Scan All Vacancies (AI)"}
             </button>
 
+            <button
+              onClick={() => handleBulkGapFill()}
+              disabled={disabled || bulkGapFilling}
+              style={{
+                ...secondaryBtn,
+                background: bulkGapFilling ? "#94a3b8" : "#0369a1",
+                color: "white",
+                border: "none",
+                fontWeight: 700,
+              }}
+            >
+              {bulkGapFilling ? `Filling gaps… ${bulkGapFillProgress}` : "Bulk Fill All Gaps (Gov)"}
+            </button>
+
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>
               API: {API_BASE}
             </div>
@@ -1684,11 +1752,31 @@ export default function AdminNursingHomes() {
                     {scanning ? "Scanning…" : "AI Scan Website"}
                   </button>
                 )}
+                {currentId != null && (
+                  <button
+                    type="button"
+                    onClick={handleGapFill}
+                    disabled={scanning || disabled}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: scanning ? "#94a3b8" : "#0369a1",
+                      color: "white",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: scanning ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {scanning ? "Scanning…" : "Fill Gaps (Gov)"}
+                  </button>
+                )}
                 {scanMessage && (
                   <p style={{
                     margin: 0,
                     fontSize: 12,
-                    color: scanMessage?.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
+                    color: scanMessage?.startsWith("Scan failed") || scanMessage?.startsWith("Gap-fill failed") ? "#dc2626" : "#0f766e",
                     fontWeight: 600,
                   }}>
                     {scanMessage}
@@ -1900,11 +1988,31 @@ export default function AdminNursingHomes() {
                     {scanning ? "Scanning…" : "AI Scan Website"}
                   </button>
                 )}
+                {currentId != null && (
+                  <button
+                    type="button"
+                    onClick={handleGapFill}
+                    disabled={scanning || disabled}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: "none",
+                      background: scanning ? "#94a3b8" : "#0369a1",
+                      color: "white",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: scanning ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {scanning ? "Scanning…" : "Fill Gaps (Gov)"}
+                  </button>
+                )}
                 {scanMessage && (
                   <p style={{
                     margin: 0,
                     fontSize: 12,
-                    color: scanMessage?.startsWith("Scan failed") ? "#dc2626" : "#0f766e",
+                    color: scanMessage?.startsWith("Scan failed") || scanMessage?.startsWith("Gap-fill failed") ? "#dc2626" : "#0f766e",
                     fontWeight: 600,
                   }}>
                     {scanMessage}
