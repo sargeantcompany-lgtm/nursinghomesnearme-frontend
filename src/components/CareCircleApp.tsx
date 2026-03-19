@@ -130,6 +130,7 @@ const styles = `
   .ccTopbarTitle{font-family:Georgia,"Times New Roman",serif;font-size:20px;font-weight:700;line-height:1.05}
   .ccTopbarSub{color:rgba(255,255,255,.65);font-size:12px;margin-top:4px}
   .ccEmergency{background:linear-gradient(90deg,#7b1a1a,#9c2626);color:#fecaca;font-size:12px;font-weight:800;padding:10px 18px;letter-spacing:.03em}
+  .ccEmergencyButton{cursor:pointer}
   .ccTabs{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-bottom:1px solid #e8e0d0}
   .ccTab{border:0;background:transparent;padding:12px 4px 11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-bottom:3px solid transparent}
   .ccTabActive{color:#e8563a;border-bottom-color:#e8563a}
@@ -178,6 +179,9 @@ const styles = `
   .ccField,.ccTextarea,.ccSelect{width:100%;border:1px solid #d7cebe;border-radius:12px;padding:10px 12px;font:inherit;color:#1e1e2e;background:#fff}
   .ccTextarea{min-height:88px;resize:vertical}
   .ccFieldRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .ccModalBack{position:fixed;inset:0;background:rgba(26,32,53,.45);display:flex;align-items:flex-end;justify-content:center;padding:0 12px 12px;z-index:50}
+  .ccModal{width:100%;max-width:430px;background:#fffdf9;border:1px solid #e8e0d0;border-radius:24px;padding:18px;box-shadow:0 24px 60px rgba(26,32,53,.25)}
+  .ccModalHandle{width:42px;height:4px;border-radius:999px;background:#d8cfc0;margin:0 auto 16px}
   .ccEmpty{background:#fff;border:1px dashed #d8cfc0;border-radius:18px;padding:22px 18px;text-align:center;color:#64748b;font-size:14px;line-height:1.6}
   .ccError{max-width:430px;margin:20px auto 0;padding:14px 16px;border-radius:14px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:13px}
   @media (max-width:480px){.ccPage{padding:0}.ccShell{border-radius:0;border-left:0;border-right:0;min-height:100vh}.ccSummary{grid-template-columns:repeat(2,1fr)}.ccTaskCard{grid-template-columns:40px 40px 1fr}.ccTaskActions,.ccNeedActions{grid-column:3;align-items:flex-start;flex-direction:row;flex-wrap:wrap}.ccGridTwo,.ccFieldRow{grid-template-columns:1fr}}
@@ -199,6 +203,8 @@ export default function CareCircleApp() {
   const [busyTaskId, setBusyTaskId] = React.useState<string | null>(null);
   const [busyNeedId, setBusyNeedId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState<string | null>(null);
+  const [showEmergency, setShowEmergency] = React.useState(false);
+  const [activeMemberId, setActiveMemberId] = React.useState<string | null>(null);
   const [taskDraft, setTaskDraft] = React.useState({ title: "", description: "", scheduledTime: "", taskType: "other", priority: "normal" });
   const [needDraft, setNeedDraft] = React.useState({ title: "", description: "", frequency: "Weekly", coverageNotes: "" });
   const [billDraft, setBillDraft] = React.useState({ name: "", provider: "", amount: "", dueDate: "", frequency: "monthly", notes: "" });
@@ -224,13 +230,13 @@ export default function CareCircleApp() {
   }, [load]);
 
   async function taskAction(taskId: string, action: "claim" | "done") {
-    if (!data?.circle?.id || !data?.currentMember?.id) return;
+    if (!data?.circle?.id || !actingMember?.id) return;
     setBusyTaskId(taskId);
     try {
       const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/tasks/${taskId}/${action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: data.currentMember.id }),
+        body: JSON.stringify({ memberId: actingMember.id }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.message || `Failed to ${action} task`);
@@ -243,13 +249,13 @@ export default function CareCircleApp() {
   }
 
   async function claimNeed(needId: string) {
-    if (!data?.circle?.id || !data?.currentMember?.id) return;
+    if (!data?.circle?.id || !actingMember?.id) return;
     setBusyNeedId(needId);
     try {
       const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/needs/${needId}/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: data.currentMember.id }),
+        body: JSON.stringify({ memberId: actingMember.id }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.message || "Failed to claim need");
@@ -273,8 +279,8 @@ export default function CareCircleApp() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          memberId: data.currentMember?.id ?? null,
-          postedByName: data.currentMember?.name ?? "Circle member",
+          memberId: actingMember?.id ?? null,
+          postedByName: actingMember?.name ?? "Circle member",
           ...payload,
         }),
       });
@@ -294,6 +300,10 @@ export default function CareCircleApp() {
   const bills = data?.bills ?? [];
   const updates = data?.updates ?? [];
   const members = data?.members ?? [];
+  const actingMember = React.useMemo(() => {
+    if (!data) return null;
+    return members.find((member) => member.id === activeMemberId) || data.currentMember;
+  }, [activeMemberId, data, members]);
   const urgentTasks = todayTasks.filter((task) => task.priority === "urgent").length;
   const unclaimedCount = todayTasks.filter((task) => !task.assignedTo && task.status === "pending").length;
   const doneCount = todayTasks.filter((task) => task.status === "done").length;
@@ -325,7 +335,7 @@ export default function CareCircleApp() {
           </div>
           <button className="ccGhostBtn" onClick={load}>Refresh</button>
         </div>
-        <div className="ccEmergency">
+        <div className="ccEmergency ccEmergencyButton" onClick={() => setShowEmergency(true)}>
           Emergency contacts | 000 | {data?.circle.gpName || "Family + GP"} | allergies visible on every screen
         </div>
         <div className="ccTabs">
@@ -352,6 +362,21 @@ export default function CareCircleApp() {
                 <div className="ccSummaryCell"><div className="ccSummaryNum">{unclaimedCount}</div><div className="ccSummaryLbl">Unclaimed tasks</div></div>
                 <div className="ccSummaryCell"><div className="ccSummaryNum">{doneCount}</div><div className="ccSummaryLbl">Done already</div></div>
                 <div className="ccSummaryCell"><div className="ccSummaryNum">{urgentTasks}</div><div className="ccSummaryLbl">Urgent today</div></div>
+              </div>
+              <div className="ccCard" style={{ marginBottom: "16px" }}>
+                <div className="ccInfoLabel">Acting as</div>
+                <select
+                  className="ccSelect"
+                  value={actingMember?.id || ""}
+                  onChange={(event) => setActiveMemberId(event.target.value || null)}
+                >
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name} - {capitalize(member.role)}
+                    </option>
+                  ))}
+                </select>
+                <div className="ccText">Use this demo switch until Clerk auth is wired. Claims and notes will post as this member.</div>
               </div>
               {(["morning", "afternoon", "evening"] as const).map((period) => {
                 const tasks = todayTasks.filter((task) => getPeriod(task.scheduledTime) === period);
@@ -709,6 +734,42 @@ export default function CareCircleApp() {
           ) : null}
         </div>
       </div>
+      {data && showEmergency ? (
+        <div className="ccModalBack" onClick={() => setShowEmergency(false)}>
+          <div className="ccModal" onClick={(event) => event.stopPropagation()}>
+            <div className="ccModalHandle" />
+            <div className="ccDateMain" style={{ fontSize: "20px", marginBottom: "10px" }}>Emergency contacts</div>
+            <div className="ccMemberList">
+              {data.circle.poaName || data.circle.poaPhone ? (
+                <div className="ccMemberCard">
+                  <div className="ccIcon">PO</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="ccMemberName">{data.circle.poaName || "Power of attorney"}</div>
+                    <div className="ccMemberMeta">{joinBits([data.circle.poaRelationship, data.circle.poaPhone])}</div>
+                  </div>
+                </div>
+              ) : null}
+              {data.circle.gpName || data.circle.gpPhone ? (
+                <div className="ccMemberCard">
+                  <div className="ccIcon">GP</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="ccMemberName">{data.circle.gpName || "GP"}</div>
+                    <div className="ccMemberMeta">{data.circle.gpPhone || "Phone not added yet"}</div>
+                  </div>
+                </div>
+              ) : null}
+              <div className="ccMemberCard">
+                <div className="ccIcon">00</div>
+                <div style={{ flex: 1 }}>
+                  <div className="ccMemberName">Emergency</div>
+                  <div className="ccMemberMeta">Call 000 for urgent medical emergencies</div>
+                </div>
+              </div>
+            </div>
+            <button className="ccGhostBtn" style={{ marginTop: "12px", width: "100%" }} onClick={() => setShowEmergency(false)}>Close</button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
