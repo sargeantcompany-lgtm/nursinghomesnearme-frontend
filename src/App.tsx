@@ -33,6 +33,7 @@ import ClientWorkflowDashboard from "./components/ClientWorkflowDashboard";
 import BlogIndex from "./components/BlogIndex";
 import BlogPost from "./components/BlogPost";
 import CareCircleApp from "./components/CareCircleApp";
+import AcatPathwayFinderPage from "./components/AcatPathwayFinderPage";
 import { API_BASE } from "./lib/runtimeConfig";
 
 function isAdminAuthed() {
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/nursing-homes-nerang" element={<NursingHomesNerang />} />
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/acat-pathway-finder" element={<AcatPathwayFinderPage />} />
         <Route path="/carecircle" element={<CareCircleApp />} />
         <Route path="/facility/respond/:matchResponseToken" element={<FacilityRespond />} />
         <Route path="/facility/login" element={<FacilityLogin />} />
@@ -539,7 +541,7 @@ function HomePage() {
           </article>
           <article
             className="homePathCard homePathCard--acat"
-            {...activateCard(() => window.location.assign("/acat-pathway-finder.html"))}
+            {...activateCard(() => window.location.assign("/acat-pathway-finder"))}
           >
             <div>
               <div className="homePathEyebrow">Free planning tool</div>
@@ -549,7 +551,7 @@ function HomePage() {
                 phone scripts, funding amounts, and alternate pathways.
               </p>
             </div>
-            <a className="homePathLink" href="/acat-pathway-finder.html" onClick={(e) => e.stopPropagation()}>
+            <a className="homePathLink" href="/acat-pathway-finder" onClick={(e) => e.stopPropagation()}>
               Open ACAT Pathway Finder →
             </a>
           </article>
