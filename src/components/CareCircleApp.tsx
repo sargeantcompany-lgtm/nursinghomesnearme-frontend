@@ -174,9 +174,13 @@ const styles = `
   .ccMemberAvatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex:0 0 auto}
   .ccBillAmount{margin-top:4px;font-family:Georgia,"Times New Roman",serif;font-size:22px;font-weight:700;color:#1a2035}
   .ccUpdateTime{margin-top:6px;font-size:11px;color:#94a3b8;font-weight:700}
+  .ccForm{display:grid;gap:10px}
+  .ccField,.ccTextarea,.ccSelect{width:100%;border:1px solid #d7cebe;border-radius:12px;padding:10px 12px;font:inherit;color:#1e1e2e;background:#fff}
+  .ccTextarea{min-height:88px;resize:vertical}
+  .ccFieldRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .ccEmpty{background:#fff;border:1px dashed #d8cfc0;border-radius:18px;padding:22px 18px;text-align:center;color:#64748b;font-size:14px;line-height:1.6}
   .ccError{max-width:430px;margin:20px auto 0;padding:14px 16px;border-radius:14px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:13px}
-  @media (max-width:480px){.ccPage{padding:0}.ccShell{border-radius:0;border-left:0;border-right:0;min-height:100vh}.ccSummary{grid-template-columns:repeat(2,1fr)}.ccTaskCard{grid-template-columns:40px 40px 1fr}.ccTaskActions,.ccNeedActions{grid-column:3;align-items:flex-start;flex-direction:row;flex-wrap:wrap}.ccGridTwo{grid-template-columns:1fr}}
+  @media (max-width:480px){.ccPage{padding:0}.ccShell{border-radius:0;border-left:0;border-right:0;min-height:100vh}.ccSummary{grid-template-columns:repeat(2,1fr)}.ccTaskCard{grid-template-columns:40px 40px 1fr}.ccTaskActions,.ccNeedActions{grid-column:3;align-items:flex-start;flex-direction:row;flex-wrap:wrap}.ccGridTwo,.ccFieldRow{grid-template-columns:1fr}}
 `;
 
 const avatarColorMap: Record<string, string> = {
@@ -194,6 +198,11 @@ export default function CareCircleApp() {
   const [error, setError] = React.useState("");
   const [busyTaskId, setBusyTaskId] = React.useState<string | null>(null);
   const [busyNeedId, setBusyNeedId] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState<string | null>(null);
+  const [taskDraft, setTaskDraft] = React.useState({ title: "", description: "", scheduledTime: "", taskType: "other", priority: "normal" });
+  const [needDraft, setNeedDraft] = React.useState({ title: "", description: "", frequency: "Weekly", coverageNotes: "" });
+  const [billDraft, setBillDraft] = React.useState({ name: "", provider: "", amount: "", dueDate: "", frequency: "monthly", notes: "" });
+  const [updateDraft, setUpdateDraft] = React.useState("");
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -249,6 +258,34 @@ export default function CareCircleApp() {
       setError(err instanceof Error ? err.message : "Failed to claim need");
     } finally {
       setBusyNeedId(null);
+    }
+  }
+
+  async function createItem(
+    kind: "task" | "need" | "bill" | "update",
+    payload: Record<string, unknown>,
+    reset: () => void
+  ) {
+    if (!data?.circle?.id) return;
+    setSubmitting(kind);
+    try {
+      const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/${kind === "update" ? "updates" : `${kind}s`}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId: data.currentMember?.id ?? null,
+          postedByName: data.currentMember?.name ?? "Circle member",
+          ...payload,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.message || `Failed to create ${kind}`);
+      reset();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to create ${kind}`);
+    } finally {
+      setSubmitting(null);
     }
   }
 
@@ -364,6 +401,57 @@ export default function CareCircleApp() {
                   </div>
                 ))}
               </div>
+              <div className="ccSectionLabel">Add quick update</div>
+              <div className="ccCard">
+                <div className="ccForm">
+                  <textarea
+                    className="ccTextarea"
+                    placeholder="Post a quick note for the family..."
+                    value={updateDraft}
+                    onChange={(event) => setUpdateDraft(event.target.value)}
+                  />
+                  <button
+                    className="ccActionBtn"
+                    disabled={!updateDraft.trim() || submitting === "update"}
+                    onClick={() => createItem("update", { message: updateDraft.trim(), updateType: "note", isAlert: false }, () => setUpdateDraft(""))}
+                  >
+                    {submitting === "update" ? "Posting..." : "Post update"}
+                  </button>
+                </div>
+              </div>
+              <div className="ccSectionLabel">Add task</div>
+              <div className="ccCard">
+                <div className="ccForm">
+                  <input className="ccField" placeholder="Task title" value={taskDraft.title} onChange={(event) => setTaskDraft((current) => ({ ...current, title: event.target.value }))} />
+                  <textarea className="ccTextarea" placeholder="Task details" value={taskDraft.description} onChange={(event) => setTaskDraft((current) => ({ ...current, description: event.target.value }))} />
+                  <div className="ccFieldRow">
+                    <input className="ccField" type="time" value={taskDraft.scheduledTime} onChange={(event) => setTaskDraft((current) => ({ ...current, scheduledTime: event.target.value }))} />
+                    <select className="ccSelect" value={taskDraft.taskType} onChange={(event) => setTaskDraft((current) => ({ ...current, taskType: event.target.value }))}>
+                      <option value="other">Other</option>
+                      <option value="meal">Meal</option>
+                      <option value="medication">Medication</option>
+                      <option value="personal_care">Personal care</option>
+                      <option value="family_visit">Family visit</option>
+                      <option value="gp_appointment">GP appointment</option>
+                    </select>
+                  </div>
+                  <button
+                    className="ccActionBtn"
+                    disabled={!taskDraft.title.trim() || submitting === "task"}
+                    onClick={() => createItem("task", {
+                      title: taskDraft.title.trim(),
+                      description: taskDraft.description.trim() || null,
+                      taskType: taskDraft.taskType,
+                      scheduledDate: new Date().toISOString().split("T")[0],
+                      scheduledTime: taskDraft.scheduledTime || null,
+                      icon: taskGlyph(taskDraft.taskType),
+                      priority: taskDraft.priority,
+                    }, () => setTaskDraft({ title: "", description: "", scheduledTime: "", taskType: "other", priority: "normal" }))}
+                  >
+                    {submitting === "task" ? "Saving..." : "Add task for today"}
+                  </button>
+                </div>
+              </div>
             </>
           ) : null}
 
@@ -405,6 +493,38 @@ export default function CareCircleApp() {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="ccSectionLabel">Add need</div>
+              <div className="ccCard">
+                <div className="ccForm">
+                  <input className="ccField" placeholder="Need title" value={needDraft.title} onChange={(event) => setNeedDraft((current) => ({ ...current, title: event.target.value }))} />
+                  <textarea className="ccTextarea" placeholder="What help is needed?" value={needDraft.description} onChange={(event) => setNeedDraft((current) => ({ ...current, description: event.target.value }))} />
+                  <div className="ccFieldRow">
+                    <select className="ccSelect" value={needDraft.frequency} onChange={(event) => setNeedDraft((current) => ({ ...current, frequency: event.target.value }))}>
+                      <option>Daily</option>
+                      <option>Weekly</option>
+                      <option>Fortnightly</option>
+                      <option>Monthly</option>
+                    </select>
+                    <input className="ccField" placeholder="Coverage notes" value={needDraft.coverageNotes} onChange={(event) => setNeedDraft((current) => ({ ...current, coverageNotes: event.target.value }))} />
+                  </div>
+                  <button
+                    className="ccActionBtn"
+                    disabled={!needDraft.title.trim() || submitting === "need"}
+                    onClick={() => createItem("need", {
+                      title: needDraft.title.trim(),
+                      description: needDraft.description.trim() || null,
+                      frequency: needDraft.frequency,
+                      coverageNotes: needDraft.coverageNotes.trim() || null,
+                      icon: "ND",
+                      isChsp: false,
+                      chspServiceType: null,
+                      nextDue: null,
+                    }, () => setNeedDraft({ title: "", description: "", frequency: "Weekly", coverageNotes: "" }))}
+                  >
+                    {submitting === "need" ? "Saving..." : "Add need"}
+                  </button>
+                </div>
               </div>
             </>
           ) : null}
@@ -547,6 +667,43 @@ export default function CareCircleApp() {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="ccSectionLabel">Add bill</div>
+              <div className="ccCard">
+                <div className="ccForm">
+                  <input className="ccField" placeholder="Bill name" value={billDraft.name} onChange={(event) => setBillDraft((current) => ({ ...current, name: event.target.value }))} />
+                  <div className="ccFieldRow">
+                    <input className="ccField" placeholder="Provider" value={billDraft.provider} onChange={(event) => setBillDraft((current) => ({ ...current, provider: event.target.value }))} />
+                    <input className="ccField" placeholder="Amount" value={billDraft.amount} onChange={(event) => setBillDraft((current) => ({ ...current, amount: event.target.value }))} />
+                  </div>
+                  <div className="ccFieldRow">
+                    <input className="ccField" type="date" value={billDraft.dueDate} onChange={(event) => setBillDraft((current) => ({ ...current, dueDate: event.target.value }))} />
+                    <select className="ccSelect" value={billDraft.frequency} onChange={(event) => setBillDraft((current) => ({ ...current, frequency: event.target.value }))}>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="annual">Annual</option>
+                      <option value="one-off">One-off</option>
+                    </select>
+                  </div>
+                  <textarea className="ccTextarea" placeholder="Notes" value={billDraft.notes} onChange={(event) => setBillDraft((current) => ({ ...current, notes: event.target.value }))} />
+                  <button
+                    className="ccActionBtn"
+                    disabled={!billDraft.name.trim() || submitting === "bill"}
+                    onClick={() => createItem("bill", {
+                      name: billDraft.name.trim(),
+                      provider: billDraft.provider.trim() || null,
+                      icon: "BL",
+                      amount: billDraft.amount ? Number(billDraft.amount) : null,
+                      dueDate: billDraft.dueDate || null,
+                      frequency: billDraft.frequency,
+                      isDirectDebit: false,
+                      notes: billDraft.notes.trim() || null,
+                      status: "upcoming",
+                    }, () => setBillDraft({ name: "", provider: "", amount: "", dueDate: "", frequency: "monthly", notes: "" }))}
+                  >
+                    {submitting === "bill" ? "Saving..." : "Add bill"}
+                  </button>
+                </div>
               </div>
             </>
           ) : null}
