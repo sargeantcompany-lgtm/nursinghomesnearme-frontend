@@ -444,6 +444,14 @@ function SiteHeader({ showHome = false, onAdmin }: { showHome?: boolean; onAdmin
 function HomePage() {
   const navigate = useNavigate();
   const formRef = React.useRef<HTMLDivElement | null>(null);
+  const [acatHtml, setAcatHtml] = React.useState("");
+
+  React.useEffect(() => {
+    fetch("/acat-pathway-finder-source.txt", { cache: "no-cache" })
+      .then((r) => r.text())
+      .then((t) => setAcatHtml(t))
+      .catch(() => {});
+  }, []);
 
   function openAdmin() {
     if (isAdminAuthed()) {
@@ -520,36 +528,17 @@ function HomePage() {
           </p>
         </section>
 
-        <section className="homePaths" aria-label="Main ways to use Nursing Homes Near Me">
-          <article className="homePathCard homePathCard--search" {...activateCard(scrollToForm)}>
-            <div>
-              <div className="homePathEyebrow">Placement support</div>
-              <h2 className="homePathTitle">Find nursing homes that fit right now</h2>
-              <p className="homePathText">
-                Start with our nursing home enquiry and matching flow to compare facilities, availability, costs,
-                and the best current options for your family.
-              </p>
-            </div>
-            <button className="homePathLink" type="button" onClick={(e) => { e.stopPropagation(); scrollToForm(); }}>
-              Start the nursing home search →
-            </button>
-          </article>
-          <article
-            className="homePathCard homePathCard--acat"
-            {...activateCard(() => window.location.assign("/acat-pathway-finder"))}
-          >
-            <div>
-              <div className="homePathEyebrow">Free planning tool</div>
-              <h2 className="homePathTitle">Work out the ACAT pathway first</h2>
-              <p className="homePathText">
-                Use the ACAT Pathway Finder to get a clearer next step in around 4 minutes, including wait times,
-                phone scripts, funding amounts, and alternate pathways.
-              </p>
-            </div>
-            <a className="homePathLink" href="/acat-pathway-finder" onClick={(e) => e.stopPropagation()}>
-              Open ACAT Pathway Finder →
-            </a>
-          </article>
+        {acatHtml && (
+          <section style={{ width: "100%", maxWidth: 980, margin: "32px auto 0" }} aria-label="ACAT Pathway Finder">
+            <iframe
+              title="ACAT Pathway Finder"
+              srcDoc={acatHtml}
+              style={{ width: "100%", minHeight: 700, border: 0, display: "block", borderRadius: 18, overflow: "hidden" }}
+            />
+          </section>
+        )}
+
+        <section className="homePaths" aria-label="More tools" style={{ gridTemplateColumns: "1fr" }}>
           <article className="homePathCard homePathCard--circle" {...activateCard(() => navigate("/carecircle"))}>
             <div>
               <div className="homePathEyebrow">Family coordination</div>
