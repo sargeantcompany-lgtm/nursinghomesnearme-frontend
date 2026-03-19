@@ -45,12 +45,17 @@ type Circle = {
 type Member = {
   id: string;
   name: string;
+  email: string | null;
+  mobile: string | null;
   role: string;
   relationship: string | null;
   isCircleManager: boolean;
   isPoa: boolean;
   avatarColour: string | null;
   responsibilities: string | null;
+  inviteSentAt: string | null;
+  inviteAcceptedAt: string | null;
+  inviteToken: string | null;
 };
 
 type Task = {
@@ -205,10 +210,12 @@ export default function CareCircleApp() {
   const [submitting, setSubmitting] = React.useState<string | null>(null);
   const [showEmergency, setShowEmergency] = React.useState(false);
   const [activeMemberId, setActiveMemberId] = React.useState<string | null>(null);
+  const [inviteResult, setInviteResult] = React.useState<{ inviteUrl: string; name: string } | null>(null);
   const [taskDraft, setTaskDraft] = React.useState({ title: "", description: "", scheduledTime: "", taskType: "other", priority: "normal" });
   const [needDraft, setNeedDraft] = React.useState({ title: "", description: "", frequency: "Weekly", coverageNotes: "" });
   const [billDraft, setBillDraft] = React.useState({ name: "", provider: "", amount: "", dueDate: "", frequency: "monthly", notes: "" });
   const [updateDraft, setUpdateDraft] = React.useState("");
+  const [inviteDraft, setInviteDraft] = React.useState({ name: "", email: "", mobile: "", role: "family", relationship: "", responsibilities: "" });
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -290,6 +297,36 @@ export default function CareCircleApp() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to create ${kind}`);
+    } finally {
+      setSubmitting(null);
+    }
+  }
+
+  async function inviteMember() {
+    if (!data?.circle?.id || !inviteDraft.name.trim()) return;
+    setSubmitting("invite");
+    try {
+      const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invitedByMemberId: actingMember?.id ?? null,
+          name: inviteDraft.name.trim(),
+          email: inviteDraft.email.trim() || null,
+          mobile: inviteDraft.mobile.trim() || null,
+          role: inviteDraft.role,
+          relationship: inviteDraft.relationship.trim() || null,
+          responsibilities: inviteDraft.responsibilities.trim() || null,
+          avatarColour: "coral",
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.message || "Failed to invite member");
+      setInviteResult({ inviteUrl: body.inviteUrl, name: inviteDraft.name.trim() });
+      setInviteDraft({ name: "", email: "", mobile: "", role: "family", relationship: "", responsibilities: "" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to invite member");
     } finally {
       setSubmitting(null);
     }
@@ -618,14 +655,46 @@ export default function CareCircleApp() {
                       <div className="ccMemberMeta">
                         {joinBits([member.relationship, capitalize(member.role)])}
                         {member.responsibilities ? <><br />{member.responsibilities}</> : null}
+                        {(member.email || member.mobile) ? <><br />{joinBits([member.email, member.mobile])}</> : null}
                       </div>
                       <div className="ccInlineRow">
                         {member.isCircleManager ? <span className="ccPill">Circle manager</span> : null}
                         {member.isPoa ? <span className="ccPill">POA</span> : null}
+                        {member.inviteAcceptedAt ? <span className="ccPill">Invite accepted</span> : member.inviteSentAt ? <span className="ccPill">Invite sent</span> : null}
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="ccSectionLabel">Invite someone new</div>
+              <div className="ccCard">
+                <div className="ccForm">
+                  <input className="ccField" placeholder="Full name" value={inviteDraft.name} onChange={(event) => setInviteDraft((current) => ({ ...current, name: event.target.value }))} />
+                  <div className="ccFieldRow">
+                    <input className="ccField" placeholder="Mobile" value={inviteDraft.mobile} onChange={(event) => setInviteDraft((current) => ({ ...current, mobile: event.target.value }))} />
+                    <input className="ccField" placeholder="Email" value={inviteDraft.email} onChange={(event) => setInviteDraft((current) => ({ ...current, email: event.target.value }))} />
+                  </div>
+                  <div className="ccFieldRow">
+                    <select className="ccSelect" value={inviteDraft.role} onChange={(event) => setInviteDraft((current) => ({ ...current, role: event.target.value }))}>
+                      <option value="family">Family</option>
+                      <option value="carer">Carer</option>
+                      <option value="neighbour">Neighbour</option>
+                      <option value="medical">Medical</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <input className="ccField" placeholder="Relationship" value={inviteDraft.relationship} onChange={(event) => setInviteDraft((current) => ({ ...current, relationship: event.target.value }))} />
+                  </div>
+                  <textarea className="ccTextarea" placeholder="Responsibilities" value={inviteDraft.responsibilities} onChange={(event) => setInviteDraft((current) => ({ ...current, responsibilities: event.target.value }))} />
+                  <button className="ccActionBtn" disabled={!inviteDraft.name.trim() || submitting === "invite"} onClick={inviteMember}>
+                    {submitting === "invite" ? "Sending..." : "Send invite"}
+                  </button>
+                  {inviteResult ? (
+                    <div className="ccText">
+                      Invite ready for {inviteResult.name}: <br />
+                      <a href={inviteResult.inviteUrl} target="_blank" rel="noreferrer">{inviteResult.inviteUrl}</a>
+                    </div>
+                  ) : null}
+                </div>
               </div>
               <div className="ccSectionLabel">Legal + support</div>
               <div className="ccGrid ccGridTwo">
