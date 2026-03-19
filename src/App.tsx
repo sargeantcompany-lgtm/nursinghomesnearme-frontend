@@ -110,7 +110,7 @@ const sharedPageStyles = `
   }
   .heroImg {
     width: 100%;
-    max-width: 1100px;
+    max-width: 760px;
     margin: 18px auto 0;
     display: block;
   }
@@ -143,43 +143,6 @@ const sharedPageStyles = `
     line-height: 1.7;
     color: var(--text);
     font-weight: 500;
-  }
-  .videoWrap {
-    display: flex;
-    justify-content: center;
-    margin: 22px 0 22px;
-  }
-  .heroVideo {
-    width: 100%;
-    max-width: 900px;
-    border-radius: 12px;
-    background: #000;
-  }
-  .formGap { height: 28px; }
-  .stepsRow {
-    display: flex;
-    width: 100%;
-    gap: 0;
-    margin-top: 0;
-    align-items: flex-start;
-  }
-  .stepItem {
-    flex: 1 1 0;
-    display: flex;
-    justify-content: center;
-  }
-  .stepImg {
-    width: 92%;
-    max-width: 520px;
-    height: auto;
-    display: block;
-  }
-  .stepImg--border {
-    border: 3px solid var(--green);
-    border-radius: 18px;
-    padding: 10px;
-    background: #ffffff;
-    box-sizing: border-box;
   }
   .extrasCard {
     width: 100%;
@@ -378,13 +341,6 @@ const sharedPageStyles = `
     .underHeroH1 { font-size: 26px; }
     .underHeroLead { font-size: 16px; }
     .underHeroP { font-size: 15px; }
-    .videoWrap { margin: 18px 0 18px; }
-    .heroVideo { max-width: 100%; }
-    .formGap { height: 18px; }
-    .stepsRow { flex-direction: column; gap: 18px; }
-    .stepItem { justify-content: center; }
-    .stepImg { width: 100%; max-width: 520px; }
-    .stepImg--border { padding: 8px; }
     .seoCtaCard { padding: 22px 20px; border-radius: 18px; }
     .seoCtaTitle { font-size: 24px; }
     .seoCtaText { font-size: 15px; }
@@ -434,6 +390,7 @@ function SiteHeader({ showHome = false, onAdmin }: { showHome?: boolean; onAdmin
 
 function HomePage() {
   const navigate = useNavigate();
+  const formRef = React.useRef<HTMLDivElement | null>(null);
 
   function openAdmin() {
     if (isAdminAuthed()) {
@@ -441,6 +398,10 @@ function HomePage() {
       return;
     }
     navigate("/admin");
+  }
+
+  function scrollToForm() {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -468,27 +429,8 @@ function HomePage() {
           </p>
         </section>
 
-        <div className="videoWrap">
-          <video controls playsInline preload="metadata" poster="/video-thumb.png" className="heroVideo">
-            <source src="/videos/nhnm-intro.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-
-        <PlacementForm />
-
-        <div className="formGap" />
-
-        <div className="stepsRow">
-          <div className="stepItem">
-            <img src="/step-1.png" alt="Step One" className="stepImg stepImg--border" />
-          </div>
-          <div className="stepItem">
-            <img src="/step-2.png" alt="Step Two" className="stepImg stepImg--border" />
-          </div>
-          <div className="stepItem">
-            <img src="/step-3.png" alt="Step Three" className="stepImg stepImg--border" />
-          </div>
+        <div ref={formRef}>
+          <PlacementForm />
         </div>
 
         <section className="extrasCard" aria-label="Extra support services">
@@ -513,9 +455,9 @@ function HomePage() {
                 and the best current options for your family.
               </p>
             </div>
-            <Link className="homePathLink" to="/referral">
+            <button className="homePathLink" type="button" onClick={scrollToForm}>
               Start the nursing home search →
-            </Link>
+            </button>
           </article>
           <article className="homePathCard homePathCard--acat">
             <div>
@@ -543,18 +485,6 @@ function HomePage() {
               Open CareCircle →
             </Link>
           </article>
-        </section>
-
-        <section className="seoCtaCard" aria-label="Aged care pathway finder">
-          <div className="seoCtaEyebrow">Free planning tool</div>
-          <h2 className="seoCtaTitle">Not sure where to start with aged care?</h2>
-          <p className="seoCtaText">
-            Use our ACAT Pathway Finder to get a clearer next step in around 4 minutes, including wait times by
-            state, phone scripts, funding amounts, and the pathways most families never hear about.
-          </p>
-          <a className="seoCtaLink" href="/acat-pathway-finder.html">
-            Find your pathway in 4 minutes →
-          </a>
         </section>
 
         <div className="bottomSpace" />

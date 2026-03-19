@@ -543,13 +543,9 @@ export default function AdminNursingHomes() {
       // Refresh form with saved data
       setForm((p) => ({
         ...p,
-        beds:               updated.beds != null ? String(updated.beds) : p.beds,
         description:        String(updated.description || p.description),
         oneLineDescription: String(updated.oneLineDescription || p.oneLineDescription),
-        radFrom:            updated.radFrom != null ? String(updated.radFrom) : p.radFrom,
-        radTo:              updated.radTo != null ? String(updated.radTo) : p.radTo,
-        dapFrom:            updated.dapFrom != null ? String(updated.dapFrom) : p.dapFrom,
-        dapTo:              updated.dapTo != null ? String(updated.dapTo) : p.dapTo,
+        activeVacancies:    updated.activeVacancies != null ? String(updated.activeVacancies) : p.activeVacancies,
         phone:              String(updated.phone || p.phone),
         email:              String(updated.email || p.email),
         internalNotes:      String(updated.internalNotes || p.internalNotes),
@@ -566,8 +562,8 @@ export default function AdminNursingHomes() {
     if (!window.confirm("This will scan all facilities with missing beds/description/pricing via Firecrawl and save directly to the database. Continue?")) return;
     setBulkGapFilling(true);
     setBulkGapFillProgress("");
-    setNotice(null);
-    setError(null);
+    setNotice("");
+    setError("");
     try {
       setBulkGapFillProgress("running…");
       const result = await apiFetch<{ processed: number; filled: number; unchanged: number; errors: number; errorDetails: string[] }>(
