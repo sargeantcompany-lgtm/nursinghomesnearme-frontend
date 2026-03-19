@@ -516,18 +516,6 @@ function HomePage() {
           <PlacementForm />
         </div>
 
-        <section className="extrasCard" aria-label="Extra support services">
-          <h2 className="extrasTitle">Extra support services</h2>
-          <p className="extrasText">
-            Moving into aged care often involves more than just finding the right facility. We can also help connect
-            you with trusted local services to make the transition smoother — downsizing and decluttering, aged-care
-            removalists, packing and unpacking, furniture delivery and storage, exit cleaning, gardening and lawn
-            maintenance, handyman repairs, home styling, building and pest inspections, plus real estate support,
-            property appraisals, conveyancers, and solicitors (Power of Attorney, wills, and estate planning). We
-            can also assist with antique collectors, auctioneers, and valuers if needed.
-          </p>
-        </section>
-
         {acatHtml && (
           <section style={{ width: "100%", maxWidth: 980, margin: "32px auto 0" }} aria-label="ACAT Pathway Finder">
             <iframe
@@ -538,21 +526,22 @@ function HomePage() {
           </section>
         )}
 
-        <section className="homePaths" aria-label="More tools" style={{ gridTemplateColumns: "1fr" }}>
-          <article className="homePathCard homePathCard--circle" {...activateCard(() => navigate("/carecircle"))}>
-            <div>
-              <div className="homePathEyebrow">Family coordination</div>
-              <h2 className="homePathTitle">Keep everyone on the same page with CareCircle</h2>
-              <p className="homePathText">
-                Coordinate visits, tasks, notes, needs, bills, and family communication in one place while care is
-                being arranged or managed at home.
-              </p>
+        <div style={{ width: "100%", maxWidth: 980, margin: "24px auto 0" }}>
+          <div className="homePathCard homePathCard--circle" style={{ minHeight: "auto", padding: "28px 28px" }} {...activateCard(() => navigate("/carecircle"))}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+              <div>
+                <div className="homePathEyebrow">Family coordination</div>
+                <h2 className="homePathTitle" style={{ fontSize: 22, margin: "6px 0 8px" }}>Keep everyone on the same page with CareCircle</h2>
+                <p className="homePathText" style={{ margin: 0, maxWidth: 560 }}>
+                  Coordinate visits, tasks, needs, bills, and family communication in one place.
+                </p>
+              </div>
+              <Link className="homePathLink" to="/carecircle" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+                Open CareCircle →
+              </Link>
             </div>
-            <Link className="homePathLink" to="/carecircle" onClick={(e) => e.stopPropagation()}>
-              Open CareCircle →
-            </Link>
-          </article>
-        </section>
+          </div>
+        </div>
 
         <div className="bottomSpace" />
         <SiteFooter />
