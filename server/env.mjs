@@ -31,6 +31,7 @@ export const env = {
   smtpSsl: readFirst(["SMTP_SSL", "SPRING_MAIL_SMTP_SSL_ENABLE"], "true") === "true",
   smtpStartTls: readFirst(["SMTP_STARTTLS", "SPRING_MAIL_SMTP_STARTTLS_ENABLE"], "false") === "true",
   adminNotifyEmail: readFirst(["APP_ADMIN_NOTIFY_EMAIL", "SPRING_MAIL_USERNAME"]),
+  firecrawlApiKey: readEnv("FIRECRAWL_API_KEY"),
 };
 
 if (!env.databaseUrl) {

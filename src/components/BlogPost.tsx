@@ -93,6 +93,29 @@ export default function BlogPost() {
           }}
         />
 
+        {post.downloadUrl && (
+          <a
+            href={post.downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "10px 18px",
+              marginBottom: 24,
+              borderRadius: 10,
+              border: "1px solid #cbd5e1",
+              background: "#f8fafc",
+              color: "#0b3b5b",
+              fontWeight: 700,
+              fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            ↓ {post.downloadLabel ?? "Download resource (PDF)"}
+          </a>
+        )}
         <article>
           {paragraphs.map((paragraph, idx) => (
             <p key={idx} style={{ lineHeight: 1.8, color: "#1f2937", fontSize: 17 }}>

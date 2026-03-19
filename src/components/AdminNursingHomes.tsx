@@ -336,6 +336,7 @@ export default function AdminNursingHomes() {
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
   const [scanning, setScanning] = useState(false);
+  const [gapFilling, setGapFilling] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
   const [scanningVacancies, setScanningVacancies] = useState(false);
   const [vacancyScanProgress, setVacancyScanProgress] = useState<{ done: number; total: number } | null>(null);
@@ -534,7 +535,7 @@ export default function AdminNursingHomes() {
 
   async function handleGapFill() {
     if (currentId == null) return;
-    setScanning(true);
+    setGapFilling(true);
     setScanMessage(null);
     try {
       const updated = await apiFetch<Record<string, unknown>>(`/api/admin/nursing-homes/gap-fill/${currentId}`, {
@@ -554,7 +555,7 @@ export default function AdminNursingHomes() {
     } catch (e: unknown) {
       setScanMessage(`Gap-fill failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
-      setScanning(false);
+      setGapFilling(false);
     }
   }
 
@@ -1752,20 +1753,20 @@ export default function AdminNursingHomes() {
                   <button
                     type="button"
                     onClick={handleGapFill}
-                    disabled={scanning || disabled}
+                    disabled={gapFilling || disabled}
                     style={{
                       padding: "8px 14px",
                       borderRadius: 8,
                       border: "none",
-                      background: scanning ? "#94a3b8" : "#0369a1",
+                      background: gapFilling ? "#94a3b8" : "#0369a1",
                       color: "white",
                       fontWeight: 700,
                       fontSize: 13,
-                      cursor: scanning ? "not-allowed" : "pointer",
+                      cursor: gapFilling ? "not-allowed" : "pointer",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {scanning ? "Scanning…" : "Fill Gaps (Gov)"}
+                    {gapFilling ? "Filling…" : "Fill Gaps (Gov)"}
                   </button>
                 )}
                 {scanMessage && (
@@ -1988,20 +1989,20 @@ export default function AdminNursingHomes() {
                   <button
                     type="button"
                     onClick={handleGapFill}
-                    disabled={scanning || disabled}
+                    disabled={gapFilling || disabled}
                     style={{
                       padding: "8px 14px",
                       borderRadius: 8,
                       border: "none",
-                      background: scanning ? "#94a3b8" : "#0369a1",
+                      background: gapFilling ? "#94a3b8" : "#0369a1",
                       color: "white",
                       fontWeight: 700,
                       fontSize: 13,
-                      cursor: scanning ? "not-allowed" : "pointer",
+                      cursor: gapFilling ? "not-allowed" : "pointer",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {scanning ? "Scanning…" : "Fill Gaps (Gov)"}
+                    {gapFilling ? "Filling…" : "Fill Gaps (Gov)"}
                   </button>
                 )}
                 {scanMessage && (
