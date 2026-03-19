@@ -288,53 +288,50 @@ const sharedPageStyles = `
     font-size: 14px;
     width: fit-content;
   }
-  .trustBar {
+  .statsStrip {
     width: 100%;
     max-width: 760px;
-    margin: 14px auto 0;
+    margin: 20px auto 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    background: #f0fdf9;
-    border: 1px solid #99f6e4;
-    border-radius: 16px;
-    padding: 12px 20px;
+    align-items: stretch;
+    background: linear-gradient(135deg, #0b3b5b 0%, #0d4a6b 60%, #0a4a52 100%);
+    border-radius: 18px;
+    padding: 22px 28px;
     box-sizing: border-box;
-    flex-wrap: wrap;
+    gap: 0;
   }
-  .trustBarItem {
+  .statsStripItem {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
     flex: 1;
-    min-width: 100px;
-    padding: 4px 8px;
+    padding: 0 12px;
   }
-  .trustBarNum {
-    font-size: 20px;
+  .statsStripNum {
+    font-size: 28px;
     font-weight: 900;
-    color: #0D9488;
+    color: #2dd4bf;
     line-height: 1;
     letter-spacing: -0.03em;
   }
-  .trustBarLabel {
+  .statsStripLabel {
     font-size: 11px;
     font-weight: 600;
-    color: #475569;
+    color: rgba(255,255,255,0.65);
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.3;
+    margin-top: 5px;
   }
-  .trustBarDivider {
+  .statsStripDivider {
     width: 1px;
-    height: 32px;
-    background: #99f6e4;
+    background: rgba(255,255,255,0.12);
     flex-shrink: 0;
+    align-self: stretch;
   }
   @media (max-width: 640px) {
-    .trustBarDivider { display: none; }
-    .trustBarItem { min-width: 45%; }
+    .statsStrip { flex-wrap: wrap; gap: 16px; padding: 18px 20px; }
+    .statsStripDivider { display: none; }
+    .statsStripItem { min-width: 45%; }
   }
   .bottomSpace { height: 40px; }
   .bottomStrip {
@@ -489,14 +486,12 @@ function HomePage() {
       <main className="pageWrap">
         <img src="/nursinghomesnearme-woman.png" alt="Nursing Homes Near Me" className="heroImg" />
 
-        <div className="trustBar">
-          <div className="trustBarItem"><span className="trustBarNum">205+</span><span className="trustBarLabel">Facilities in database</span></div>
-          <div className="trustBarDivider" />
-          <div className="trustBarItem"><span className="trustBarNum">Free</span><span className="trustBarLabel">No cost, no referral fees</span></div>
-          <div className="trustBarDivider" />
-          <div className="trustBarItem"><span className="trustBarNum">Local</span><span className="trustBarLabel">Gold Coast specialists</span></div>
-          <div className="trustBarDivider" />
-          <div className="trustBarItem"><span className="trustBarNum">Fast</span><span className="trustBarLabel">Urgent placements welcome</span></div>
+        <div className="statsStrip">
+          <div className="statsStripItem"><span className="statsStripNum">130,000+</span><span className="statsStripLabel">people on the national home care waitlist</span></div>
+          <div className="statsStripDivider" />
+          <div className="statsStripItem"><span className="statsStripNum">$78,106</span><span className="statsStripLabel">maximum annual home care funding</span></div>
+          <div className="statsStripDivider" />
+          <div className="statsStripItem"><span className="statsStripNum">6</span><span className="statsStripLabel">pathways most families never hear about</span></div>
         </div>
 
         <section className="underHeroWrap" aria-label="Introduction">

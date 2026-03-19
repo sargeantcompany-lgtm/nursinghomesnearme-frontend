@@ -184,7 +184,7 @@ const Check = ({
   </label>
 );
 
-const STEP_LABELS = ["Your details", "Care needs", "Budget & funding", "Review"];
+const STEP_LABELS = ["Get started", "Care needs", "Budget & funding", "Review"];
 
 function Steps({ current, total }: { current: number; total: number }) {
   return (
@@ -231,12 +231,16 @@ export default function PlacementForm() {
     if (step === 1) {
       return (
         data.contactName.trim().length >= 2 &&
-        isValidEmail(data.email) &&
-        preferredLocations.length >= 1
+        isValidEmail(data.email)
       );
     }
     if (step === 2) {
-      return data.timing !== "" && data.currentLocation !== "" && data.careTypes.length > 0;
+      return (
+        preferredLocations.length >= 1 &&
+        data.timing !== "" &&
+        data.currentLocation !== "" &&
+        data.careTypes.length > 0
+      );
     }
     if (step === 3) {
       return (
@@ -408,7 +412,7 @@ export default function PlacementForm() {
     <div className="bg-white px-2 py-2">
       <div className="max-w-4xl mx-auto w-full">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mb-4 px-1">
-          {["Free service", "No referral fees", "Independent advice", "Real people, not a call centre"].map((t) => (
+          {["Free service", "No referral fees", "Independent advice"].map((t) => (
             <span key={t} className="flex items-center gap-1.5 text-xs font-semibold text-[#0D9488]">
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14">
                 <circle cx="7" cy="7" r="6.5" stroke="#0D9488" strokeWidth="1.2" />
@@ -431,10 +435,9 @@ export default function PlacementForm() {
         <Card>
           {step === 1 && (
             <>
-              <H2>Create your placement profile</H2>
+              <H2>Find the best nursing home option</H2>
               <p className="text-sm text-[#475569] mb-5 leading-relaxed">
-                This goes straight into our system so we can create your client card, shortlist local
-                options, and send your dashboard login.
+                Takes about 2 minutes. We'll create your profile and send matching options straight to your inbox.
               </p>
 
               <div className="space-y-4">
@@ -461,36 +464,6 @@ export default function PlacementForm() {
                   ) : null}
                 </div>
 
-                <div>
-                  <Label>Phone number</Label>
-                  <input
-                    value={data.phone}
-                    onChange={(e) => setData((p) => ({ ...p, phone: e.target.value }))}
-                    placeholder="e.g. 0400 000 000"
-                    className="w-full rounded-2xl border border-[#E5E7EB] px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-[#0D9488]/30"
-                  />
-                </div>
-
-                <div>
-                  <Label>Preferred suburb</Label>
-                  <input
-                    value={data.preferredLocation1}
-                    onChange={(e) => setData((p) => ({ ...p, preferredLocation1: e.target.value }))}
-                    placeholder="e.g. Southport"
-                    className="w-full rounded-2xl border border-[#E5E7EB] px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-[#0D9488]/30"
-                  />
-                </div>
-
-                <div>
-                  <Label>Second preferred suburb</Label>
-                  <input
-                    value={data.preferredLocation2}
-                    onChange={(e) => setData((p) => ({ ...p, preferredLocation2: e.target.value }))}
-                    placeholder="e.g. Robina"
-                    className="w-full rounded-2xl border border-[#E5E7EB] px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-[#0D9488]/30"
-                  />
-                </div>
-
                 <div className="flex justify-end">
                   <Btn onClick={() => setStep(2)} disabled={!canNext}>
                     Next &rarr;
@@ -503,6 +476,36 @@ export default function PlacementForm() {
           {step === 2 && (
             <>
               <H2>Placement needs</H2>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <Label>Phone number</Label>
+                  <input
+                    value={data.phone}
+                    onChange={(e) => setData((p) => ({ ...p, phone: e.target.value }))}
+                    placeholder="e.g. 0400 000 000"
+                    className="w-full rounded-2xl border border-[#E5E7EB] px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-[#0D9488]/30"
+                  />
+                </div>
+                <div>
+                  <Label>Preferred suburb</Label>
+                  <input
+                    value={data.preferredLocation1}
+                    onChange={(e) => setData((p) => ({ ...p, preferredLocation1: e.target.value }))}
+                    placeholder="e.g. Southport"
+                    className="w-full rounded-2xl border border-[#E5E7EB] px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-[#0D9488]/30"
+                  />
+                </div>
+                <div>
+                  <Label>Second preferred suburb (optional)</Label>
+                  <input
+                    value={data.preferredLocation2}
+                    onChange={(e) => setData((p) => ({ ...p, preferredLocation2: e.target.value }))}
+                    placeholder="e.g. Robina"
+                    className="w-full rounded-2xl border border-[#E5E7EB] px-4 py-3 bg-white outline-none focus:ring-2 focus:ring-[#0D9488]/30"
+                  />
+                </div>
+              </div>
 
               <div className="mb-5">
                 <Label>When is care needed?</Label>
