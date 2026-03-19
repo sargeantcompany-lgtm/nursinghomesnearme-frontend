@@ -32,6 +32,7 @@ import FacilityDashboard from "./components/FacilityDashboard";
 import ClientWorkflowDashboard from "./components/ClientWorkflowDashboard";
 import BlogIndex from "./components/BlogIndex";
 import BlogPost from "./components/BlogPost";
+import CareCircleApp from "./components/CareCircleApp";
 import { API_BASE } from "./lib/runtimeConfig";
 
 function isAdminAuthed() {
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/nursing-homes-nerang" element={<NursingHomesNerang />} />
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/carecircle" element={<CareCircleApp />} />
         <Route path="/facility/respond/:matchResponseToken" element={<FacilityRespond />} />
         <Route path="/facility/login" element={<FacilityLogin />} />
         <Route path="/facility/dashboard" element={<FacilityDashboard />} />
