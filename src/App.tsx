@@ -236,6 +236,7 @@ const sharedPageStyles = `
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    cursor: pointer;
   }
   .homePathCard--search {
     background: linear-gradient(135deg, #0b3b5b 0%, #145374 100%);
@@ -404,6 +405,20 @@ function HomePage() {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function activateCard(action: () => void) {
+    return {
+      role: "link" as const,
+      tabIndex: 0,
+      onClick: action,
+      onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          action();
+        }
+      },
+    };
+  }
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#ffffff" }}>
       <SeoHead
@@ -446,7 +461,7 @@ function HomePage() {
         </section>
 
         <section className="homePaths" aria-label="Main ways to use Nursing Homes Near Me">
-          <article className="homePathCard homePathCard--search">
+          <article className="homePathCard homePathCard--search" {...activateCard(scrollToForm)}>
             <div>
               <div className="homePathEyebrow">Placement support</div>
               <h2 className="homePathTitle">Find nursing homes that fit right now</h2>
@@ -455,11 +470,14 @@ function HomePage() {
                 and the best current options for your family.
               </p>
             </div>
-            <button className="homePathLink" type="button" onClick={scrollToForm}>
+            <button className="homePathLink" type="button" onClick={(e) => { e.stopPropagation(); scrollToForm(); }}>
               Start the nursing home search →
             </button>
           </article>
-          <article className="homePathCard homePathCard--acat">
+          <article
+            className="homePathCard homePathCard--acat"
+            {...activateCard(() => window.location.assign("/acat-pathway-finder.html"))}
+          >
             <div>
               <div className="homePathEyebrow">Free planning tool</div>
               <h2 className="homePathTitle">Work out the ACAT pathway first</h2>
@@ -468,11 +486,11 @@ function HomePage() {
                 phone scripts, funding amounts, and alternate pathways.
               </p>
             </div>
-            <a className="homePathLink" href="/acat-pathway-finder.html">
+            <a className="homePathLink" href="/acat-pathway-finder.html" onClick={(e) => e.stopPropagation()}>
               Open ACAT Pathway Finder →
             </a>
           </article>
-          <article className="homePathCard homePathCard--circle">
+          <article className="homePathCard homePathCard--circle" {...activateCard(() => navigate("/carecircle"))}>
             <div>
               <div className="homePathEyebrow">Family coordination</div>
               <h2 className="homePathTitle">Keep everyone on the same page with CareCircle</h2>
@@ -481,7 +499,7 @@ function HomePage() {
                 being arranged or managed at home.
               </p>
             </div>
-            <Link className="homePathLink" to="/carecircle">
+            <Link className="homePathLink" to="/carecircle" onClick={(e) => e.stopPropagation()}>
               Open CareCircle →
             </Link>
           </article>
