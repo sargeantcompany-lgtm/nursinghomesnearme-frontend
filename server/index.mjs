@@ -11,6 +11,7 @@ import { env } from "./env.mjs";
 import { query } from "./db.mjs";
 import { runMigrations } from "./migrate.mjs";
 import { blogPosts } from "./blogData.mjs";
+import { registerCareCircleRoutes } from "./carecircle.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1541,6 +1542,9 @@ app.get("/blog/:slug", (req, res, next) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.send(blogPostHtml(post));
 });
+
+// CareCircle API routes
+registerCareCircleRoutes(app);
 
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
