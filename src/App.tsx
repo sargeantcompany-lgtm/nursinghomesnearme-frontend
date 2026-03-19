@@ -256,6 +256,67 @@ const sharedPageStyles = `
     font-weight: 800;
     font-size: 15px;
   }
+  .homePaths {
+    width: 100%;
+    max-width: 980px;
+    margin: 32px auto 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .homePathCard {
+    border-radius: 22px;
+    padding: 24px 22px;
+    color: white;
+    box-shadow: 0 16px 40px rgba(11, 59, 91, 0.14);
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .homePathCard--search {
+    background: linear-gradient(135deg, #0b3b5b 0%, #145374 100%);
+  }
+  .homePathCard--acat {
+    background: linear-gradient(135deg, #145374 0%, #1a6b72 100%);
+  }
+  .homePathCard--circle {
+    background: linear-gradient(135deg, #8f3b2e 0%, #e8563a 100%);
+  }
+  .homePathEyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.78;
+  }
+  .homePathTitle {
+    margin: 10px 0 0;
+    font-size: 26px;
+    line-height: 1.08;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .homePathText {
+    margin: 12px 0 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.88);
+  }
+  .homePathLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 13px 18px;
+    border-radius: 999px;
+    background: white;
+    color: #0b3b5b;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 14px;
+    width: fit-content;
+  }
   .bottomSpace { height: 40px; }
   .bottomStrip {
     width: 100%;
@@ -327,6 +388,8 @@ const sharedPageStyles = `
     .seoCtaCard { padding: 22px 20px; border-radius: 18px; }
     .seoCtaTitle { font-size: 24px; }
     .seoCtaText { font-size: 15px; }
+    .homePaths { grid-template-columns: 1fr; gap: 14px; }
+    .homePathCard { min-height: auto; }
     .bottomStrip { border-radius: 10px; flex-direction: column; align-items: flex-start; }
     .footerRight { text-align: left; justify-content: flex-start; }
     .flag { width: 26px; }
@@ -438,6 +501,48 @@ function HomePage() {
             property appraisals, conveyancers, and solicitors (Power of Attorney, wills, and estate planning). We
             can also assist with antique collectors, auctioneers, and valuers if needed.
           </p>
+        </section>
+
+        <section className="homePaths" aria-label="Main ways to use Nursing Homes Near Me">
+          <article className="homePathCard homePathCard--search">
+            <div>
+              <div className="homePathEyebrow">Placement support</div>
+              <h2 className="homePathTitle">Find nursing homes that fit right now</h2>
+              <p className="homePathText">
+                Start with our nursing home enquiry and matching flow to compare facilities, availability, costs,
+                and the best current options for your family.
+              </p>
+            </div>
+            <Link className="homePathLink" to="/referral">
+              Start the nursing home search →
+            </Link>
+          </article>
+          <article className="homePathCard homePathCard--acat">
+            <div>
+              <div className="homePathEyebrow">Free planning tool</div>
+              <h2 className="homePathTitle">Work out the ACAT pathway first</h2>
+              <p className="homePathText">
+                Use the ACAT Pathway Finder to get a clearer next step in around 4 minutes, including wait times,
+                phone scripts, funding amounts, and alternate pathways.
+              </p>
+            </div>
+            <a className="homePathLink" href="/acat-pathway-finder.html">
+              Open ACAT Pathway Finder →
+            </a>
+          </article>
+          <article className="homePathCard homePathCard--circle">
+            <div>
+              <div className="homePathEyebrow">Family coordination</div>
+              <h2 className="homePathTitle">Keep everyone on the same page with CareCircle</h2>
+              <p className="homePathText">
+                Coordinate visits, tasks, notes, needs, bills, and family communication in one place while care is
+                being arranged or managed at home.
+              </p>
+            </div>
+            <Link className="homePathLink" to="/carecircle">
+              Open CareCircle →
+            </Link>
+          </article>
         </section>
 
         <section className="seoCtaCard" aria-label="Aged care pathway finder">
