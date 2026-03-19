@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import { env } from "./env.mjs";
 import { query } from "./db.mjs";
 import { runMigrations } from "./migrate.mjs";
+import { blogPosts } from "./blogData.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1409,6 +1410,136 @@ app.post("/api/admin/nursing-homes/import-location-centers", adminAuth, async (r
   }
 
   return res.json({ created, updated, skipped });
+});
+
+// ── Blog SSR — serve real HTML to crawlers so posts get indexed ───────────────
+
+function escHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function blogPostHtml(post) {
+  const siteUrl = "https://www.nursinghomesnearme.com.au";
+  const canonical = `${siteUrl}/blog/${post.slug}`;
+  const paragraphs = post.content.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  const excerpt = paragraphs[0]?.slice(0, 155) ?? post.metaDescription;
+  const schema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: excerpt,
+    image: `${siteUrl}${post.image}`,
+    url: canonical,
+    mainEntityOfPage: canonical,
+    datePublished: post.datePublished,
+    dateModified: post.datePublished,
+    author: { "@type": "Organization", name: "Nursing Homes Near Me" },
+    publisher: {
+      "@type": "Organization",
+      name: "Nursing Homes Near Me",
+      logo: { "@type": "ImageObject", url: `${siteUrl}/favicon-512.png` },
+    },
+  });
+  const paragraphsHtml = paragraphs.map(p => `<p>${escHtml(p)}</p>`).join("\n");
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${escHtml(post.title)} | Nursing Homes Near Me</title>
+<meta name="description" content="${escHtml(post.metaDescription)}"/>
+<link rel="canonical" href="${escHtml(canonical)}"/>
+<meta property="og:type" content="article"/>
+<meta property="og:title" content="${escHtml(post.title)}"/>
+<meta property="og:description" content="${escHtml(post.metaDescription)}"/>
+<meta property="og:url" content="${escHtml(canonical)}"/>
+<meta property="og:image" content="${escHtml(siteUrl + post.image)}"/>
+<meta property="og:site_name" content="Nursing Homes Near Me"/>
+<script type="application/ld+json">${schema}</script>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#1e293b;background:#fff}
+  h1{font-size:2rem;line-height:1.25;margin-bottom:8px}
+  p{line-height:1.75;margin-bottom:1.2em;font-size:1.05rem}
+  a{color:#0f766e}
+  nav{margin-bottom:24px;font-size:14px}
+  time{color:#64748b;font-size:14px;display:block;margin-bottom:24px}
+</style>
+</head>
+<body>
+<nav><a href="/">Home</a> &rsaquo; <a href="/blog">Blog</a> &rsaquo; ${escHtml(post.title)}</nav>
+<article>
+<h1>${escHtml(post.title)}</h1>
+<time datetime="${escHtml(post.datePublished)}">${new Date(post.datePublished).toLocaleDateString("en-AU",{year:"numeric",month:"long",day:"numeric"})}</time>
+${paragraphsHtml}
+</article>
+<p style="margin-top:40px"><a href="/blog">&larr; Back to all guides</a></p>
+<p style="margin-top:16px"><a href="/referral">Get free placement help &rarr;</a></p>
+</body>
+</html>`;
+}
+
+function blogIndexHtml() {
+  const siteUrl = "https://www.nursinghomesnearme.com.au";
+  const sorted = [...blogPosts].sort((a, b) => b.datePublished.localeCompare(a.datePublished));
+  const listItems = sorted.map(p =>
+    `<li style="margin-bottom:24px">
+      <a href="/blog/${escHtml(p.slug)}" style="font-size:1.15rem;font-weight:700;color:#0f766e;text-decoration:none">${escHtml(p.title)}</a>
+      <p style="margin:4px 0 0;color:#475569;font-size:0.95rem">${escHtml(p.metaDescription)}</p>
+      <time style="font-size:13px;color:#94a3b8">${new Date(p.datePublished).toLocaleDateString("en-AU",{year:"numeric",month:"long",day:"numeric"})}</time>
+    </li>`
+  ).join("\n");
+  const schema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "Nursing Homes Near Me — Aged Care Guides",
+    url: `${siteUrl}/blog`,
+    description: "Practical guides for Australian families navigating aged care placement, costs, rights, and quality.",
+  });
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Aged Care Guides for Australian Families | Nursing Homes Near Me</title>
+<meta name="description" content="Practical, plain-English guides to help Australian families navigate nursing home placement, aged care costs, rights, and quality."/>
+<link rel="canonical" href="${siteUrl}/blog"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Aged Care Guides for Australian Families | Nursing Homes Near Me"/>
+<meta property="og:description" content="Practical, plain-English guides to help Australian families navigate nursing home placement, aged care costs, rights, and quality."/>
+<meta property="og:url" content="${siteUrl}/blog"/>
+<script type="application/ld+json">${schema}</script>
+<style>
+  body{font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#1e293b;background:#fff}
+  h1{font-size:2rem;line-height:1.25;margin-bottom:8px}
+  ul{list-style:none;padding:0;margin:32px 0}
+  a{color:#0f766e}
+  nav{margin-bottom:24px;font-size:14px}
+</style>
+</head>
+<body>
+<nav><a href="/">Home</a> &rsaquo; Blog</nav>
+<h1>Aged Care Guides for Australian Families</h1>
+<p style="color:#475569">Practical, plain-English information to help you navigate nursing home placement, costs, rights, and quality in Australia.</p>
+<ul>${listItems}</ul>
+<p><a href="/referral">Need help finding a nursing home? Get free placement guidance &rarr;</a></p>
+</body>
+</html>`;
+}
+
+app.get("/blog", (_req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(blogIndexHtml());
+});
+
+app.get("/blog/:slug", (req, res, next) => {
+  const post = blogPosts.find(p => p.slug === req.params.slug);
+  if (!post) return next();
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(blogPostHtml(post));
 });
 
 if (fs.existsSync(distDir)) {
