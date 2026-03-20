@@ -308,7 +308,7 @@ const sharedPageStyles = `
     padding: 0 12px;
   }
   .statsStripNum {
-    font-size: 28px;
+    font-size: 42px;
     font-weight: 900;
     color: #2dd4bf;
     line-height: 1;
@@ -320,7 +320,8 @@ const sharedPageStyles = `
     color: rgba(255,255,255,0.65);
     text-align: center;
     line-height: 1.3;
-    margin-top: 5px;
+    margin-top: 6px;
+    white-space: nowrap;
   }
   .statsStripDivider {
     width: 1px;
@@ -511,17 +512,17 @@ function HomePage() {
         <div className="statsStrip">
           <div className="statsStripItem">
             <span className="statsStripNum">{nursingCount}</span>
-            <span className="statsStripLabel">families helped find a nursing home in {month}</span>
+            <span className="statsStripLabel">families placed in {month}</span>
           </div>
           <div className="statsStripDivider" />
           <div className="statsStripItem">
             <span className="statsStripNum">{acatCount}</span>
-            <span className="statsStripLabel">people used the ACAT tool in {month}</span>
+            <span className="statsStripLabel">ACAT tool sessions in {month}</span>
           </div>
           <div className="statsStripDivider" />
           <div className="statsStripItem">
             <span className="statsStripNum">{circleCount}</span>
-            <span className="statsStripLabel">families coordinating care on CareCircle</span>
+            <span className="statsStripLabel">families on CareCircle</span>
           </div>
         </div>
 
