@@ -514,41 +514,11 @@ function HomePage() {
 
         {acatHtml && (
           <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }} aria-label="ACAT Pathway Finder">
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2aa3df", marginBottom: 8 }}>Free government assessment tool</div>
-              <h2 style={{ fontFamily: "Georgia,\"Times New Roman\",serif", fontSize: 36, fontWeight: 700, color: "#0b3b5b", margin: "0 0 12px", lineHeight: 1.1 }}>
-                ACAT Tracker &amp; Guide
-              </h2>
-              <p style={{ margin: "0 0 20px", fontSize: 16, color: "#334155", lineHeight: 1.65 }}>
-                An ACAT assessment (Aged Care Assessment Team) is the official government gateway to aged care services in Australia. You must have one before accessing any government-funded nursing home, home care package, or respite care. It's free, and we'll help you track exactly where you are in the process.
+            <div style={{ marginBottom: 20 }}>
+              <div className="underHeroLead" style={{ marginBottom: 6 }}>ACAT Tracker &amp; Guide</div>
+              <p className="underHeroP" style={{ margin: 0 }}>
+                An ACAT assessment (Aged Care Assessment Team) is the official government gateway to aged care services in Australia. You must have one before accessing any government-funded nursing home, home care package, or respite care. It's free — use this tool to understand where you are in the process.
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
-                {[
-                  { step: "1", title: "Request an assessment", desc: "Call My Aged Care on 1800 200 422 or apply online. We help you prepare." },
-                  { step: "2", title: "Assessment visit", desc: "An assessor visits at home or in hospital. Usually within 2–4 weeks." },
-                  { step: "3", title: "Get your letter", desc: "You'll receive an approval letter listing which services you're eligible for." },
-                  { step: "4", title: "Choose your pathway", desc: "Nursing home, home care package, respite — use this tool to decide." },
-                ].map(({ step, title, desc }) => (
-                  <div key={step} style={{ background: "#f0f7ff", border: "1px solid #bfdbfe", borderRadius: 14, padding: "16px 14px" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#0b3b5b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, marginBottom: 10 }}>{step}</div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: "#0b3b5b", marginBottom: 5 }}>{title}</div>
-                    <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.55 }}>{desc}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
-                {[
-                  { label: "Cost", value: "Free", note: "ACAT assessments cost nothing" },
-                  { label: "Who qualifies", value: "65+", note: "Or 50+ for Aboriginal & Torres Strait Islander people" },
-                  { label: "Wait time", value: "2–6 wks", note: "Urgent cases can be fast-tracked via hospital" },
-                ].map(({ label, value, note }) => (
-                  <div key={label} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 4 }}>{label}</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#0b3b5b", lineHeight: 1 }}>{value}</div>
-                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 4, lineHeight: 1.4 }}>{note}</div>
-                  </div>
-                ))}
-              </div>
             </div>
             <iframe
               title="ACAT Pathway Finder"
