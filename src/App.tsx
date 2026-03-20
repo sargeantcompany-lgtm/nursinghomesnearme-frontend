@@ -542,7 +542,7 @@ function HomePage() {
         </div>
 
         {acatHtml && (
-          <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }} aria-label="ACAT Pathway Finder">
+          <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box", overflow: "hidden" }} aria-label="ACAT Pathway Finder">
             <div style={{ marginBottom: 20 }}>
               <h2 className="underHeroH1">ACAT Tracker &amp; Guide</h2>
               <p className="underHeroP">
@@ -565,7 +565,7 @@ function HomePage() {
           </section>
         )}
 
-        <div style={{ width: "100%", maxWidth: 900, margin: "40px auto 0", padding: "0 8px", boxSizing: "border-box" }}>
+        <div style={{ width: "100%", maxWidth: 900, margin: "16px auto 0", padding: "0 8px", boxSizing: "border-box" }}>
           <div style={{ background: "#f0fdf9", border: "1.5px solid #a7f3d0", borderRadius: 20, padding: "32px 36px", marginBottom: 24 }}>
             <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
               <div style={{ flex: "1 1 280px" }}>
