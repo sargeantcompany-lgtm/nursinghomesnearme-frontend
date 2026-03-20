@@ -555,8 +555,15 @@ function HomePage() {
             <iframe
               title="ACAT Pathway Finder"
               srcDoc={acatHtml}
-              style={{ width: "100%", minHeight: 1100, border: 0, display: "block", borderRadius: 18, overflow: "hidden" }}
-              onLoad={() => { fetch(`${API_BASE}/api/track/acat-view`, { method: "POST" }).catch(() => {}); }}
+              style={{ width: "100%", height: 600, border: 0, display: "block", borderRadius: 18, overflow: "hidden" }}
+              onLoad={(e) => {
+                const iframe = e.currentTarget;
+                try {
+                  const h = iframe.contentDocument?.documentElement?.scrollHeight;
+                  if (h && h > 200) iframe.style.height = h + "px";
+                } catch {}
+                fetch(`${API_BASE}/api/track/acat-view`, { method: "POST" }).catch(() => {});
+              }}
             />
           </section>
         )}
