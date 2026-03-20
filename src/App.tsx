@@ -430,9 +430,9 @@ function SiteFooter() {
 /* ── Shared header ── */
 function SiteHeader({ showHome = false, onAdmin }: { showHome?: boolean; onAdmin: () => void }) {
   return (
-    <header style={{ padding: "16px 24px", backgroundColor: "#0b3b5b", color: "white", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <Link to="/" style={{ color: "white", textDecoration: "none", fontWeight: 900, letterSpacing: 0.2 }}>
-        Nursing Homes Near Me
+    <header style={{ padding: "12px 24px", backgroundColor: "#0b3b5b", color: "white", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+        <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ height: 52, width: "auto", display: "block" }} />
       </Link>
       <HeaderLinksMenu showHome={showHome} onAdmin={onAdmin} />
     </header>
@@ -499,7 +499,16 @@ function HomePage() {
         </div>
 
         {acatHtml && (
-          <section style={{ width: "100%", maxWidth: 980, margin: "32px auto 0" }} aria-label="ACAT Pathway Finder">
+          <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }} aria-label="ACAT Pathway Finder">
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2aa3df", marginBottom: 8 }}>Assessment tool</div>
+              <h2 style={{ fontFamily: "Georgia,\"Times New Roman\",serif", fontSize: 36, fontWeight: 700, color: "#0b3b5b", margin: "0 0 10px", lineHeight: 1.1 }}>
+                ACAT Tracker &amp; Guide
+              </h2>
+              <p style={{ margin: 0, fontSize: 16, color: "#334155", lineHeight: 1.65 }}>
+                Use this tool to understand your ACAT pathway, track where you are in the process, and see what support options are available to you right now.
+              </p>
+            </div>
             <iframe
               title="ACAT Pathway Finder"
               srcDoc={acatHtml}
@@ -508,7 +517,7 @@ function HomePage() {
           </section>
         )}
 
-        <div style={{ width: "100%", maxWidth: 980, margin: "32px auto 0" }}>
+        <div style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }}>
           <div
             style={{ background: "#1a2035", borderRadius: 24, padding: "40px 36px", cursor: "pointer" }}
             role="link" tabIndex={0}
