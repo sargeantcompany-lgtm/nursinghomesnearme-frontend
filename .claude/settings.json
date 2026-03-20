@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.zoho.com)",
+      "WebFetch(domain:www.gen-agedcaredata.gov.au)",
+      "WebFetch(domain:data.gov.au)"
+    ]
+  }
+}

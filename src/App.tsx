@@ -294,7 +294,7 @@ const sharedPageStyles = `
     margin: 20px auto 0;
     display: flex;
     align-items: stretch;
-    background: linear-gradient(135deg, #0b3b5b 0%, #0d4a6b 60%, #0a4a52 100%);
+    background: linear-gradient(135deg, #0d1f3c 0%, #0c2d44 60%, #0a3040 100%);
     border-radius: 18px;
     padding: 22px 28px;
     box-sizing: border-box;
@@ -432,8 +432,8 @@ function SiteFooter() {
 function SiteHeader({ showHome = false, onAdmin }: { showHome?: boolean; onAdmin: () => void }) {
   return (
     <header style={{ padding: "12px 24px", backgroundColor: "#0b3b5b", color: "white", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-        <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ height: 52, width: "auto", display: "block" }} />
+      <Link to="/" style={{ textDecoration: "none" }}>
+        <span style={{ fontSize: 20, fontWeight: 700, color: "#2dd4bf", letterSpacing: "-0.02em" }}>nursing homes near me</span>
       </Link>
       <HeaderLinksMenu showHome={showHome} onAdmin={onAdmin} />
     </header>
@@ -482,7 +482,8 @@ function HomePage() {
   React.useEffect(() => {
     fetch("/acat-pathway-finder-source.txt", { cache: "no-cache" })
       .then((r) => r.text())
-      .then((t) => setAcatHtml(t.replace("</head>", "<style>html,body{background:#ffffff!important;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif!important}</style></head>")))
+      .then((t) => setAcatHtml(t.replace("</head>", "<style>html,body{background:#ffffff!important;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif!important}.header{display:none!important}</style></head>")))
+
       .catch(() => {});
   }, []);
 
@@ -542,10 +543,13 @@ function HomePage() {
 
         {acatHtml && (
           <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }} aria-label="ACAT Pathway Finder">
-            <div style={{ marginBottom: 20 }}>
-              <div className="underHeroLead" style={{ marginBottom: 6 }}>ACAT Tracker &amp; Guide</div>
-              <p className="underHeroP" style={{ margin: 0 }}>
-                An ACAT assessment (Aged Care Assessment Team) is the official government gateway to aged care services in Australia. You must have one before accessing any government-funded nursing home, home care package, or respite care. It's free — use this tool to understand where you are in the process.
+            <div style={{ marginBottom: 24, textAlign: "center" }}>
+              <div style={{ display: "inline-block", background: "#0b3b5b", borderRadius: 12, padding: "6px 18px", marginBottom: 14 }}>
+                <span style={{ color: "#2dd4bf", fontSize: 13, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>Free Government Tool</span>
+              </div>
+              <h2 style={{ fontSize: 30, fontWeight: 700, color: "#0b3b5b", margin: "0 0 10px", letterSpacing: "-0.02em" }}>ACAT Tracker &amp; Guide</h2>
+              <p className="underHeroP" style={{ margin: "0 auto", maxWidth: 680 }}>
+                An ACAT assessment (Aged Care Assessment Team) is the official government gateway to aged care services in Australia. You must have one before accessing any government-funded nursing home, home care package, or respite care. It's free — use this tool to track where you are in the process.
               </p>
             </div>
             <iframe
@@ -557,7 +561,37 @@ function HomePage() {
           </section>
         )}
 
-        <div style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }}>
+        <div style={{ width: "100%", maxWidth: 900, margin: "40px auto 0", padding: "0 8px", boxSizing: "border-box" }}>
+          <div style={{ background: "#f0fdf9", border: "1.5px solid #a7f3d0", borderRadius: 20, padding: "32px 36px", marginBottom: 24 }}>
+            <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 280px" }}>
+                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#059669", marginBottom: 10 }}>While you wait for placement</div>
+                <h3 style={{ fontSize: 22, fontWeight: 700, color: "#0b3b5b", margin: "0 0 10px", letterSpacing: "-0.02em", lineHeight: 1.25 }}>
+                  Most families wait 12–24 months for a nursing home bed.
+                </h3>
+                <p style={{ fontSize: 15, color: "#374151", lineHeight: 1.65, margin: 0 }}>
+                  CareCircle was built for exactly this period — keeping your family organised, informed, and supported
+                  while your loved one is at home or in transition care waiting for placement.
+                </p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, flex: "1 1 260px" }}>
+                {[
+                  { icon: "🗓️", text: "Coordinate visits & tasks" },
+                  { icon: "💊", text: "Track medications & allergies" },
+                  { icon: "📋", text: "Share updates with family" },
+                  { icon: "💰", text: "Manage bills & due dates" },
+                ].map(({ icon, text }) => (
+                  <div key={text} style={{ display: "flex", alignItems: "center", gap: 10, background: "white", border: "1px solid #d1fae5", borderRadius: 12, padding: "10px 14px" }}>
+                    <span style={{ fontSize: 18 }}>{icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "#0b3b5b" }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", padding: "0 8px", boxSizing: "border-box" }}>
           <div
             style={{ background: "#1a2035", borderRadius: 24, padding: "40px 36px", cursor: "pointer" }}
             role="link" tabIndex={0}
