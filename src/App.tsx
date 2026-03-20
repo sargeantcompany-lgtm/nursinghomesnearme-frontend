@@ -461,20 +461,6 @@ function HomePage() {
     navigate("/admin");
   }
 
-  function activateCard(action: () => void) {
-    return {
-      role: "link" as const,
-      tabIndex: 0,
-      onClick: action,
-      onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          action();
-        }
-      },
-    };
-  }
-
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#ffffff" }}>
       <SeoHead
@@ -517,24 +503,52 @@ function HomePage() {
             <iframe
               title="ACAT Pathway Finder"
               srcDoc={acatHtml}
-              style={{ width: "100%", minHeight: 700, border: 0, display: "block", borderRadius: 18, overflow: "hidden" }}
+              style={{ width: "100%", minHeight: 1100, border: 0, display: "block", borderRadius: 18, overflow: "hidden" }}
             />
           </section>
         )}
 
-        <div style={{ width: "100%", maxWidth: 980, margin: "24px auto 0" }}>
-          <div className="homePathCard homePathCard--circle" style={{ minHeight: "auto", padding: "28px 28px" }} {...activateCard(() => navigate("/carecircle"))}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+        <div style={{ width: "100%", maxWidth: 980, margin: "32px auto 0" }}>
+          <div
+            style={{ background: "#1a2035", borderRadius: 24, padding: "40px 36px", cursor: "pointer" }}
+            role="link" tabIndex={0}
+            onClick={() => navigate("/carecircle")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("/carecircle"); } }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, flexWrap: "wrap", marginBottom: 32 }}>
               <div>
-                <div className="homePathEyebrow">Family coordination</div>
-                <h2 className="homePathTitle" style={{ fontSize: 22, margin: "6px 0 8px" }}>Keep everyone on the same page with CareCircle</h2>
-                <p className="homePathText" style={{ margin: 0, maxWidth: 560 }}>
-                  Coordinate visits, tasks, needs, bills, and family communication in one place.
+                <div style={{ color: "#e8563a", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Family coordination app</div>
+                <h2 style={{ fontFamily: "Georgia,\"Times New Roman\",serif", fontSize: 30, fontWeight: 700, color: "#fff", margin: "0 0 14px", lineHeight: 1.15 }}>
+                  CareCircle — keep the whole family across everything
+                </h2>
+                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 540 }}>
+                  One place for visits, tasks, medications, bills, and quick family updates.
+                  Invite family members, carers, and neighbours — everyone sees what they need to.
                 </p>
               </div>
-              <Link className="homePathLink" to="/carecircle" onClick={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+              <Link
+                to="/carecircle"
+                onClick={(e) => e.stopPropagation()}
+                style={{ background: "#e8563a", color: "#fff", borderRadius: 999, padding: "13px 24px", fontWeight: 800, fontSize: 14, textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0, display: "inline-block" }}
+              >
                 Open CareCircle →
               </Link>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              {[
+                { lbl: "TO", title: "Today view", desc: "Morning, afternoon, evening tasks. Who's coming and when. Mark things done as you go." },
+                { lbl: "NB", title: "Needs board", desc: "Ongoing help that rotates. Grocery runs, dog walking, washing — the family shares the load." },
+                { lbl: "FU", title: "Family updates", desc: "Post a quick note. Everyone in the circle sees it. No more group-chat chaos." },
+                { lbl: "RX", title: "Medications", desc: "What they take and when. Allergies pinned to every screen. Always visible in an emergency." },
+                { lbl: "$B", title: "Bills & finances", desc: "Due dates, direct debits, and who manages which account. Nothing falls through the cracks." },
+                { lbl: "CC", title: "Circle members", desc: "Invite family, carers, neighbours. Assign roles, track who holds POA, and who has the spare key." },
+              ].map(({ lbl, title, desc }) => (
+                <div key={title} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "18px 16px" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(232,86,58,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#e8563a", marginBottom: 12 }}>{lbl}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 6 }}>{title}</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{desc}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

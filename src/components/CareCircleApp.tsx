@@ -39,6 +39,9 @@ type Circle = {
   ambulanceCover: boolean;
   ambulanceMembership: string | null;
   hasPets: boolean;
+  medications: Array<{ name: string; dose: string; time: string }>;
+  advanceCareDirective: boolean;
+  advanceCareDirectiveNotes: string | null;
   subscriptionStatus: string | null;
 };
 
@@ -124,7 +127,7 @@ type LaunchPayload = {
   updates: Update[];
 };
 
-type TabKey = "today" | "needs" | "about" | "circle" | "bills";
+type TabKey = "today" | "needs" | "about" | "circle" | "bills" | "updates";
 
 const styles = `
   .ccPage{min-height:100vh;background:linear-gradient(180deg,#f7f2ea 0%,#fffdf9 45%,#f7f2ea 100%);padding:24px 16px 40px;box-sizing:border-box}
@@ -136,8 +139,8 @@ const styles = `
   .ccTopbarSub{color:rgba(255,255,255,.65);font-size:12px;margin-top:4px}
   .ccEmergency{background:linear-gradient(90deg,#7b1a1a,#9c2626);color:#fecaca;font-size:12px;font-weight:800;padding:10px 18px;letter-spacing:.03em}
   .ccEmergencyButton{cursor:pointer}
-  .ccTabs{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-bottom:1px solid #e8e0d0}
-  .ccTab{border:0;background:transparent;padding:12px 4px 11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-bottom:3px solid transparent}
+  .ccTabs{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border-bottom:1px solid #e8e0d0}
+  .ccTab{border:0;background:transparent;padding:10px 2px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:#94a3b8;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-bottom:3px solid transparent}
   .ccTabActive{color:#e8563a;border-bottom-color:#e8563a}
   .ccPane{padding:16px 16px 26px}
   .ccDateHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
@@ -376,10 +379,10 @@ export default function CareCircleApp() {
           Emergency contacts | 000 | {data?.circle.gpName || "Family + GP"} | allergies visible on every screen
         </div>
         <div className="ccTabs">
-          {(["today", "needs", "about", "circle", "bills"] as TabKey[]).map((key) => (
+          {(["today", "needs", "about", "circle", "bills", "updates"] as TabKey[]).map((key) => (
             <button key={key} className={`ccTab ${tab === key ? "ccTabActive" : ""}`} onClick={() => setTab(key)}>
-              <span>{key === "about" ? "A" : key[0].toUpperCase()}</span>
-              <span>{key === "about" ? "About Nan" : capitalize(key)}</span>
+              <span>{key === "about" ? "A" : key === "updates" ? "U" : key[0].toUpperCase()}</span>
+              <span>{key === "about" ? `About ${data?.circle.firstName || "them"}` : capitalize(key)}</span>
             </button>
           ))}
         </div>
@@ -624,6 +627,43 @@ export default function CareCircleApp() {
                   <div className="ccInfoValue">{joinBits([data.circle.favouriteTv, data.circle.musicPreference, data.circle.religion]) || "Not added yet"}</div>
                 </div>
               </div>
+              {data.circle.medications && data.circle.medications.length > 0 ? (
+                <>
+                  <div className="ccSectionLabel">Medications</div>
+                  <div className="ccCard">
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {["morning", "evening", "night", ""].map((timeSlot) => {
+                        const meds = data.circle.medications.filter((m) =>
+                          timeSlot ? (m.time || "").toLowerCase() === timeSlot : !["morning", "evening", "night"].includes((m.time || "").toLowerCase())
+                        );
+                        if (!meds.length) return null;
+                        return (
+                          <div key={timeSlot || "other"}>
+                            <div className="ccInfoLabel" style={{ marginBottom: 6 }}>{timeSlot ? capitalize(timeSlot) : "Other"}</div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                              {meds.map((med, idx) => (
+                                <span key={idx} className="ccMetaChip">{med.name} {med.dose}</span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {data.circle.allergies ? (
+                      <div style={{ marginTop: 12, padding: "8px 12px", background: "rgba(192,57,43,0.08)", borderRadius: 10, border: "1px solid rgba(192,57,43,0.2)" }}>
+                        <div className="ccInfoLabel" style={{ color: "#991b1b" }}>Allergy alert</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#991b1b" }}>{data.circle.allergies}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+              <div className="ccSectionLabel">Advance care directive</div>
+              <div className="ccCard">
+                <div className="ccInfoLabel">Directive in place</div>
+                <div className="ccInfoValue">{data.circle.advanceCareDirective ? "Yes" : "Not recorded"}</div>
+                {data.circle.advanceCareDirectiveNotes ? <div className="ccText" style={{ marginTop: 8 }}>{data.circle.advanceCareDirectiveNotes}</div> : null}
+              </div>
               <div className="ccSectionLabel">Practical notes</div>
               <div className="ccCard">
                 <div className="ccText">{data.circle.carerNotes || "Circle notes will appear here."}</div>
@@ -799,6 +839,49 @@ export default function CareCircleApp() {
                   </button>
                 </div>
               </div>
+            </>
+          ) : null}
+          {!loading && data && tab === "updates" ? (
+            <>
+              <div className="ccDateHeader">
+                <div>
+                  <div className="ccDateMain">Family updates</div>
+                  <div className="ccDateSub">Notes and alerts visible to everyone in the circle</div>
+                </div>
+              </div>
+              <div className="ccCard" style={{ marginBottom: 16 }}>
+                <div className="ccForm">
+                  <textarea
+                    className="ccTextarea"
+                    placeholder="Post a note for the family..."
+                    value={updateDraft}
+                    onChange={(event) => setUpdateDraft(event.target.value)}
+                  />
+                  <button
+                    className="ccActionBtn"
+                    disabled={!updateDraft.trim() || submitting === "update"}
+                    onClick={() => createItem("update", { message: updateDraft.trim(), updateType: "note", isAlert: false }, () => setUpdateDraft(""))}
+                  >
+                    {submitting === "update" ? "Posting..." : "Post update"}
+                  </button>
+                </div>
+              </div>
+              {updates.length === 0 ? (
+                <div className="ccEmpty">No updates yet. Post the first one above.</div>
+              ) : (
+                <div className="ccUpdateList">
+                  {updates.map((update) => (
+                    <div className="ccUpdateCard ccCard" key={update.id} style={update.isAlert ? { borderLeft: "4px solid #e8563a" } : {}}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <div className="ccCardTitle">{update.postedByName || "Circle member"}</div>
+                        {update.isAlert ? <span className="ccStatusPill ccStatusOverdue">Alert</span> : null}
+                      </div>
+                      <div className="ccText">{update.message}</div>
+                      <div className="ccUpdateTime">{formatDateTime(update.createdAt)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           ) : null}
         </div>
