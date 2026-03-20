@@ -155,6 +155,17 @@ function cleanDescription(value?: string | null, fallback?: string | null): stri
   return sentences.slice(0, 4).join(" ") || trimmed;
 }
 
+function cleanLongDescription(value?: string | null, fallback?: string | null): string {
+  const base = cleanText(value) || cleanText(fallback);
+  if (!base) return "";
+  return base
+    .replace(/skip to content/gi, "")
+    .replace(/search for:/gi, "")
+    .replace(/\b(book a tour|menu|careers|contact)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function pickBestImages(data: NursingHomePublicDetails | null): string[] {
   if (!data) return [];
   const combined = uniqueList([
@@ -218,7 +229,12 @@ export default function NursingHomeDetails() {
   const images = useMemo(() => pickBestImages(data), [data]);
 
   const tags = useMemo(
-    () => uniqueList([...(data?.featureTags ?? []), ...(data?.otherTags ?? []), ...(data?.tags ?? [])]).slice(0, 10),
+    () =>
+      uniqueList([
+        ...(data?.heroBadges ?? []),
+        ...(data?.featureTags ?? []),
+        ...(data?.amenities ?? []).slice(0, 4),
+      ]).slice(0, 10),
     [data],
   );
   const heroBadges = useMemo(() => uniqueList(data?.heroBadges).slice(0, 4), [data]);
@@ -239,6 +255,7 @@ export default function NursingHomeDetails() {
   const cleanOneLine = cleanDescription(data?.oneLineDescription);
   const overviewHeading = cleanText(data?.overviewHeading) || "Overview";
   const cleanOverview = cleanDescription(data?.description, data?.providerOverview || data?.oneLineDescription) || "Full facility profile coming soon.";
+  const cleanLongOverview = cleanLongDescription(data?.description, data?.providerOverview || data?.oneLineDescription);
   const cleanAccommodationSummary = cleanDescription(data?.accommodationSummary);
   const cleanPricingSummary = cleanDescription(data?.pricingSummary);
   const cleanFoodHighlights = cleanDescription(data?.foodHighlights);
@@ -355,11 +372,17 @@ export default function NursingHomeDetails() {
 
             <section style={contentGrid}>
               <div style={{ display: "grid", gap: 18 }}>
-                <InfoPanel title={overviewHeading}>
-                  <p style={bodyText}>
-                    {cleanOverview}
-                  </p>
-                </InfoPanel>
+                  <InfoPanel title={overviewHeading}>
+                    <p style={bodyText}>
+                      {cleanOverview}
+                    </p>
+                  </InfoPanel>
+
+                  {cleanLongOverview && cleanLongOverview !== cleanOverview ? (
+                    <InfoPanel title="Long description">
+                      <p style={bodyText}>{cleanLongOverview}</p>
+                    </InfoPanel>
+                  ) : null}
 
                 {(cleanAccommodationSummary || cleanPricingSummary || fallbackRad || fallbackDap) ? (
                   <InfoPanel title="Accommodation and pricing">
@@ -376,11 +399,11 @@ export default function NursingHomeDetails() {
                   </InfoPanel>
                 ) : null}
 
-                {tags.length ? (
-                  <InfoPanel title="Highlights">
-                    <div style={tagWrap}>
-                      {tags.map((tag) => (
-                        <span key={tag} style={softTag}>
+                  {tags.length ? (
+                    <InfoPanel title="Highlights and features">
+                      <div style={tagWrap}>
+                        {tags.map((tag) => (
+                          <span key={tag} style={softTag}>
                           {tag}
                         </span>
                       ))}
@@ -478,15 +501,17 @@ export default function NursingHomeDetails() {
                   ) : null}
                 </InfoPanel>
 
-                <InfoPanel title="Why this page matters">
-                  <div style={sideStack}>
-                    <Fact label="Source" value={data.sourcePrimary || "Imported facility profile"} />
-                    <Fact label="Profile status" value={data.status || "Active"} />
-                    <Fact label="Photo count" value={images.length ? `${images.length} linked` : "Still being built"} />
-                    {data.abn ? <Fact label="ABN" value={data.abn} /> : null}
-                    {data.reviewCount != null ? <Fact label="Review count" value={String(data.reviewCount)} /> : null}
-                  </div>
-                </InfoPanel>
+                {(data.abn || data.reviewCount != null || data.lastProfileScanAt || data.sourcePrimary) ? (
+                  <InfoPanel title="Profile details">
+                    <div style={sideStack}>
+                      {data.sourcePrimary ? <Fact label="Source" value={data.sourcePrimary} /> : null}
+                      {data.status ? <Fact label="Profile status" value={data.status} /> : null}
+                      {data.lastProfileScanAt ? <Fact label="Last profile update" value={formatDate(data.lastProfileScanAt)} /> : null}
+                      {data.abn ? <Fact label="ABN" value={data.abn} /> : null}
+                      {data.reviewCount != null ? <Fact label="Review count" value={String(data.reviewCount)} /> : null}
+                    </div>
+                  </InfoPanel>
+                ) : null}
               </div>
             </section>
           </>

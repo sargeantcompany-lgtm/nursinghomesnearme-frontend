@@ -159,6 +159,19 @@ function listToLines(list?: string[] | null): string {
   return (list ?? []).filter(Boolean).join("\n");
 }
 
+function normalizeIsoLike(raw?: string | null): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?$/.test(value)) return value;
+
+  const normalised = value
+    .replace(" ", "T")
+    .replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+  const parsed = Date.parse(normalised);
+  if (Number.isNaN(parsed)) return "";
+  return new Date(parsed).toISOString().replace(".000Z", "Z");
+}
+
 function toRoomRows(list?: RoomOption[] | null): RoomOptionRow[] {
   const src = list ?? [];
   if (!src.length) return ensureMinimumRoomRows([]);
@@ -672,7 +685,7 @@ export default function AdminNursingHomes() {
         updatedAt: nh.updatedAt,
       });
 
-      setForm({
+        setForm({
         name: (nh.name ?? "") as string,
         oneLineDescription: (nh.oneLineDescription ?? "") as string,
         description: (nh.description ?? "") as string,
@@ -699,7 +712,7 @@ export default function AdminNursingHomes() {
         internalNotes: (nh.internalNotes ?? "") as string,
         status: nh.status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
         activeVacancies: nh.activeVacancies == null ? "" : String(nh.activeVacancies),
-        verifiedAt: (nh.verifiedAt ?? "") as string,
+          verifiedAt: normalizeIsoLike(nh.verifiedAt),
 
         primaryImageUrl: (nh.primaryImageUrl ?? "") as string,
         galleryImageUrlsText: listToLines(nh.galleryImageUrls),
@@ -760,7 +773,7 @@ export default function AdminNursingHomes() {
         internalNotes: form.internalNotes.trim() || null,
         status: form.status,
         activeVacancies: parseOptionalNumber(form.activeVacancies),
-        verifiedAt: form.verifiedAt.trim() || null,
+          verifiedAt: normalizeIsoLike(form.verifiedAt) || null,
 
         // images
         primaryImageUrl: form.primaryImageUrl.trim() || null,
