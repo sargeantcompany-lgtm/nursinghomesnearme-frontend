@@ -1612,6 +1612,37 @@ app.get("/blog/:slug", (req, res, next) => {
 });
 
 // CareCircle API routes
+// ── Public stats ─────────────────────────────────────────────────────────────
+
+// POST /api/track/acat-view  — fire-and-forget, called when ACAT iframe loads
+app.post("/api/track/acat-view", async (_req, res) => {
+  try {
+    await query(`INSERT INTO page_views (page) VALUES ('acat')`);
+  } catch { /* non-fatal */ }
+  return res.status(204).end();
+});
+
+// GET /api/stats — live platform counts for the homepage strip
+app.get("/api/stats", async (_req, res) => {
+  try {
+    const [familiesRes, acatRes, circlesRes] = await Promise.all([
+      query(`SELECT COUNT(*)::int AS count FROM client_cases WHERE date_trunc('month', created_at) = date_trunc('month', NOW())`),
+      query(`SELECT COUNT(*)::int AS count FROM page_views WHERE page = 'acat' AND date_trunc('month', created_at) = date_trunc('month', NOW())`),
+      query(`SELECT COUNT(*)::int AS count FROM cc_circles`),
+    ]);
+    const month = new Intl.DateTimeFormat("en-AU", { month: "long" }).format(new Date());
+    return res.json({
+      month,
+      familiesHelpedThisMonth: familiesRes.rows[0]?.count ?? 0,
+      acatViewsThisMonth: acatRes.rows[0]?.count ?? 0,
+      careCircleFamilies: circlesRes.rows[0]?.count ?? 0,
+    });
+  } catch (err) {
+    console.error("[stats]", err);
+    return res.status(500).json({ month: "", familiesHelpedThisMonth: 0, acatViewsThisMonth: 0, careCircleFamilies: 0 });
+  }
+});
+
 registerCareCircleRoutes(app);
 
 if (fs.existsSync(distDir)) {

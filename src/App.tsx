@@ -445,11 +445,16 @@ function HomePage() {
   const navigate = useNavigate();
   const formRef = React.useRef<HTMLDivElement | null>(null);
   const [acatHtml, setAcatHtml] = React.useState("");
+  const [stats, setStats] = React.useState<{ month: string; familiesHelpedThisMonth: number; acatViewsThisMonth: number; careCircleFamilies: number } | null>(null);
 
   React.useEffect(() => {
     fetch("/acat-pathway-finder-source.txt", { cache: "no-cache" })
       .then((r) => r.text())
       .then((t) => setAcatHtml(t.replace("</head>", "<style>html,body{background:#ffffff!important;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif!important}</style></head>")))
+      .catch(() => {});
+    fetch(`${API_BASE}/api/stats`)
+      .then((r) => r.json())
+      .then((d) => setStats(d))
       .catch(() => {});
   }, []);
 
@@ -477,11 +482,20 @@ function HomePage() {
         <img src="/nursinghomesnearme-woman.png" alt="Nursing Homes Near Me" className="heroImg" />
 
         <div className="statsStrip">
-          <div className="statsStripItem"><span className="statsStripNum">130,000+</span><span className="statsStripLabel">people on the national home care waitlist</span></div>
+          <div className="statsStripItem">
+            <span className="statsStripNum">{stats ? stats.familiesHelpedThisMonth : "—"}</span>
+            <span className="statsStripLabel">families helped find a nursing home in {stats?.month || "this month"}</span>
+          </div>
           <div className="statsStripDivider" />
-          <div className="statsStripItem"><span className="statsStripNum">$78,106</span><span className="statsStripLabel">maximum annual home care funding</span></div>
+          <div className="statsStripItem">
+            <span className="statsStripNum">{stats ? stats.acatViewsThisMonth : "—"}</span>
+            <span className="statsStripLabel">people used the ACAT tool in {stats?.month || "this month"}</span>
+          </div>
           <div className="statsStripDivider" />
-          <div className="statsStripItem"><span className="statsStripNum">6</span><span className="statsStripLabel">pathways most families never hear about</span></div>
+          <div className="statsStripItem">
+            <span className="statsStripNum">{stats ? stats.careCircleFamilies : "—"}</span>
+            <span className="statsStripLabel">families coordinating care on CareCircle</span>
+          </div>
         </div>
 
         <section className="underHeroWrap" aria-label="Introduction">
@@ -500,19 +514,47 @@ function HomePage() {
 
         {acatHtml && (
           <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }} aria-label="ACAT Pathway Finder">
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2aa3df", marginBottom: 8 }}>Assessment tool</div>
-              <h2 style={{ fontFamily: "Georgia,\"Times New Roman\",serif", fontSize: 36, fontWeight: 700, color: "#0b3b5b", margin: "0 0 10px", lineHeight: 1.1 }}>
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#2aa3df", marginBottom: 8 }}>Free government assessment tool</div>
+              <h2 style={{ fontFamily: "Georgia,\"Times New Roman\",serif", fontSize: 36, fontWeight: 700, color: "#0b3b5b", margin: "0 0 12px", lineHeight: 1.1 }}>
                 ACAT Tracker &amp; Guide
               </h2>
-              <p style={{ margin: 0, fontSize: 16, color: "#334155", lineHeight: 1.65 }}>
-                Use this tool to understand your ACAT pathway, track where you are in the process, and see what support options are available to you right now.
+              <p style={{ margin: "0 0 20px", fontSize: 16, color: "#334155", lineHeight: 1.65 }}>
+                An ACAT assessment (Aged Care Assessment Team) is the official government gateway to aged care services in Australia. You must have one before accessing any government-funded nursing home, home care package, or respite care. It's free, and we'll help you track exactly where you are in the process.
               </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
+                {[
+                  { step: "1", title: "Request an assessment", desc: "Call My Aged Care on 1800 200 422 or apply online. We help you prepare." },
+                  { step: "2", title: "Assessment visit", desc: "An assessor visits at home or in hospital. Usually within 2–4 weeks." },
+                  { step: "3", title: "Get your letter", desc: "You'll receive an approval letter listing which services you're eligible for." },
+                  { step: "4", title: "Choose your pathway", desc: "Nursing home, home care package, respite — use this tool to decide." },
+                ].map(({ step, title, desc }) => (
+                  <div key={step} style={{ background: "#f0f7ff", border: "1px solid #bfdbfe", borderRadius: 14, padding: "16px 14px" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#0b3b5b", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, marginBottom: 10 }}>{step}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#0b3b5b", marginBottom: 5 }}>{title}</div>
+                    <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.55 }}>{desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
+                {[
+                  { label: "Cost", value: "Free", note: "ACAT assessments cost nothing" },
+                  { label: "Who qualifies", value: "65+", note: "Or 50+ for Aboriginal & Torres Strait Islander people" },
+                  { label: "Wait time", value: "2–6 wks", note: "Urgent cases can be fast-tracked via hospital" },
+                ].map(({ label, value, note }) => (
+                  <div key={label} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#0b3b5b", lineHeight: 1 }}>{value}</div>
+                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 4, lineHeight: 1.4 }}>{note}</div>
+                  </div>
+                ))}
+              </div>
             </div>
             <iframe
               title="ACAT Pathway Finder"
               srcDoc={acatHtml}
               style={{ width: "100%", minHeight: 1100, border: 0, display: "block", borderRadius: 18, overflow: "hidden" }}
+              onLoad={() => { fetch(`${API_BASE}/api/track/acat-view`, { method: "POST" }).catch(() => {}); }}
             />
           </section>
         )}
@@ -543,7 +585,7 @@ function HomePage() {
                 Open CareCircle →
               </Link>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 28 }}>
               {[
                 { lbl: "TO", title: "Today view", desc: "Morning, afternoon, evening tasks. Who's coming and when. Mark things done as you go." },
                 { lbl: "NB", title: "Needs board", desc: "Ongoing help that rotates. Grocery runs, dog walking, washing — the family shares the load." },
@@ -558,6 +600,24 @@ function HomePage() {
                   <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{desc}</div>
                 </div>
               ))}
+            </div>
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 24 }}>
+              <div style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)", marginBottom: 16 }}>How it works</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                {[
+                  { n: "1", title: "Set up in 5 minutes", desc: "Add your loved one's name, address, GP, medications, and emergency contacts. It's all in one place from day one." },
+                  { n: "2", title: "Invite your circle", desc: "Add family members, carers, neighbours, and friends. Each person gets a link — no app download needed." },
+                  { n: "3", title: "Coordinate together", desc: "Everyone sees today's tasks, who's visiting, what's needed, and any updates. Nothing gets missed." },
+                ].map(({ n, title, desc }) => (
+                  <div key={n} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(232,86,58,0.2)", border: "1px solid rgba(232,86,58,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#e8563a", flexShrink: 0 }}>{n}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{title}</div>
+                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

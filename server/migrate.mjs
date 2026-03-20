@@ -197,6 +197,17 @@ export async function runMigrations() {
     EXECUTE FUNCTION set_updated_at();
   `);
 
+  // ── Page view tracking ─────────────────────────────────────────────────────
+  await query(`
+    CREATE TABLE IF NOT EXISTS page_views (
+      id BIGSERIAL PRIMARY KEY,
+      page TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_page_views_page_month
+    ON page_views (page, created_at);
+  `);
+
   // ── CareCircle tables ──────────────────────────────────────────────────────
   await query(`
     CREATE TABLE IF NOT EXISTS cc_circles (
