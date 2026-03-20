@@ -119,7 +119,7 @@ const sharedPageStyles = `
   .underHeroWrap {
     width: 100%;
     max-width: 900px;
-    margin: 18px auto 0;
+    margin: 0 auto 0;
     padding: 0 8px;
     box-sizing: border-box;
     text-align: left;
@@ -291,7 +291,7 @@ const sharedPageStyles = `
   .statsStrip {
     width: 100%;
     max-width: 760px;
-    margin: 20px auto 0;
+    margin: 20px auto 20px;
     display: flex;
     align-items: stretch;
     background: linear-gradient(135deg, #0d1f3c 0%, #0c2d44 60%, #0a3040 100%);
