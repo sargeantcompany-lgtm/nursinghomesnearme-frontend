@@ -543,10 +543,10 @@ function HomePage() {
 
         {acatHtml && (
           <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box" }} aria-label="ACAT Pathway Finder">
-            <div style={{ marginBottom: 24, textAlign: "center" }}>
-              <h2 style={{ fontSize: 30, fontWeight: 700, color: "#0b3b5b", margin: "0 0 10px", letterSpacing: "-0.02em" }}>ACAT Tracker &amp; Guide</h2>
-              <p className="underHeroP" style={{ margin: "0 auto", maxWidth: 680 }}>
-                An ACAT assessment (Aged Care Assessment Team) is the official government gateway to aged care services in Australia. You must have one before accessing any government-funded nursing home, home care package, or respite care. It's free — use this tool to track where you are in the process.
+            <div style={{ marginBottom: 20 }}>
+              <h2 className="underHeroH1">ACAT Tracker &amp; Guide</h2>
+              <p className="underHeroP">
+                An ACAT assessment (Aged Care Assessment Team) is what you need before accessing a nursing home, home care package, or respite care. Use this tool to understand where you are in the process and what comes next.
               </p>
             </div>
             <iframe
