@@ -33,8 +33,10 @@ type NursingHomeListItem = {
 type RoomOption = {
   roomType?: string | null;
   bathroomType?: string | null;
+  sizeM2?: number | null;
   radMin?: number | null;
   radMax?: number | null;
+  dapAmount?: number | null;
   availabilityNote?: string | null;
 };
 
@@ -89,13 +91,15 @@ type NursingHome = {
 type RoomOptionRow = {
   roomType: string;
   bathroomType: string;
+  sizeM2: string;
   radMin: string; // keep as string for input, convert on save
   radMax: string;
+  dapAmount: string;
   availabilityNote: string;
 };
 
 function emptyRoomOptionRow(): RoomOptionRow {
-  return { roomType: "", bathroomType: "", radMin: "", radMax: "", availabilityNote: "" };
+  return { roomType: "", bathroomType: "", sizeM2: "", radMin: "", radMax: "", dapAmount: "", availabilityNote: "" };
 }
 
 function ensureMinimumRoomRows(rows: RoomOptionRow[], minimum = 4): RoomOptionRow[] {
@@ -179,8 +183,10 @@ function toRoomRows(list?: RoomOption[] | null): RoomOptionRow[] {
   return ensureMinimumRoomRows(src.map((r) => ({
     roomType: (r.roomType ?? "") as string,
     bathroomType: (r.bathroomType ?? "") as string,
+    sizeM2: r.sizeM2 == null ? "" : String(r.sizeM2),
     radMin: r.radMin == null ? "" : String(r.radMin),
     radMax: r.radMax == null ? "" : String(r.radMax),
+    dapAmount: r.dapAmount == null ? "" : String(r.dapAmount),
     availabilityNote: (r.availabilityNote ?? "") as string,
   })));
 }
@@ -211,8 +217,10 @@ function rowsToRoomOptions(
 ): Array<{
   roomType?: string;
   bathroomType?: string;
+  sizeM2?: number;
   radMin?: number;
   radMax?: number;
+  dapAmount?: number;
   availabilityNote?: string;
 }> {
   return rows
@@ -221,25 +229,23 @@ function rowsToRoomOptions(
       const bathroomType = r.bathroomType.trim();
       const availabilityNote = r.availabilityNote.trim();
 
+      const sizeM2 = parseOptionalFloat(r.sizeM2);
       const radMin = parseOptionalNumber(r.radMin);
       const radMax = parseOptionalNumber(r.radMax);
+      const dapAmount = parseOptionalFloat(r.dapAmount);
 
       const hasAny =
         roomType ||
         bathroomType ||
         availabilityNote ||
+        sizeM2 !== undefined ||
         radMin !== undefined ||
-        radMax !== undefined;
+        radMax !== undefined ||
+        dapAmount !== undefined;
 
       if (!hasAny) return null;
 
-      return {
-        roomType,
-        bathroomType,
-        radMin,
-        radMax,
-        availabilityNote,
-      };
+      return { roomType, bathroomType, sizeM2, radMin, radMax, dapAmount, availabilityNote };
     })
     .filter((x): x is NonNullable<typeof x> => x != null);
 }
@@ -351,6 +357,8 @@ export default function AdminNursingHomes() {
   const [scanning, setScanning] = useState(false);
   const [gapFilling, setGapFilling] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [roomScanning, setRoomScanning] = useState(false);
+  const [roomScanMsg, setRoomScanMsg] = useState<string | null>(null);
   const [scanningVacancies, setScanningVacancies] = useState(false);
   const [vacancyScanProgress, setVacancyScanProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkGapFilling, setBulkGapFilling] = useState(false);
@@ -569,6 +577,43 @@ export default function AdminNursingHomes() {
       setScanMessage(`Gap-fill failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setGapFilling(false);
+    }
+  }
+
+  async function handleScanRooms() {
+    if (currentId == null) {
+      setRoomScanMsg("Save the facility first, then scan rooms.");
+      return;
+    }
+    setRoomScanning(true);
+    setRoomScanMsg(null);
+    try {
+      const result = await apiFetch<{ rooms: Array<{ roomType: string; bathroomType: string; sizeM2: number | null; radMin: number | null; radMax: number | null; dapAmount: number | null; availabilityNote: string }>; scannedUrl: string }>(
+        "/api/admin/scan-rooms",
+        { method: "POST", body: JSON.stringify({ facilityId: currentId }) }
+      );
+      const rooms = result.rooms ?? [];
+      if (rooms.length === 0) {
+        setRoomScanMsg("No room data found — MyAgedCare may not have room costs listed for this facility.");
+        return;
+      }
+      const newRows = rooms.map((r) => ({
+        roomType: r.roomType ?? "",
+        bathroomType: r.bathroomType ?? "",
+        sizeM2: r.sizeM2 != null ? String(r.sizeM2) : "",
+        radMin: r.radMin != null ? String(r.radMin) : "",
+        radMax: r.radMax != null ? String(r.radMax) : "",
+        dapAmount: r.dapAmount != null ? String(r.dapAmount) : "",
+        availabilityNote: r.availabilityNote ?? "",
+      }));
+      // Pad to at least 4 rows
+      while (newRows.length < 4) newRows.push(emptyRoomOptionRow());
+      setForm((p) => ({ ...p, roomOptions: newRows }));
+      setRoomScanMsg(`Imported ${rooms.length} room(s) from MyAgedCare. Review and save.`);
+    } catch (e: unknown) {
+      setRoomScanMsg(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setRoomScanning(false);
     }
   }
 
@@ -2193,14 +2238,31 @@ export default function AdminNursingHomes() {
             </div>
 
             <SectionTitle text="Room Options (RAD table)" />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                disabled={disabled || roomScanning}
+                onClick={handleScanRooms}
+                style={{ ...secondaryBtn, background: "#0b3b5b", color: "#fff", borderColor: "#0b3b5b" }}
+              >
+                {roomScanning ? "Scanning MyAgedCare…" : "🔍 Scan rooms from MyAgedCare"}
+              </button>
+              {roomScanMsg && (
+                <span style={{ fontSize: 13, color: roomScanMsg.includes("failed") || roomScanMsg.includes("No room") ? "#991b1b" : "#166534" }}>
+                  {roomScanMsg}
+                </span>
+              )}
+            </div>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>
                   <tr>
                     <th style={th}>Room type</th>
                     <th style={th}>Bathroom</th>
+                    <th style={th}>Size m²</th>
                     <th style={th}>RAD min</th>
                     <th style={th}>RAD max</th>
+                    <th style={th}>DAP $/day</th>
                     <th style={th}>Availability note</th>
                     <th style={th}></th>
                   </tr>
@@ -2240,6 +2302,22 @@ export default function AdminNursingHomes() {
                       </td>
                       <td style={td}>
                         <input
+                          value={r.sizeM2}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setForm((p) => {
+                              const next = [...p.roomOptions];
+                              next[idx] = { ...next[idx], sizeM2: v };
+                              return { ...p, roomOptions: next };
+                            });
+                          }}
+                          disabled={disabled}
+                          inputMode="decimal"
+                          style={miniInput}
+                        />
+                      </td>
+                      <td style={td}>
+                        <input
                           value={r.radMin}
                           onChange={(e) => {
                             const v = e.target.value;
@@ -2267,6 +2345,22 @@ export default function AdminNursingHomes() {
                           }}
                           disabled={disabled}
                           inputMode="numeric"
+                          style={miniInput}
+                        />
+                      </td>
+                      <td style={td}>
+                        <input
+                          value={r.dapAmount}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setForm((p) => {
+                              const next = [...p.roomOptions];
+                              next[idx] = { ...next[idx], dapAmount: v };
+                              return { ...p, roomOptions: next };
+                            });
+                          }}
+                          disabled={disabled}
+                          inputMode="decimal"
                           style={miniInput}
                         />
                       </td>

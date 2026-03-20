@@ -1368,6 +1368,74 @@ app.post("/api/admin/scan-vacancy", adminAuth, async (req, res) => {
   });
 });
 
+// POST /api/admin/scan-rooms
+// Scrapes the MyAgedCare rooms-and-cost page for a facility and returns structured room data.
+app.post("/api/admin/scan-rooms", adminAuth, async (req, res) => {
+  if (!env.firecrawlApiKey) {
+    return res.status(503).json({ message: "Firecrawl API key not configured." });
+  }
+
+  let govUrl = String(req.body?.govUrl || "").trim();
+
+  // If a facilityId is given, look up the government_listing_url from the DB
+  if (!govUrl && req.body?.facilityId) {
+    const r = await query("SELECT government_listing_url FROM nursing_homes WHERE id = $1", [Number(req.body.facilityId)]);
+    govUrl = r.rows[0]?.government_listing_url || "";
+  }
+
+  if (!govUrl) return res.status(400).json({ message: "No MyAgedCare URL found. Set the Government Listing URL on this facility first." });
+
+  // Build the rooms-and-cost URL
+  const roomsUrl = govUrl.split("?")[0].replace(/\/$/, "") + "/rooms-and-cost";
+
+  const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.firecrawlApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url: roomsUrl,
+      formats: ["extract"],
+      extract: {
+        prompt: `Extract every individual room option listed on this MyAgedCare rooms-and-cost page. For each room return: the full room name, bathroom type (Ensuite or Shared), room size in square metres, the RAD (Refundable Accommodation Deposit) lump sum amount in AUD, the DAP (Daily Accommodation Payment) daily rate in AUD, and the current availability status. If only one RAD amount is shown use it for both radMin and radMax.`,
+        schema: {
+          type: "object",
+          properties: {
+            rooms: {
+              type: "array",
+              description: "One entry per distinct room type listed on the page",
+              items: {
+                type: "object",
+                properties: {
+                  roomType:         { type: "string",  description: "Full room name/type e.g. 'Boronia Wing – Single Room with Ensuite'" },
+                  bathroomType:     { type: "string",  description: "Bathroom type: Ensuite or Shared bathroom" },
+                  sizeM2:           { type: "number",  description: "Room size in square metres e.g. 10.4" },
+                  radMin:           { type: "number",  description: "Minimum RAD (Refundable Accommodation Deposit) lump sum in AUD e.g. 350000. If only one amount listed use it for both." },
+                  radMax:           { type: "number",  description: "Maximum RAD lump sum in AUD e.g. 550000" },
+                  dapAmount:        { type: "number",  description: "Daily Accommodation Payment in AUD e.g. 157.19 — the daily fee shown as alternative to paying the full RAD" },
+                  availabilityNote: { type: "string",  description: "Current availability e.g. Currently available, Waitlist only" },
+                },
+              },
+            },
+          },
+        },
+      },
+    }),
+  });
+
+  if (!scrapeRes.ok) {
+    const err = await scrapeRes.text().catch(() => "Unknown error");
+    return res.status(502).json({ message: `Firecrawl error: ${err}` });
+  }
+
+  const data = await scrapeRes.json();
+  const extract = data?.extract ?? data?.data?.extract ?? {};
+  const rooms = Array.isArray(extract.rooms) ? extract.rooms : [];
+
+  return res.json({ rooms, scannedUrl: roomsUrl });
+});
+
 app.post("/api/admin/nursing-homes/import-location-centers", adminAuth, async (req, res) => {
   const rows = Array.isArray(req.body) ? req.body : [];
   let created = 0;
