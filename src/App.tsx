@@ -449,7 +449,7 @@ function HomePage() {
   React.useEffect(() => {
     fetch("/acat-pathway-finder-source.txt", { cache: "no-cache" })
       .then((r) => r.text())
-      .then((t) => setAcatHtml(t))
+      .then((t) => setAcatHtml(t.replace("</head>", "<style>html,body{background:#ffffff!important;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif!important}</style></head>")))
       .catch(() => {});
   }, []);
 
