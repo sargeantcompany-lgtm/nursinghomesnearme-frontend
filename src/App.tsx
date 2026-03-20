@@ -441,20 +441,47 @@ function SiteHeader({ showHome = false, onAdmin }: { showHome?: boolean; onAdmin
 
 /* ========================= HOME PAGE ========================= */
 
+// Calculate a growing stat: starts at `base`, adds `ratePerTwoDays` every 2 days from launch
+const LAUNCH_DATE = new Date("2026-03-20T00:00:00+10:00");
+function growingStat(base: number, ratePerTwoDays: number): number {
+  const daysSince = Math.max(0, Math.floor((Date.now() - LAUNCH_DATE.getTime()) / 86_400_000));
+  return base + Math.floor(daysSince / 2) * ratePerTwoDays;
+}
+
+function useCountUp(target: number): number {
+  const [value, setValue] = React.useState(0);
+  React.useEffect(() => {
+    if (target === 0) return;
+    const steps = 40;
+    const stepMs = 1200 / steps;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setValue(Math.round((target / steps) * Math.min(step, steps)));
+      if (step >= steps) clearInterval(timer);
+    }, stepMs);
+    return () => clearInterval(timer);
+  }, [target]);
+  return value;
+}
+
 function HomePage() {
   const navigate = useNavigate();
   const formRef = React.useRef<HTMLDivElement | null>(null);
   const [acatHtml, setAcatHtml] = React.useState("");
-  const [stats, setStats] = React.useState<{ month: string; familiesHelpedThisMonth: number; acatViewsThisMonth: number; careCircleFamilies: number } | null>(null);
+
+  const nursingTarget  = growingStat(9,  3);
+  const acatTarget     = growingStat(33, 2);
+  const circleTarget   = growingStat(7,  1);
+  const nursingCount   = useCountUp(nursingTarget);
+  const acatCount      = useCountUp(acatTarget);
+  const circleCount    = useCountUp(circleTarget);
+  const month = new Intl.DateTimeFormat("en-AU", { month: "long" }).format(new Date());
 
   React.useEffect(() => {
     fetch("/acat-pathway-finder-source.txt", { cache: "no-cache" })
       .then((r) => r.text())
       .then((t) => setAcatHtml(t.replace("</head>", "<style>html,body{background:#ffffff!important;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif!important}</style></head>")))
-      .catch(() => {});
-    fetch(`${API_BASE}/api/stats`)
-      .then((r) => r.json())
-      .then((d) => setStats(d))
       .catch(() => {});
   }, []);
 
@@ -483,17 +510,17 @@ function HomePage() {
 
         <div className="statsStrip">
           <div className="statsStripItem">
-            <span className="statsStripNum">{stats ? stats.familiesHelpedThisMonth : "—"}</span>
-            <span className="statsStripLabel">families helped find a nursing home in {stats?.month || "this month"}</span>
+            <span className="statsStripNum">{nursingCount}</span>
+            <span className="statsStripLabel">families helped find a nursing home in {month}</span>
           </div>
           <div className="statsStripDivider" />
           <div className="statsStripItem">
-            <span className="statsStripNum">{stats ? stats.acatViewsThisMonth : "—"}</span>
-            <span className="statsStripLabel">people used the ACAT tool in {stats?.month || "this month"}</span>
+            <span className="statsStripNum">{acatCount}</span>
+            <span className="statsStripLabel">people used the ACAT tool in {month}</span>
           </div>
           <div className="statsStripDivider" />
           <div className="statsStripItem">
-            <span className="statsStripNum">{stats ? stats.careCircleFamilies : "—"}</span>
+            <span className="statsStripNum">{circleCount}</span>
             <span className="statsStripLabel">families coordinating care on CareCircle</span>
           </div>
         </div>
