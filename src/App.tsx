@@ -461,10 +461,6 @@ function HomePage() {
     navigate("/admin");
   }
 
-  function scrollToForm() {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   function activateCard(action: () => void) {
     return {
       role: "link" as const,
