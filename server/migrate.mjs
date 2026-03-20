@@ -208,6 +208,17 @@ export async function runMigrations() {
     ON page_views (page, created_at);
   `);
 
+  // ── Chat enquiries ─────────────────────────────────────────────────────────
+  await query(`
+    CREATE TABLE IF NOT EXISTS chat_enquiries (
+      id BIGSERIAL PRIMARY KEY,
+      name TEXT,
+      email TEXT,
+      message TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
   // ── CareCircle tables ──────────────────────────────────────────────────────
   await query(`
     CREATE TABLE IF NOT EXISTS cc_circles (

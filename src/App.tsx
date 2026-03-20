@@ -34,6 +34,7 @@ import BlogIndex from "./components/BlogIndex";
 import BlogPost from "./components/BlogPost";
 import CareCircleApp from "./components/CareCircleApp";
 import AcatPathwayFinderPage from "./components/AcatPathwayFinderPage";
+import ChatWidget from "./components/ChatWidget";
 import { API_BASE } from "./lib/runtimeConfig";
 
 function isAdminAuthed() {
@@ -54,6 +55,7 @@ export default function App() {
   return (
     <>
       <SiteStructuredData />
+      <ChatWidget />
       <Routes>
         {/* Public */}
         <Route path="/" element={<HomePage />} />

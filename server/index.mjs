@@ -1614,6 +1614,18 @@ app.get("/blog/:slug", (req, res, next) => {
 // CareCircle API routes
 // ── Public stats ─────────────────────────────────────────────────────────────
 
+// POST /api/chat-enquiry — stores a chat message from the chat widget
+app.post("/api/chat-enquiry", async (req, res) => {
+  const { name, email, message } = req.body ?? {};
+  try {
+    await query(
+      `INSERT INTO chat_enquiries (name, email, message) VALUES ($1, $2, $3)`,
+      [name ?? "", email ?? "", message ?? ""]
+    );
+  } catch { /* non-fatal if table doesn't exist yet */ }
+  return res.status(204).end();
+});
+
 // POST /api/track/acat-view  — fire-and-forget, called when ACAT iframe loads
 app.post("/api/track/acat-view", async (_req, res) => {
   try {
