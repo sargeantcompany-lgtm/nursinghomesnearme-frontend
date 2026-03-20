@@ -31,7 +31,29 @@ type NursingHomePublicDetails = {
   sourcePrimary?: string | null;
   facilityType?: string | null;
   beds?: number | null;
+  abn?: string | null;
   description?: string | null;
+  overviewHeading?: string | null;
+  providerOverview?: string | null;
+  accommodationSummary?: string | null;
+  pricingSummary?: string | null;
+  heroBadges?: string[] | null;
+  servicesIncluded?: string[] | null;
+  amenities?: string[] | null;
+  alliedHealth?: string[] | null;
+  foodHighlights?: string | null;
+  visitingHours?: string | null;
+  admissionsProcess?: string | null;
+  waitingListSummary?: string | null;
+  transportNotes?: string | null;
+  nearbyHospitals?: string[] | null;
+  faqItems?: string[] | null;
+  reviewSummary?: string | null;
+  reviewCount?: number | null;
+  radFrom?: number | null;
+  radTo?: number | null;
+  dapFrom?: number | null;
+  dapTo?: number | null;
   lastProfileScanAt?: string | null;
   galleryImageUrls?: string[] | null;
   images?: string[] | null;
@@ -199,19 +221,40 @@ export default function NursingHomeDetails() {
     () => uniqueList([...(data?.featureTags ?? []), ...(data?.otherTags ?? []), ...(data?.tags ?? [])]).slice(0, 10),
     [data],
   );
+  const heroBadges = useMemo(() => uniqueList(data?.heroBadges).slice(0, 4), [data]);
   const careTypes = useMemo(() => uniqueList(data?.careTypes), [data]);
   const specialties = useMemo(() => uniqueList(data?.specialties), [data]);
   const languages = useMemo(() => uniqueList(data?.languages), [data]);
   const roomTypes = useMemo(() => uniqueList(data?.roomTypes), [data]);
+  const amenities = useMemo(() => uniqueList(data?.amenities), [data]);
+  const servicesIncluded = useMemo(() => uniqueList(data?.servicesIncluded), [data]);
+  const alliedHealth = useMemo(() => uniqueList(data?.alliedHealth), [data]);
+  const nearbyHospitals = useMemo(() => uniqueList(data?.nearbyHospitals), [data]);
+  const faqItems = useMemo(() => uniqueList(data?.faqItems), [data]);
   const rooms = useMemo(() => (data?.roomOptions ?? []).filter((room) => room.roomType || room.radMin || room.radMax), [data]);
   const availability = availabilityTone(data?.availabilityStatus);
   const pageLocation = locationLabel(data);
   const heroImage = images[heroIndex] || "";
   const cleanProvider = cleanText(data?.providerName);
   const cleanOneLine = cleanDescription(data?.oneLineDescription);
-  const cleanOverview = cleanDescription(data?.description, data?.oneLineDescription) || "Full facility profile coming soon.";
+  const overviewHeading = cleanText(data?.overviewHeading) || "Overview";
+  const cleanOverview = cleanDescription(data?.description, data?.providerOverview || data?.oneLineDescription) || "Full facility profile coming soon.";
+  const cleanAccommodationSummary = cleanDescription(data?.accommodationSummary);
+  const cleanPricingSummary = cleanDescription(data?.pricingSummary);
+  const cleanFoodHighlights = cleanDescription(data?.foodHighlights);
+  const cleanVisitingHours = cleanText(data?.visitingHours);
+  const cleanAdmissionsProcess = cleanDescription(data?.admissionsProcess);
+  const cleanWaitingListSummary = cleanDescription(data?.waitingListSummary);
+  const cleanTransportNotes = cleanDescription(data?.transportNotes);
+  const cleanReviewSummary = cleanDescription(data?.reviewSummary);
   const cleanWebsite = cleanWebsiteUrl(data?.website);
   const cleanGovernmentListing = cleanWebsiteUrl(data?.governmentListingUrl);
+  const fallbackRad = data?.radFrom != null || data?.radTo != null
+    ? [niceCurrency(data?.radFrom), niceCurrency(data?.radTo)].filter(Boolean).join(" – ")
+    : "";
+  const fallbackDap = data?.dapFrom != null || data?.dapTo != null
+    ? [niceCurrency(data?.dapFrom), niceCurrency(data?.dapTo)].filter(Boolean).join(" – ")
+    : "";
 
   return (
     <div style={pageWrap}>
@@ -255,6 +298,15 @@ export default function NursingHomeDetails() {
                     {data.providerName && pageLocation ? <span>•</span> : null}
                     {pageLocation ? <span>{pageLocation}</span> : null}
                   </div>
+                  {heroBadges.length ? (
+                    <div style={{ ...tagWrap, marginTop: 14 }}>
+                      {heroBadges.map((badge) => (
+                        <span key={badge} style={{ ...softTag, background: "rgba(255,255,255,0.18)", color: "#fff", borderColor: "rgba(255,255,255,0.2)" }}>
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   {cleanOneLine ? <p style={heroDescription}>{cleanOneLine}</p> : null}
 
                   <div style={heroActions}>
@@ -303,11 +355,26 @@ export default function NursingHomeDetails() {
 
             <section style={contentGrid}>
               <div style={{ display: "grid", gap: 18 }}>
-                <InfoPanel title="Overview">
+                <InfoPanel title={overviewHeading}>
                   <p style={bodyText}>
                     {cleanOverview}
                   </p>
                 </InfoPanel>
+
+                {(cleanAccommodationSummary || cleanPricingSummary || fallbackRad || fallbackDap) ? (
+                  <InfoPanel title="Accommodation and pricing">
+                    <div style={{ display: "grid", gap: 14 }}>
+                      {cleanAccommodationSummary ? <p style={bodyText}>{cleanAccommodationSummary}</p> : null}
+                      {cleanPricingSummary ? <p style={bodyText}>{cleanPricingSummary}</p> : null}
+                      {(fallbackRad || fallbackDap) ? (
+                        <div style={{ display: "grid", gap: 8 }}>
+                          {fallbackRad ? <Fact label="RAD range" value={fallbackRad} /> : null}
+                          {fallbackDap ? <Fact label="DAP range" value={fallbackDap} /> : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </InfoPanel>
+                ) : null}
 
                 {tags.length ? (
                   <InfoPanel title="Highlights">
@@ -327,6 +394,16 @@ export default function NursingHomeDetails() {
                       <MiniList title="Care types" items={careTypes} empty="Care types still being added" />
                       <MiniList title="Specialties" items={specialties} empty="Specialties still being added" />
                       <MiniList title="Languages" items={languages} empty="Languages still being added" />
+                    </div>
+                  </InfoPanel>
+                ) : null}
+
+                {(amenities.length || servicesIncluded.length || alliedHealth.length) ? (
+                  <InfoPanel title="Services and amenities">
+                    <div style={triGrid}>
+                      <MiniList title="Amenities" items={amenities} empty="Amenities still being added" />
+                      <MiniList title="Services included" items={servicesIncluded} empty="Services still being added" />
+                      <MiniList title="Allied health" items={alliedHealth} empty="Allied health still being added" />
                     </div>
                   </InfoPanel>
                 ) : null}
@@ -362,6 +439,21 @@ export default function NursingHomeDetails() {
                     )}
                   </InfoPanel>
                 ) : null}
+
+                {(cleanFoodHighlights || cleanVisitingHours || cleanAdmissionsProcess || cleanWaitingListSummary || cleanTransportNotes || nearbyHospitals.length || faqItems.length || cleanReviewSummary) ? (
+                  <InfoPanel title="More details">
+                    <div style={{ display: "grid", gap: 14 }}>
+                      {cleanFoodHighlights ? <Fact label="Food" value={cleanFoodHighlights} /> : null}
+                      {cleanVisitingHours ? <Fact label="Visiting hours" value={cleanVisitingHours} /> : null}
+                      {cleanAdmissionsProcess ? <Fact label="Admissions" value={cleanAdmissionsProcess} /> : null}
+                      {cleanWaitingListSummary ? <Fact label="Waitlist" value={cleanWaitingListSummary} /> : null}
+                      {cleanTransportNotes ? <Fact label="Transport" value={cleanTransportNotes} /> : null}
+                      {nearbyHospitals.length ? <Fact label="Nearby hospitals" value={nearbyHospitals.join(", ")} /> : null}
+                      {faqItems.length ? <Fact label="FAQs" value={faqItems.join(" • ")} /> : null}
+                      {cleanReviewSummary ? <Fact label="Reviews" value={cleanReviewSummary} /> : null}
+                    </div>
+                  </InfoPanel>
+                ) : null}
               </div>
 
               <div style={{ display: "grid", gap: 18 }}>
@@ -371,6 +463,7 @@ export default function NursingHomeDetails() {
                     <Fact label="Phone" value={data.phone || "Not listed"} />
                     <Fact label="Email" value={data.email || "Not listed"} />
                     <Fact label="Website" value={cleanWebsite || "Not listed"} />
+                    {cleanGovernmentListing ? <Fact label="Government listing" value={cleanGovernmentListing} /> : null}
                   </div>
                   {(data.phone || data.email || cleanWebsite) ? (
                     <div style={{ ...heroActions, marginTop: 16 }}>
@@ -390,6 +483,8 @@ export default function NursingHomeDetails() {
                     <Fact label="Source" value={data.sourcePrimary || "Imported facility profile"} />
                     <Fact label="Profile status" value={data.status || "Active"} />
                     <Fact label="Photo count" value={images.length ? `${images.length} linked` : "Still being built"} />
+                    {data.abn ? <Fact label="ABN" value={data.abn} /> : null}
+                    {data.reviewCount != null ? <Fact label="Review count" value={String(data.reviewCount)} /> : null}
                   </div>
                 </InfoPanel>
               </div>
