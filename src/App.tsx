@@ -315,7 +315,7 @@ const sharedPageStyles = `
     letter-spacing: -0.03em;
   }
   .statsStripLabel {
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     color: rgba(255,255,255,0.65);
     text-align: center;
@@ -513,17 +513,17 @@ function HomePage() {
         <div className="statsStrip">
           <div className="statsStripItem">
             <span className="statsStripNum">{nursingCount}</span>
-            <span className="statsStripLabel">families placed in {month}</span>
+            <span className="statsStripLabel">Families Placed in {month}</span>
           </div>
           <div className="statsStripDivider" />
           <div className="statsStripItem">
             <span className="statsStripNum">{acatCount}</span>
-            <span className="statsStripLabel">ACAT tool sessions in {month}</span>
+            <span className="statsStripLabel">ACAT Tool Sessions in {month}</span>
           </div>
           <div className="statsStripDivider" />
           <div className="statsStripItem">
             <span className="statsStripNum">{circleCount}</span>
-            <span className="statsStripLabel">families on CareCircle</span>
+            <span className="statsStripLabel">Families on CareCircle</span>
           </div>
         </div>
 
