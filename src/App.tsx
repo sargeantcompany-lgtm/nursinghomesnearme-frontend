@@ -105,24 +105,24 @@ const sharedPageStyles = `
     --green: #0D9488;
   }
   .pageWrap {
-    max-width: 1800px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 0 24px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    box-sizing: border-box;
   }
   .heroImg {
     width: 100%;
-    max-width: 760px;
+    max-width: 640px;
     margin: 18px auto 0;
     display: block;
   }
   .underHeroWrap {
     width: 100%;
-    max-width: 900px;
-    margin: 0 auto 0;
-    padding: 0 8px;
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
     text-align: left;
   }
@@ -150,8 +150,8 @@ const sharedPageStyles = `
   }
   .extrasCard {
     width: 100%;
-    max-width: 900px;
-    margin: 28px auto 0;
+    max-width: 100%;
+    margin: 28px 0 0;
     border: none;
     background: transparent;
     padding: 0;
@@ -175,8 +175,8 @@ const sharedPageStyles = `
   }
   .seoCtaCard {
     width: 100%;
-    max-width: 900px;
-    margin: 28px auto 0;
+    max-width: 100%;
+    margin: 28px 0 0;
     padding: 28px 30px;
     border-radius: 22px;
     background: linear-gradient(135deg, #0b3b5b 0%, #145374 62%, #1a6b72 100%);
@@ -292,8 +292,8 @@ const sharedPageStyles = `
   }
   .statsStrip {
     width: 100%;
-    max-width: 760px;
-    margin: 20px auto 20px;
+    max-width: 100%;
+    margin: 20px 0 20px;
     display: flex;
     align-items: stretch;
     background: linear-gradient(135deg, #0d1f3c 0%, #0c2d44 60%, #0a3040 100%);
@@ -544,7 +544,7 @@ function HomePage() {
         </div>
 
         {acatHtml && (
-          <section style={{ width: "100%", maxWidth: 900, margin: "32px auto 0", padding: "0 8px", boxSizing: "border-box", overflow: "hidden" }} aria-label="ACAT Pathway Finder">
+          <section style={{ width: "100%", margin: "32px 0 0", boxSizing: "border-box", overflow: "hidden" }} aria-label="ACAT Pathway Finder">
             <div style={{ marginBottom: 20 }}>
               <h2 className="underHeroH1">ACAT Tracker &amp; Guide</h2>
               <p className="underHeroP">
@@ -567,7 +567,7 @@ function HomePage() {
           </section>
         )}
 
-        <div style={{ width: "100%", maxWidth: 900, margin: "16px auto 0", padding: "0 8px", boxSizing: "border-box" }}>
+        <div style={{ width: "100%", margin: "16px 0 0", boxSizing: "border-box" }}>
           <div style={{ background: "#f0fdf9", border: "1.5px solid #a7f3d0", borderRadius: 20, padding: "32px 36px", marginBottom: 24 }}>
             <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
               <div style={{ flex: "1 1 280px" }}>
@@ -597,7 +597,7 @@ function HomePage() {
           </div>
         </div>
 
-        <div style={{ width: "100%", maxWidth: 900, margin: "0 auto", padding: "0 8px", boxSizing: "border-box" }}>
+        <div style={{ width: "100%", margin: "0", boxSizing: "border-box" }}>
           <div
             style={{ background: "#1a2035", borderRadius: 24, padding: "40px 36px", cursor: "pointer" }}
             role="link" tabIndex={0}
