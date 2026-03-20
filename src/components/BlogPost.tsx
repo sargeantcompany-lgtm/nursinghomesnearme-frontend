@@ -85,6 +85,10 @@ export default function BlogPost() {
         <img
           src={post.image}
           alt={post.title}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "/social-preview.png";
+          }}
           style={{
             width: "100%",
             borderRadius: 12,

@@ -100,6 +100,10 @@ export default function BlogIndex() {
                 src={post.image}
                 alt={post.title}
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/social-preview.png";
+                }}
                 style={{
                   width: "100%",
                   height: 180,

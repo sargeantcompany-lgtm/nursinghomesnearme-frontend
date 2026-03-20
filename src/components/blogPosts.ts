@@ -153,4 +153,4 @@ const rawBlogPosts: Omit<BlogPost, "excerpt">[] = [
 export const blogPosts: BlogPost[] = rawBlogPosts.map((post) => ({
   ...post,
   excerpt: post.content.replace(/\s+/g, " ").trim().slice(0, 170) + "...",
-}));
+})).sort((a, b) => a.day - b.day);
