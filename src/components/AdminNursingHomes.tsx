@@ -615,7 +615,7 @@ export default function AdminNursingHomes() {
     setRoomScanMsg(null);
     try {
       const result = await apiFetch<{ rooms: Array<{ roomType: string; bathroomType: string; sizeM2: number | null; radMin: number | null; radMax: number | null; dapAmount: number | null; availabilityNote: string }>; scannedUrl: string }>(
-        "/api/admin/scan-rooms",
+        "/api/admin/nursing-homes/scan-rooms",
         { method: "POST", body: JSON.stringify({ facilityId: currentId }) }
       );
       const rooms = result.rooms ?? [];
