@@ -553,6 +553,12 @@ export default function AdminNursingHomes() {
           ...linesToList(p.languagesText),
           ...((data.languages as string[]) || []),
         ].filter((v, i, a) => v && a.indexOf(v) === i).join("\n"),
+        primaryImageUrl:
+          String(data.primaryImageUrl || p.primaryImageUrl),
+        galleryImageUrlsText: [
+          ...linesToList(p.galleryImageUrlsText),
+          ...((data.galleryImageUrls as string[]) || []),
+        ].filter((v, i, a) => v && a.indexOf(v) === i).join("\n"),
         internalNotes: [
           p.internalNotes,
           data.visitingHours ? `Visiting hours: ${data.visitingHours}` : "",
