@@ -45,6 +45,7 @@ export default function AdminLogin() {
       const res = await fetch(`${API_BASE}/api/admin/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ password: password.trim() }),
       });
 
@@ -78,12 +79,13 @@ export default function AdminLogin() {
         throw new Error(serverMessage || `Login failed (${res.status}).`);
       }
 
-      const data = (await res.json()) as { token?: string };
-      if (!data?.token || !data.token.trim()) {
-        throw new Error("Login failed: server did not return a token.");
+      const body = await res.json().catch(() => ({}));
+      if (!body?.token || typeof body.token !== "string") {
+        throw new Error("Login succeeded but no admin token was returned.");
       }
 
-      localStorage.setItem("nhnm_admin_token", data.token.trim());
+      localStorage.setItem("nhnm_admin_token", body.token);
+      localStorage.setItem("nhnm_admin_session", "1");
       setPassword("");
       setFailedAttempts(0);
       setCooldownUntil(null);
@@ -159,9 +161,9 @@ export default function AdminLogin() {
         ) : null}
 
         <div style={{ marginTop: 12, fontSize: 12, color: "#64748b" }}>
-          Tip: If you are stuck in admin, clear token in DevTools:
+          Tip: If you are stuck in admin, clear the local session flag in DevTools:
           <div style={{ fontFamily: "monospace", marginTop: 6 }}>
-            localStorage.removeItem("nhnm_admin_token")
+            localStorage.removeItem("nhnm_admin_session"); localStorage.removeItem("nhnm_admin_token")
           </div>
         </div>
       </div>

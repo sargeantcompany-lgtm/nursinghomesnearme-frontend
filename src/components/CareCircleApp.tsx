@@ -204,6 +204,8 @@ const avatarColorMap: Record<string, string> = {
 };
 
 export default function CareCircleApp() {
+  const inviteFromUrl = new URLSearchParams(window.location.search).get("invite")?.trim() || "";
+  const [inviteToken, setInviteToken] = React.useState<string>(() => inviteFromUrl || sessionStorage.getItem("nhnm_carecircle_invite") || "");
   const [tab, setTab] = React.useState<TabKey>("today");
   const [data, setData] = React.useState<LaunchPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -220,11 +222,25 @@ export default function CareCircleApp() {
   const [updateDraft, setUpdateDraft] = React.useState("");
   const [inviteDraft, setInviteDraft] = React.useState({ name: "", email: "", mobile: "", role: "family", relationship: "", responsibilities: "" });
 
+  React.useEffect(() => {
+    if (inviteFromUrl) {
+      sessionStorage.setItem("nhnm_carecircle_invite", inviteFromUrl);
+      setInviteToken(inviteFromUrl);
+    }
+  }, [inviteFromUrl]);
+
   const load = React.useCallback(async () => {
+    if (!inviteToken) {
+      setLoading(false);
+      setError("A valid CareCircle invite link is required.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/carecircle/launch`);
+      const res = await fetch(`${API_BASE}/api/carecircle/launch`, {
+        headers: { "X-CareCircle-Invite": inviteToken },
+      });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body?.message || "Failed to load CareCircle");
       setData(body);
@@ -233,7 +249,7 @@ export default function CareCircleApp() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [inviteToken]);
 
   React.useEffect(() => {
     load();
@@ -245,7 +261,7 @@ export default function CareCircleApp() {
     try {
       const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/tasks/${taskId}/${action}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CareCircle-Invite": inviteToken },
         body: JSON.stringify({ memberId: actingMember.id }),
       });
       const body = await res.json().catch(() => ({}));
@@ -264,7 +280,7 @@ export default function CareCircleApp() {
     try {
       const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/needs/${needId}/claim`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CareCircle-Invite": inviteToken },
         body: JSON.stringify({ memberId: actingMember.id }),
       });
       const body = await res.json().catch(() => ({}));
@@ -287,7 +303,7 @@ export default function CareCircleApp() {
     try {
       const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/${kind === "update" ? "updates" : `${kind}s`}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CareCircle-Invite": inviteToken },
         body: JSON.stringify({
           memberId: actingMember?.id ?? null,
           postedByName: actingMember?.name ?? "Circle member",
@@ -311,7 +327,7 @@ export default function CareCircleApp() {
     try {
       const res = await fetch(`${API_BASE}/api/carecircle/circles/${data.circle.id}/members`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-CareCircle-Invite": inviteToken },
         body: JSON.stringify({
           invitedByMemberId: actingMember?.id ?? null,
           name: inviteDraft.name.trim(),

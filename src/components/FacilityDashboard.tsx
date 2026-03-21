@@ -68,7 +68,7 @@ export default function FacilityDashboard() {
   const [searchParams] = useSearchParams();
   const tokenFromUrl = searchParams.get("token") ?? "";
 
-  const [token, setToken] = useState(() => tokenFromUrl || localStorage.getItem("nhnm_facility_token") || "");
+  const [token, setToken] = useState(() => localStorage.getItem("nhnm_facility_token") || "");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -84,10 +84,35 @@ export default function FacilityDashboard() {
   const [responseSaving, setResponseSaving] = useState(false);
 
   useEffect(() => {
-    if (tokenFromUrl) {
-      localStorage.setItem("nhnm_facility_token", tokenFromUrl);
-      setToken(tokenFromUrl);
+    if (!tokenFromUrl) return;
+
+    let cancelled = false;
+    async function exchangeToken() {
+      try {
+        const res = await fetch(`${API_BASE}/api/facility/auth/exchange`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: tokenFromUrl }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok || !body?.token) {
+          throw new Error(body?.message || "Unable to open facility session.");
+        }
+        if (cancelled) return;
+        localStorage.setItem("nhnm_facility_token", body.token);
+        setToken(body.token);
+        window.history.replaceState({}, "", "/facility/dashboard");
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Unable to open facility session.");
+        setLoading(false);
+      }
     }
+
+    exchangeToken();
+    return () => {
+      cancelled = true;
+    };
   }, [tokenFromUrl]);
 
   useEffect(() => {

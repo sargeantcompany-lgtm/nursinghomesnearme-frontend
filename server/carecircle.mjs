@@ -135,11 +135,44 @@ function rowToUpdate(r) {
 // ── routes ───────────────────────────────────────────────────────────────────
 
 export function registerCareCircleRoutes(app) {
+  async function getCareCircleAuth(req, expectedCircleId = null) {
+    const token =
+      String(req.header("X-CareCircle-Invite") || req.query.invite || "").trim();
+    if (!token) return null;
+
+    const result = await query(
+      `SELECT * FROM cc_members
+       WHERE invite_token = $1
+       LIMIT 1`,
+      [token],
+    );
+    const member = result.rows[0];
+    if (!member) return null;
+    if (expectedCircleId && String(member.circle_id) !== String(expectedCircleId)) return null;
+
+    if (!member.invite_accepted_at) {
+      await query(
+        `UPDATE cc_members
+         SET invite_accepted_at = NOW()
+         WHERE id = $1 AND invite_accepted_at IS NULL`,
+        [member.id],
+      );
+      member.invite_accepted_at = new Date();
+    }
+
+    return member;
+  }
+
   // GET /api/carecircle/launch
   // Returns the demo circle with all data needed for the app shell
-  app.get("/api/carecircle/launch", async (_req, res) => {
+  app.get("/api/carecircle/launch", async (req, res) => {
     try {
-      const circleRes = await query(`SELECT * FROM cc_circles ORDER BY created_at LIMIT 1`);
+      const authMember = await getCareCircleAuth(req);
+      if (!authMember) {
+        return res.status(401).json({ message: "CareCircle invite token is required." });
+      }
+
+      const circleRes = await query(`SELECT * FROM cc_circles WHERE id = $1 LIMIT 1`, [authMember.circle_id]);
       if (circleRes.rows.length === 0) {
         return res.status(404).json({ message: "No circle found. Please set up a circle first." });
       }
@@ -155,7 +188,7 @@ export function registerCareCircleRoutes(app) {
       ]);
 
       const members = membersRes.rows.map(rowToMember);
-      const currentMember = members.find((m) => m.isCircleManager) ?? members[0] ?? null;
+      const currentMember = members.find((m) => String(m.id) === String(authMember.id)) ?? null;
 
       return res.json({
         circle,
@@ -175,17 +208,15 @@ export function registerCareCircleRoutes(app) {
   // POST /api/carecircle/circles/:id/tasks/:taskId/claim
   app.post("/api/carecircle/circles/:id/tasks/:taskId/claim", async (req, res) => {
     const { id, taskId } = req.params;
-    const { memberId } = req.body ?? {};
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       let assignedName = "A circle member";
-      if (memberId) {
-        const mr = await query(`SELECT name FROM cc_members WHERE id = $1 AND circle_id = $2`, [memberId, id]);
-        if (mr.rows.length) assignedName = mr.rows[0].name;
-      }
+      assignedName = authMember.name;
       const r = await query(
         `UPDATE cc_tasks SET status = 'claimed', assigned_to = $1, assigned_name = $2, updated_at = NOW()
          WHERE id = $3 AND circle_id = $4 AND status = 'pending' RETURNING *`,
-        [memberId || null, assignedName, taskId, id]
+        [authMember.id, assignedName, taskId, id]
       );
       if (!r.rows.length) return res.status(404).json({ message: "Task not found or already claimed" });
       return res.json(rowToTask(r.rows[0]));
@@ -198,12 +229,13 @@ export function registerCareCircleRoutes(app) {
   // POST /api/carecircle/circles/:id/tasks/:taskId/done
   app.post("/api/carecircle/circles/:id/tasks/:taskId/done", async (req, res) => {
     const { id, taskId } = req.params;
-    const { memberId } = req.body ?? {};
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       const r = await query(
         `UPDATE cc_tasks SET status = 'done', completed_by = $1, completed_at = NOW(), updated_at = NOW()
          WHERE id = $2 AND circle_id = $3 RETURNING *`,
-        [memberId || null, taskId, id]
+        [authMember.id, taskId, id]
       );
       if (!r.rows.length) return res.status(404).json({ message: "Task not found" });
       return res.json(rowToTask(r.rows[0]));
@@ -219,6 +251,8 @@ export function registerCareCircleRoutes(app) {
     const { title, description, taskType, scheduledTime, priority, memberId } = req.body ?? {};
     if (!title?.trim()) return res.status(400).json({ message: "Title is required" });
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       let assignedName = null;
       if (memberId) {
         const mr = await query(`SELECT name FROM cc_members WHERE id = $1 AND circle_id = $2`, [memberId, id]);
@@ -239,17 +273,15 @@ export function registerCareCircleRoutes(app) {
   // POST /api/carecircle/circles/:id/needs/:needId/claim
   app.post("/api/carecircle/circles/:id/needs/:needId/claim", async (req, res) => {
     const { id, needId } = req.params;
-    const { memberId } = req.body ?? {};
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       let assignedName = "A circle member";
-      if (memberId) {
-        const mr = await query(`SELECT name FROM cc_members WHERE id = $1 AND circle_id = $2`, [memberId, id]);
-        if (mr.rows.length) assignedName = mr.rows[0].name;
-      }
+      assignedName = authMember.name;
       const r = await query(
         `UPDATE cc_needs SET status = 'claimed', assigned_to = $1, assigned_name = $2
          WHERE id = $3 AND circle_id = $4 RETURNING *`,
-        [memberId || null, assignedName, needId, id]
+        [authMember.id, assignedName, needId, id]
       );
       if (!r.rows.length) return res.status(404).json({ message: "Need not found" });
       return res.json(rowToNeed(r.rows[0]));
@@ -265,6 +297,8 @@ export function registerCareCircleRoutes(app) {
     const { title, description, frequency, coverageNotes } = req.body ?? {};
     if (!title?.trim()) return res.status(400).json({ message: "Title is required" });
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       const r = await query(
         `INSERT INTO cc_needs (circle_id, title, description, frequency, coverage_notes)
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
@@ -283,6 +317,8 @@ export function registerCareCircleRoutes(app) {
     const { name, provider, amount, dueDate, frequency, notes } = req.body ?? {};
     if (!name?.trim()) return res.status(400).json({ message: "Name is required" });
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       const r = await query(
         `INSERT INTO cc_bills (circle_id, name, provider, amount, due_date, frequency, notes)
          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
@@ -301,10 +337,12 @@ export function registerCareCircleRoutes(app) {
     const { message, memberId, postedByName } = req.body ?? {};
     if (!message?.trim()) return res.status(400).json({ message: "Message is required" });
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       const r = await query(
         `INSERT INTO cc_updates (circle_id, posted_by, posted_by_name, message)
          VALUES ($1,$2,$3,$4) RETURNING *`,
-        [id, memberId || null, postedByName || "Circle member", message.trim()]
+        [id, authMember.id, postedByName || authMember.name || "Circle member", message.trim()]
       );
       return res.status(201).json(rowToUpdate(r.rows[0]));
     } catch (err) {
@@ -319,6 +357,8 @@ export function registerCareCircleRoutes(app) {
     const { name, email, mobile, role, relationship, responsibilities, avatarColour } = req.body ?? {};
     if (!name?.trim()) return res.status(400).json({ message: "Name is required" });
     try {
+      const authMember = await getCareCircleAuth(req, id);
+      if (!authMember) return res.status(401).json({ message: "CareCircle authentication required." });
       const inviteToken = crypto.randomBytes(18).toString("base64url");
       const r = await query(
         `INSERT INTO cc_members (circle_id, name, email, mobile, role, relationship, responsibilities, avatar_colour, invite_token, invite_sent_at)

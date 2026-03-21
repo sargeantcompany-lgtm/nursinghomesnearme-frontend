@@ -38,7 +38,10 @@ import ChatWidget from "./components/ChatWidget";
 import { API_BASE } from "./lib/runtimeConfig";
 
 function isAdminAuthed() {
-  return !!(localStorage.getItem("nhnm_admin_token") ?? "").trim();
+  return (
+    !!(localStorage.getItem("nhnm_admin_token") ?? "").trim() ||
+    !!(localStorage.getItem("nhnm_admin_session") ?? "").trim()
+  );
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
@@ -831,6 +834,9 @@ function LoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "Invalid email or password");
+      if (data?.token && data?.authToken) {
+        sessionStorage.setItem(`nhnm_workflow_auth_${data.token}`, data.authToken);
+      }
       navigate(`/workflow/${data.token}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

@@ -5,4 +5,4 @@ cmds = ["npm ci"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "node server/index.mjs"
+cmd = "if [ \"$RAILWAY_SERVICE_NAME\" = \"nursinghomesnearme_backend\" ] || [ \"$RAILWAY_SERVICE_NAME\" = \"nursinghomesnearme-backend\" ]; then npm run start:backend; else npm run start; fi"

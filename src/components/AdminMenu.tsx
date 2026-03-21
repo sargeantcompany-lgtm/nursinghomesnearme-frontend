@@ -8,7 +8,9 @@ import SeoHead from "./SeoHead";
 export default function AdminMenu() {
   const navigate = useNavigate();
 
-  const isAuthed = !!(localStorage.getItem("nhnm_admin_token") ?? "").trim();
+  const isAuthed =
+    !!(localStorage.getItem("nhnm_admin_token") ?? "").trim() ||
+    !!(localStorage.getItem("nhnm_admin_session") ?? "").trim();
   React.useEffect(() => {
     if (!isAuthed) navigate("/admin", { replace: true });
   }, [isAuthed, navigate]);

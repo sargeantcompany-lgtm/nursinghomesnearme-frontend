@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { API_BASE } from "../lib/runtimeConfig";
 
 const links = [
   { to: "/admin/menu", label: "Admin Home" },
@@ -11,8 +12,14 @@ export default function AdminTopNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  function logout() {
+  async function logout() {
+    try {
+      await fetch(`${API_BASE}/api/admin/auth/logout`, { method: "POST", credentials: "include" });
+    } catch {
+      // ignore logout network errors; we still clear the local session marker
+    }
     localStorage.removeItem("nhnm_admin_token");
+    localStorage.removeItem("nhnm_admin_session");
     navigate("/admin", { replace: true });
   }
 

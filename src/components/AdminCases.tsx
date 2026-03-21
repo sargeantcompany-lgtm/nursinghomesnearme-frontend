@@ -334,8 +334,9 @@ function toStr(v: unknown): string {
 
 export default function AdminCases() {
   const [token, setToken] = useState<string>(() => {
-    const saved = localStorage.getItem("nhnm_admin_token");
-    return saved ?? (TOKEN_ENV ?? "");
+    const savedToken = localStorage.getItem("nhnm_admin_token");
+    const savedSession = localStorage.getItem("nhnm_admin_session");
+    return (TOKEN_ENV ?? "").trim() || (savedToken ?? "").trim() || (savedSession ? "cookie-session" : "");
   });
 
   const [list, setList] = useState<CaseListItem[]>([]);
@@ -681,10 +682,6 @@ export default function AdminCases() {
   }
 
   useEffect(() => {
-    localStorage.setItem("nhnm_admin_token", token);
-  }, [token]);
-
-  useEffect(() => {
     refreshList().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -723,11 +720,11 @@ export default function AdminCases() {
         <AdminTopNav />
 
         <div style={topCard}>
-          <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>Admin Token</label>
+          <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>Admin Override Token</label>
           <input
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="Paste token here (X-Admin-Token)"
+            placeholder="Optional: paste a dev override token"
             style={inputStyle}
           />
 

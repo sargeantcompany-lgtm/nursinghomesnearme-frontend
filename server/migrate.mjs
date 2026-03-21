@@ -102,6 +102,28 @@ export async function runMigrations() {
   `);
 
   await query(`
+    CREATE TABLE IF NOT EXISTS facility_login_tokens (
+      id BIGSERIAL PRIMARY KEY,
+      nursing_home_id BIGINT NOT NULL REFERENCES nursing_homes(id) ON DELETE CASCADE,
+      email TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_facility_login_tokens_token
+    ON facility_login_tokens (token);
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_facility_login_tokens_home
+    ON facility_login_tokens (nursing_home_id, expires_at);
+  `);
+
+  await query(`
     CREATE TABLE IF NOT EXISTS outbound_messages (
       id BIGSERIAL PRIMARY KEY,
       client_case_id BIGINT REFERENCES client_cases(id) ON DELETE SET NULL,
@@ -116,8 +138,28 @@ export async function runMigrations() {
   `);
 
   await query(`
+    CREATE TABLE IF NOT EXISTS facility_match_responses (
+      id BIGSERIAL PRIMARY KEY,
+      nursing_home_id BIGINT NOT NULL REFERENCES nursing_homes(id) ON DELETE CASCADE,
+      client_case_id BIGINT NOT NULL REFERENCES client_cases(id) ON DELETE CASCADE,
+      vacancy_outcome TEXT,
+      waitlist_status TEXT,
+      facility_notes TEXT,
+      responded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (nursing_home_id, client_case_id)
+    );
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_facility_match_responses_home_case
+    ON facility_match_responses (nursing_home_id, client_case_id);
+  `);
+
+  await query(`
     CREATE TABLE IF NOT EXISTS nursing_homes (
       id BIGSERIAL PRIMARY KEY,
+      provider_name TEXT,
+      facility_row_id TEXT,
       name TEXT NOT NULL,
       one_line_description TEXT,
       description TEXT,
@@ -129,10 +171,21 @@ export async function runMigrations() {
       longitude DOUBLE PRECISION,
       phone TEXT,
       website TEXT,
+      government_listing_url TEXT,
       email TEXT,
       internal_notes TEXT,
       status TEXT NOT NULL DEFAULT 'ACTIVE',
       active_vacancies INTEGER,
+      website_says_vacancies TEXT,
+      facility_confirmed_vacancies TEXT,
+      website_checked_at TEXT,
+      website_source_url TEXT,
+      facility_confirmed_at TEXT,
+      facility_confirmation_source TEXT,
+      conflict_flag BOOLEAN,
+      last_profile_scan_at TEXT,
+      last_outreach_sent_at TEXT,
+      last_outreach_reply_at TEXT,
       verified_at TEXT,
       primary_image_url TEXT,
       gallery_image_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -144,6 +197,20 @@ export async function runMigrations() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS provider_name TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS facility_row_id TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS government_listing_url TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS website_says_vacancies TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS facility_confirmed_vacancies TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS website_checked_at TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS website_source_url TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS facility_confirmed_at TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS facility_confirmation_source TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS conflict_flag BOOLEAN;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS last_profile_scan_at TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS last_outreach_sent_at TEXT;`);
+  await query(`ALTER TABLE nursing_homes ADD COLUMN IF NOT EXISTS last_outreach_reply_at TEXT;`);
 
   await query(`
     CREATE TABLE IF NOT EXISTS suburb_location_centers (

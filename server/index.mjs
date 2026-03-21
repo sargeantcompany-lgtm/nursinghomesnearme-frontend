@@ -17,8 +17,104 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
+const uploadsDir = path.isAbsolute(env.uploadsDir)
+  ? env.uploadsDir
+  : path.join(projectRoot, env.uploadsDir);
 
 const app = express();
+app.set("trust proxy", 1);
+
+function getRequestIp(req) {
+  return (req.ip || req.socket?.remoteAddress || "unknown").trim();
+}
+
+function cleanupRateLimitStore(store, now, windowMs) {
+  for (const [key, entry] of store.entries()) {
+    if (now - entry.windowStart >= windowMs) {
+      store.delete(key);
+    }
+  }
+}
+
+function createRateLimiter({ windowMs, max, message, keyPrefix }) {
+  const store = new Map();
+
+  return function rateLimiter(req, res, next) {
+    const now = Date.now();
+    cleanupRateLimitStore(store, now, windowMs);
+
+    const bucketKey = `${keyPrefix}:${getRequestIp(req)}`;
+    const current = store.get(bucketKey);
+    if (!current || now - current.windowStart >= windowMs) {
+      store.set(bucketKey, { count: 1, windowStart: now });
+      return next();
+    }
+
+    if (current.count >= max) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((current.windowStart + windowMs - now) / 1000));
+      res.setHeader("Retry-After", String(retryAfterSeconds));
+      return res.status(429).json({ message });
+    }
+
+    current.count += 1;
+    return next();
+  };
+}
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (env.nodeEnv !== "production") return true;
+  return env.allowedOrigins.includes(origin);
+}
+
+const adminLoginRateLimit = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: "Too many admin login attempts. Please try again later.",
+  keyPrefix: "admin-login",
+});
+
+const workflowLoginLinkRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 6,
+  message: "Too many dashboard link requests. Please try again later.",
+  keyPrefix: "workflow-link",
+});
+
+const workflowAuthRateLimit = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 12,
+  message: "Too many workflow authentication attempts. Please try again later.",
+  keyPrefix: "workflow-auth",
+});
+
+const intakeRateLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  message: "Too many placement requests from this connection. Please try again later.",
+  keyPrefix: "placement-intake",
+});
+
+const enquiryRateLimit = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  message: "Too many enquiry submissions from this connection. Please try again later.",
+  keyPrefix: "chat-enquiry",
+});
+
+const facilityLoginRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 6,
+  message: "Too many facility login requests. Please try again later.",
+  keyPrefix: "facility-link",
+});
+
+const adminUploadRateLimit = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Too many upload attempts. Please try again later.",
+  keyPrefix: "admin-upload",
+});
 
 // Redirect non-www to www in production
 app.use((req, res, next) => {
@@ -30,27 +126,132 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: env.allowedOrigin || true,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   }),
 );
 app.use(express.json({ limit: "1mb" }));
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use("/uploads", express.static(uploadsDir));
+app.use((error, _req, res, next) => {
+  if (error?.message?.startsWith("CORS blocked")) {
+    return res.status(403).json({ message: "Origin not allowed." });
+  }
+  return next(error);
+});
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on("finish", () => {
+    const durationMs = Date.now() - startedAt;
+    console.log(`[http] ${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms ip=${getRequestIp(req)}`);
+  });
+  next();
+});
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (req.secure || String(req.header("x-forwarded-proto") || "").includes("https")) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  next();
+});
 
 function signAdminToken() {
-  return jwt.sign({ role: "admin" }, env.appSecret, { expiresIn: "30d" });
+  return jwt.sign({ role: "admin" }, env.appSecret, { expiresIn: "12h" });
 }
 
 function signClientAuthToken(clientCaseId, publicToken) {
-  return jwt.sign({ role: "client", clientCaseId, publicToken }, env.appSecret, { expiresIn: "30d" });
+  return jwt.sign({ role: "client", clientCaseId, publicToken }, env.appSecret, { expiresIn: "7d" });
+}
+
+function signFacilityMatchToken(clientCaseId, nursingHomeId) {
+  return jwt.sign({ role: "facility_match", clientCaseId, nursingHomeId }, env.appSecret, { expiresIn: "7d" });
+}
+
+function signFacilitySessionToken(nursingHomeId) {
+  return jwt.sign({ role: "facility", nursingHomeId }, env.appSecret, { expiresIn: "12h" });
 }
 
 function verifyToken(token) {
   return jwt.verify(token, env.appSecret);
 }
 
+function getCookie(req, name) {
+  const cookieHeader = String(req.header("Cookie") || "");
+  const parts = cookieHeader.split(/;\s*/);
+  for (const part of parts) {
+    const [key, ...rest] = part.split("=");
+    if (key === name) return decodeURIComponent(rest.join("="));
+  }
+  return "";
+}
+
+function setCookie(res, name, value, maxAgeSeconds) {
+  const secure = env.nodeEnv === "production";
+  const sameSite = secure ? "None" : "Lax";
+  const cookie = [
+    `${name}=${encodeURIComponent(value)}`,
+    "Path=/",
+    "HttpOnly",
+    `SameSite=${sameSite}`,
+    `Max-Age=${maxAgeSeconds}`,
+  ];
+  if (secure) cookie.push("Secure");
+  res.append("Set-Cookie", cookie.join("; "));
+}
+
+function clearCookie(res, name) {
+  const secure = env.nodeEnv === "production";
+  const sameSite = secure ? "None" : "Lax";
+  const cookie = [
+    `${name}=`,
+    "Path=/",
+    "HttpOnly",
+    `SameSite=${sameSite}`,
+    "Max-Age=0",
+  ];
+  if (secure) cookie.push("Secure");
+  res.append("Set-Cookie", cookie.join("; "));
+}
+
+function hasTrustedOrigin(req) {
+  const allowed = new Set(
+    [...env.allowedOrigins, env.siteUrl]
+      .map((value) => {
+        try {
+          return new URL(value).origin;
+        } catch {
+          return "";
+        }
+      })
+      .filter(Boolean),
+  );
+  const originHeader = String(req.header("Origin") || "").trim();
+  if (originHeader) return allowed.has(originHeader);
+
+  const refererHeader = String(req.header("Referer") || "").trim();
+  if (refererHeader) {
+    try {
+      return allowed.has(new URL(refererHeader).origin);
+    } catch {
+      return false;
+    }
+  }
+  return env.nodeEnv !== "production";
+}
+
 function adminAuth(req, res, next) {
-  const token = (req.header("X-Admin-Token") || "").trim();
+  const token = (req.header("X-Admin-Token") || getCookie(req, "nhnm_admin_session") || "").trim();
   if (!token) return res.status(401).json({ message: "Missing admin token." });
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method.toUpperCase()) && !hasTrustedOrigin(req)) {
+    return res.status(403).json({ message: "Untrusted origin." });
+  }
   try {
     const decoded = verifyToken(token);
     if (decoded.role !== "admin") throw new Error("Bad role");
@@ -64,9 +265,105 @@ function createPublicToken() {
   return crypto.randomBytes(18).toString("base64url");
 }
 
+function createFacilityToken() {
+  return crypto.randomBytes(24).toString("base64url");
+}
+
 function parseMaybeDate(value) {
   const trimmed = String(value ?? "").trim();
   return trimmed ? trimmed : null;
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
+}
+
+function cleanText(value, maxLength = 5000) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function sanitizeFilename(filename) {
+  const ext = path.extname(String(filename || "")).toLowerCase();
+  const stem = path
+    .basename(String(filename || ""), ext)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return { stem: stem || "upload", ext };
+}
+
+function extForMime(mime) {
+  switch (mime) {
+    case "image/jpeg":
+      return ".jpg";
+    case "image/png":
+      return ".png";
+    case "image/webp":
+      return ".webp";
+    default:
+      return "";
+  }
+}
+
+async function readMultipartUpload(req, maxBytes = 8 * 1024 * 1024) {
+  const contentType = String(req.headers["content-type"] || "");
+  const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType);
+  if (!boundaryMatch) {
+    throw new Error("Expected multipart/form-data upload.");
+  }
+  const boundary = boundaryMatch[1] || boundaryMatch[2];
+  const chunks = [];
+  let total = 0;
+
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += buffer.length;
+    if (total > maxBytes) {
+      throw new Error("Upload exceeds the 8MB size limit.");
+    }
+    chunks.push(buffer);
+  }
+
+  const body = Buffer.concat(chunks);
+  const boundaryBuffer = Buffer.from(`--${boundary}`);
+  const headerSeparator = Buffer.from("\r\n\r\n");
+  const fileFieldName = 'name="file"';
+  let searchIndex = 0;
+
+  while (searchIndex < body.length) {
+    const boundaryIndex = body.indexOf(boundaryBuffer, searchIndex);
+    if (boundaryIndex === -1) break;
+    const headerStart = boundaryIndex + boundaryBuffer.length + 2;
+    const headerEnd = body.indexOf(headerSeparator, headerStart);
+    if (headerEnd === -1) break;
+
+    const headerText = body.subarray(headerStart, headerEnd).toString("utf8");
+    if (!headerText.includes(fileFieldName)) {
+      searchIndex = headerEnd + headerSeparator.length;
+      continue;
+    }
+
+    const filenameMatch = /filename="([^"]*)"/i.exec(headerText);
+    const mimeMatch = /content-type:\s*([^\r\n]+)/i.exec(headerText);
+    const contentStart = headerEnd + headerSeparator.length;
+    const nextBoundaryIndex = body.indexOf(Buffer.from(`\r\n--${boundary}`), contentStart);
+    if (nextBoundaryIndex === -1) {
+      throw new Error("Malformed upload payload.");
+    }
+
+    return {
+      filename: filenameMatch?.[1] || "upload",
+      mimeType: (mimeMatch?.[1] || "").trim().toLowerCase(),
+      buffer: body.subarray(contentStart, nextBoundaryIndex),
+    };
+  }
+
+  throw new Error("No file field found in upload.");
 }
 
 function toJsonArray(value) {
@@ -484,6 +781,119 @@ async function logLoginLink(caseRow) {
   };
 }
 
+async function logFacilityLoginLink(facilityRow) {
+  const token = createFacilityToken();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const linkUrl = `${env.siteUrl.replace(/\/$/, "")}/facility/dashboard?token=${token}`;
+  const subject = "Your Nursing Homes Near Me facility login link";
+  const html = `
+    <p>Hello${facilityRow.name ? ` ${facilityRow.name}` : ""},</p>
+    <p>Your secure facility dashboard link is below. It expires in 24 hours.</p>
+    <p><a href="${linkUrl}">${linkUrl}</a></p>
+    <p>If you did not request this, you can ignore this email.</p>
+  `;
+
+  let delivery = { deliveryStatus: "logged", providerMessageId: null };
+  try {
+    delivery = env.resendApiKey
+      ? await sendEmailViaResend({ to: facilityRow.email, subject, html })
+      : await sendEmailViaSmtp({ to: facilityRow.email, subject, html });
+  } catch (error) {
+    console.error("[email] facility login link send failed:", error);
+  }
+
+  await query(
+    `INSERT INTO facility_login_tokens (nursing_home_id, email, token, expires_at)
+     VALUES ($1, $2, $3, $4)`,
+    [facilityRow.id, facilityRow.email, token, expiresAt.toISOString()],
+  );
+
+  return {
+    ok: true,
+    deliveryStatus: delivery.deliveryStatus,
+    previewUrl: delivery.deliveryStatus === "logged" ? linkUrl : undefined,
+    expiresAt: expiresAt.toISOString(),
+  };
+}
+
+async function findFacilitySession(token) {
+  const result = await query(
+    `SELECT flt.*, nh.name, nh.suburb, nh.active_vacancies, nh.facility_confirmed_at
+     FROM facility_login_tokens flt
+     JOIN nursing_homes nh ON nh.id = flt.nursing_home_id
+     WHERE flt.token = $1`,
+    [token],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  if (row.used_at || new Date(row.expires_at).getTime() < Date.now()) return null;
+  return row;
+}
+
+async function requireFacilityAuth(req, res, next) {
+  const header = String(req.header("Authorization") || "").trim();
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  const token = match?.[1]?.trim();
+  if (!token) return res.status(401).json({ message: "Missing facility token." });
+  try {
+    const decoded = verifyToken(token);
+    if (decoded.role !== "facility") throw new Error("Bad role");
+    const result = await query(
+      `SELECT id AS nursing_home_id, name, suburb, active_vacancies, facility_confirmed_at
+       FROM nursing_homes
+       WHERE id = $1`,
+      [Number(decoded.nursingHomeId)],
+    );
+    const session = result.rows[0];
+    if (!session) return res.status(401).json({ message: "Facility session is no longer valid." });
+    req.facilitySession = session;
+    return next();
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired facility token." });
+  }
+}
+
+async function listFacilityCaseMatches(nursingHomeId) {
+  const casesResult = await query(
+    `SELECT id, client_name, contact_name, preferred_suburb_area, timing, care_types, created_at, full_list, short_list
+     FROM client_cases
+     WHERE active = TRUE
+     ORDER BY created_at DESC`,
+  );
+  const responsesResult = await query(
+    `SELECT client_case_id, vacancy_outcome, waitlist_status, facility_notes, responded_at
+     FROM facility_match_responses
+     WHERE nursing_home_id = $1`,
+    [nursingHomeId],
+  );
+  const responseMap = new Map(
+    responsesResult.rows.map((row) => [Number(row.client_case_id), row]),
+  );
+
+  return casesResult.rows
+    .filter((row) => {
+      const items = [...toJsonArray(row.full_list), ...toJsonArray(row.short_list)];
+      return items.some((item) => Number(item?.id) === Number(nursingHomeId));
+    })
+    .map((row) => {
+      const response = responseMap.get(Number(row.id));
+      return {
+        matchId: Number(row.id),
+        caseId: Number(row.id),
+        clientName: row.client_name || row.contact_name || "Enquiry",
+        timing: row.timing || "",
+        careTypes: Array.isArray(row.care_types) ? row.care_types.filter(Boolean).join(", ") : "",
+        preferredSuburb: row.preferred_suburb_area || "",
+        submittedAt: row.created_at,
+        vacancyOutcome: response?.vacancy_outcome || null,
+        facilityResponseStatus: response?.vacancy_outcome || "",
+        waitlistStatus: response?.waitlist_status || "not_requested",
+        facilityNotes: response?.facility_notes || null,
+        matchResponseToken: signFacilityMatchToken(Number(row.id), Number(nursingHomeId)),
+      };
+    });
+}
+
 function getClientAuth(req, caseRow) {
   const token = (req.header("X-Client-Auth") || "").trim();
   if (!token) return false;
@@ -512,23 +922,85 @@ app.get("/api/health", async (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/api/admin/auth/login", async (req, res) => {
+app.post("/api/admin/auth/login", adminLoginRateLimit, async (req, res) => {
   const password = String(req.body?.password || "").trim();
   if (!password || password !== env.adminPassword) {
+    console.warn(`[auth] failed admin login ip=${getRequestIp(req)}`);
     return res.status(401).json({ message: "Incorrect password." });
   }
-  return res.json({ token: signAdminToken() });
+  const token = signAdminToken();
+  setCookie(res, "nhnm_admin_session", token, 12 * 60 * 60);
+  return res.json({ ok: true, token });
 });
 
-app.post("/api/workflow/placement-intake", async (req, res) => {
-  const body = req.body || {};
-  const clientEmail = String(body.email || "").trim().toLowerCase();
-  const contactName = String(body.contactName || "").trim();
-  const preferredLocations = Array.isArray(body.preferredLocations) ? body.preferredLocations.filter(Boolean) : [];
-  const careTypes = Array.isArray(body.careTypes) ? body.careTypes.filter(Boolean) : [];
+app.post("/api/admin/auth/logout", (_req, res) => {
+  clearCookie(res, "nhnm_admin_session");
+  return res.status(204).end();
+});
 
-  if (!clientEmail || !contactName) {
-    return res.status(400).json({ message: "Contact name and email are required." });
+app.get("/api/admin/auth/session", adminAuth, (_req, res) => {
+  return res.json({ ok: true });
+});
+
+app.post("/api/facility/auth/request-link", facilityLoginRateLimit, async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: "A valid facility email is required." });
+  }
+
+  const result = await query(
+    `SELECT id, name, email
+     FROM nursing_homes
+     WHERE LOWER(email) = LOWER($1)
+     LIMIT 1`,
+    [email],
+  );
+  const facility = result.rows[0];
+  if (!facility) {
+    console.warn(`[auth] failed facility link request email=${email} ip=${getRequestIp(req)}`);
+    return res.status(404).json({ message: "No facility found for that email address." });
+  }
+
+  const delivery = await logFacilityLoginLink(facility);
+  return res.json(delivery);
+});
+
+app.post("/api/facility/auth/exchange", async (req, res) => {
+  const loginToken = cleanText(req.body?.token, 1000);
+  if (!loginToken) return res.status(400).json({ message: "Facility login token is required." });
+
+  const session = await findFacilitySession(loginToken);
+  if (!session) return res.status(401).json({ message: "Invalid or expired facility login token." });
+
+  await query(
+    `UPDATE facility_login_tokens
+     SET used_at = NOW()
+     WHERE id = $1 AND used_at IS NULL`,
+    [session.id],
+  );
+
+  const facilityToken = signFacilitySessionToken(Number(session.nursing_home_id));
+  return res.json({
+    ok: true,
+    token: facilityToken,
+    expiresAt: "",
+    facility: {
+      id: Number(session.nursing_home_id),
+      name: session.name,
+      suburb: session.suburb,
+    },
+  });
+});
+
+app.post("/api/workflow/placement-intake", intakeRateLimit, async (req, res) => {
+  const body = req.body || {};
+  const clientEmail = normalizeEmail(body.email);
+  const contactName = cleanText(body.contactName, 200);
+  const preferredLocations = Array.isArray(body.preferredLocations) ? body.preferredLocations.map((item) => cleanText(item, 120)).filter(Boolean).slice(0, 5) : [];
+  const careTypes = Array.isArray(body.careTypes) ? body.careTypes.map((item) => cleanText(item, 80)).filter(Boolean).slice(0, 8) : [];
+
+  if (!isValidEmail(clientEmail) || !contactName) {
+    return res.status(400).json({ message: "Contact name and a valid email are required." });
   }
 
   const publicToken = createPublicToken();
@@ -551,19 +1023,19 @@ app.post("/api/workflow/placement-intake", async (req, res) => {
       contactName,
       String(body.suburb || preferredLocations[0] || "").trim() || null,
       contactName || null,
-      String(body.phone || "").trim() || null,
+      cleanText(body.phone, 80) || null,
       preferredLocations.join(", ") || null,
-      String(body.timing || "").trim() || null,
-      String(body.currentLocation || "").trim() || null,
-      String(body.notes || "").trim() || null,
+      cleanText(body.timing, 120) || null,
+      cleanText(body.currentLocation, 120) || null,
+      cleanText(body.notes, 4000) || null,
       body.consentToShare ? "Yes" : "No",
       JSON.stringify(careTypes),
       JSON.stringify(preferredLocations),
-      String(body.fundingPlan || "").trim() || null,
-      String(body.budgetRange || "").trim() || null,
-      String(body.waitingListPreference || "").trim() || null,
-      String(body.supportAtHome || "").trim() || null,
-      String(body.acatNumber || "").trim() || null,
+      cleanText(body.fundingPlan, 160) || null,
+      cleanText(body.budgetRange, 120) || null,
+      cleanText(body.waitingListPreference, 160) || null,
+      cleanText(body.supportAtHome, 120) || null,
+      cleanText(body.acatNumber, 120) || null,
       JSON.stringify(generatedLists.shortList),
       JSON.stringify(generatedLists.fullList),
     ],
@@ -576,9 +1048,9 @@ app.post("/api/workflow/placement-intake", async (req, res) => {
   });
 });
 
-app.post("/api/workflow/request-login-link", async (req, res) => {
-  const email = String(req.body?.email || "").trim().toLowerCase();
-  if (!email) return res.status(400).json({ message: "Email is required." });
+app.post("/api/workflow/request-login-link", workflowLoginLinkRateLimit, async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  if (!isValidEmail(email)) return res.status(400).json({ message: "A valid email is required." });
 
   const result = await query(
     `SELECT * FROM client_cases
@@ -589,11 +1061,47 @@ app.post("/api/workflow/request-login-link", async (req, res) => {
   );
   const row = result.rows[0];
   if (!row) {
+    console.warn(`[auth] failed workflow link request email=${email} ip=${getRequestIp(req)}`);
     return res.status(404).json({ message: "No client case found for that email yet." });
   }
 
   const delivery = await logLoginLink(row);
   return res.json(delivery);
+});
+
+app.post("/api/workflow/login", workflowAuthRateLimit, async (req, res) => {
+  const email = normalizeEmail(req.body?.email);
+  const password = String(req.body?.password || "");
+  if (!isValidEmail(email) || !password) {
+    return res.status(400).json({ message: "Email and password are required." });
+  }
+
+  const result = await query(
+    `SELECT * FROM client_cases
+     WHERE LOWER(client_email) = LOWER($1)
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [email],
+  );
+  const row = result.rows[0];
+  if (!row || !row.password_hash) {
+    console.warn(`[auth] failed workflow login email=${email} ip=${getRequestIp(req)}`);
+    return res.status(401).json({ message: "Invalid email or password." });
+  }
+
+  const ok = await bcrypt.compare(password, row.password_hash);
+  if (!ok) {
+    console.warn(`[auth] failed workflow login email=${email} ip=${getRequestIp(req)}`);
+    return res.status(401).json({ message: "Invalid email or password." });
+  }
+
+  const authToken = signClientAuthToken(row.id, row.public_token);
+  return res.json({
+    token: row.public_token,
+    authToken,
+    expiresAt: "",
+    snapshot: rowToWorkflowSnapshot(row, true),
+  });
 });
 
 app.get("/api/my-options/:token", async (req, res) => {
@@ -656,13 +1164,107 @@ app.get("/api/nursing-homes/:id", async (req, res) => {
   return res.json(publicHomeDetails(row));
 });
 
+app.get("/api/facility/dashboard", requireFacilityAuth, async (req, res) => {
+  const session = req.facilitySession;
+  const matches = await listFacilityCaseMatches(session.nursing_home_id);
+  return res.json({
+    facility: {
+      id: Number(session.nursing_home_id),
+      name: session.name,
+      suburb: session.suburb,
+      availabilityStatus:
+        session.active_vacancies == null ? null : Number(session.active_vacancies) > 0 ? "available" : "full",
+      availabilityUpdatedAt: session.facility_confirmed_at || null,
+    },
+    matches,
+  });
+});
+
+app.patch("/api/facility/availability", requireFacilityAuth, async (req, res) => {
+  const session = req.facilitySession;
+  const availabilityStatus = cleanText(req.body?.availabilityStatus, 40);
+  const nextVacancies =
+    availabilityStatus === "available" ? 1 : availabilityStatus === "waitlist" || availabilityStatus === "full" ? 0 : null;
+  if (nextVacancies == null) {
+    return res.status(400).json({ message: "availabilityStatus must be available, waitlist, or full." });
+  }
+
+  const updatedAt = new Date().toISOString();
+  const result = await query(
+    `UPDATE nursing_homes
+     SET active_vacancies = $2,
+         facility_confirmed_at = $3,
+         facility_confirmed_vacancies = $4
+     WHERE id = $1
+     RETURNING id, active_vacancies, facility_confirmed_at, facility_confirmed_vacancies`,
+    [
+      session.nursing_home_id,
+      nextVacancies,
+      updatedAt,
+      availabilityStatus === "available" ? "yes" : "no",
+    ],
+  );
+  const row = result.rows[0];
+  return res.json({
+    id: Number(row.id),
+    availabilityStatus,
+    availabilityUpdatedAt: row.facility_confirmed_at,
+  });
+});
+
+app.post("/api/facility/matches/:matchResponseToken/response", async (req, res) => {
+  const token = cleanText(req.params.matchResponseToken, 1000);
+  const vacancyOutcome = cleanText(req.body?.vacancyOutcome, 40);
+  const waitlistStatus = cleanText(req.body?.waitlistStatus, 40) || "not_requested";
+  const facilityNotes = cleanText(req.body?.facilityNotes, 4000) || null;
+  const allowedOutcomes = ["vacancy", "no_vacancy", "waitlist_offered", "needs_more_info"];
+  const allowedWaitlistStatuses = ["not_requested", "requested", "confirmed"];
+
+  if (!allowedOutcomes.includes(vacancyOutcome)) {
+    return res.status(400).json({ message: "Invalid vacancy outcome." });
+  }
+  if (!allowedWaitlistStatuses.includes(waitlistStatus)) {
+    return res.status(400).json({ message: "Invalid waitlist status." });
+  }
+
+  let decoded;
+  try {
+    decoded = verifyToken(token);
+  } catch {
+    return res.status(400).json({ message: "Invalid match token." });
+  }
+  if (decoded.role !== "facility_match") {
+    return res.status(400).json({ message: "Invalid match token." });
+  }
+  const caseId = Number(decoded.clientCaseId);
+  const nursingHomeId = Number(decoded.nursingHomeId);
+
+  const caseResult = await query("SELECT id FROM client_cases WHERE id = $1", [caseId]);
+  if (!caseResult.rows[0]) return res.status(404).json({ message: "Match not found." });
+
+  await query(
+    `INSERT INTO facility_match_responses
+      (nursing_home_id, client_case_id, vacancy_outcome, waitlist_status, facility_notes, responded_at)
+     VALUES ($1, $2, $3, $4, $5, NOW())
+     ON CONFLICT (nursing_home_id, client_case_id)
+     DO UPDATE SET
+       vacancy_outcome = EXCLUDED.vacancy_outcome,
+       waitlist_status = EXCLUDED.waitlist_status,
+       facility_notes = EXCLUDED.facility_notes,
+       responded_at = NOW()`,
+    [nursingHomeId, caseId, vacancyOutcome, waitlistStatus, facilityNotes],
+  );
+
+  return res.status(204).end();
+});
+
 app.get("/api/workflow/client/:token", async (req, res) => {
   const row = await findCaseByToken(req.params.token);
   if (!row) return res.status(404).json({ message: "Workflow not found." });
   return res.json(rowToWorkflowSnapshot(row, getClientAuth(req, row)));
 });
 
-app.post("/api/workflow/client/:token/set-password", async (req, res) => {
+app.post("/api/workflow/client/:token/set-password", workflowAuthRateLimit, async (req, res) => {
   const row = await findCaseByToken(req.params.token);
   if (!row) return res.status(404).json({ message: "Workflow not found." });
 
@@ -689,7 +1291,7 @@ app.post("/api/workflow/client/:token/set-password", async (req, res) => {
   });
 });
 
-app.post("/api/workflow/client/:token/login", async (req, res) => {
+app.post("/api/workflow/client/:token/login", workflowAuthRateLimit, async (req, res) => {
   const row = await findCaseByToken(req.params.token);
   if (!row) return res.status(404).json({ message: "Workflow not found." });
   if (!row.password_hash) {
@@ -973,34 +1575,122 @@ app.post("/api/admin/cases/:id/send-:kind", adminAuth, async (req, res) => {
   return res.status(204).send();
 });
 
+app.post("/api/admin/uploads", adminAuth, adminUploadRateLimit, async (req, res) => {
+  try {
+    const upload = await readMultipartUpload(req);
+    const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedMimeTypes.has(upload.mimeType)) {
+      return res.status(400).json({ message: "Only JPG, PNG, and WebP uploads are allowed." });
+    }
+    if (!upload.buffer.length) {
+      return res.status(400).json({ message: "Uploaded file is empty." });
+    }
+
+    const safeName = sanitizeFilename(upload.filename);
+    const ext = safeName.ext || extForMime(upload.mimeType);
+    if (!ext) {
+      return res.status(400).json({ message: "Unsupported file type." });
+    }
+
+    const finalName = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}-${safeName.stem}${ext}`;
+    const targetPath = path.join(uploadsDir, finalName);
+    await fs.promises.writeFile(targetPath, upload.buffer);
+
+    return res.status(201).json({ url: `/uploads/${finalName}` });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Upload failed.";
+    const status = /size limit|multipart|No file field|Malformed upload/i.test(message) ? 400 : 500;
+    return res.status(status).json({ message });
+  }
+});
+
 app.get("/api/admin/nursing-homes", adminAuth, async (_req, res) => {
-  const result = await query("SELECT * FROM nursing_homes ORDER BY name ASC");
+  const search = cleanText(_req.query.search, 120);
+  const state = cleanText(_req.query.state, 20).toUpperCase();
+  const limit = Math.min(Math.max(Number(_req.query.limit) || 10, 1), 50);
+  const offset = Math.max(Number(_req.query.offset) || 0, 0);
+  const hasSearch = !!search;
+  const hasState = !!state && state !== "ALL";
+  const filters = [];
+  const params = [];
+
+  if (hasSearch) {
+    params.push(`%${search.toLowerCase()}%`);
+    const idx = params.length;
+    filters.push(`(
+      LOWER(COALESCE(name, '')) LIKE $${idx}
+      OR LOWER(COALESCE(suburb, '')) LIKE $${idx}
+      OR LOWER(COALESCE(state, '')) LIKE $${idx}
+      OR LOWER(COALESCE(postcode, '')) LIKE $${idx}
+      OR LOWER(COALESCE(provider_name, '')) LIKE $${idx}
+    )`);
+  }
+
+  if (hasState) {
+    params.push(state);
+    filters.push(`UPPER(COALESCE(state, '')) = $${params.length}`);
+  }
+
+  const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+  const countResult = await query(
+    `SELECT COUNT(*)::int AS count FROM nursing_homes ${whereClause}`,
+    params,
+  );
+  params.push(limit);
+  params.push(offset);
+  const result = await query(
+    `SELECT * FROM nursing_homes
+     ${whereClause}
+     ORDER BY name ASC
+     LIMIT $${params.length - 1}
+     OFFSET $${params.length}`,
+    params,
+  );
+
+  const stateCountsResult = await query(
+    `SELECT UPPER(COALESCE(state, '')) AS state, COUNT(*)::int AS count
+     FROM nursing_homes
+     GROUP BY UPPER(COALESCE(state, ''))
+     ORDER BY UPPER(COALESCE(state, '')) ASC`,
+  );
+
+  const items = result.rows.map((row) => ({
+    id: Number(row.id),
+    name: row.name,
+    facilityRowId: row.facility_row_id,
+    providerName: row.provider_name,
+    oneLineDescription: row.one_line_description,
+    suburb: row.suburb,
+    state: row.state,
+    postcode: row.postcode,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    status: row.status,
+    primaryImageUrl: row.primary_image_url,
+    phone: row.phone,
+    email: row.email,
+    website: row.website,
+    websiteSaysVacancies: row.website_says_vacancies,
+    facilityConfirmedVacancies: row.facility_confirmed_vacancies,
+    websiteCheckedAt: row.website_checked_at,
+    facilityConfirmedAt: row.facility_confirmed_at,
+    conflictFlag: row.conflict_flag,
+    lastOutreachSentAt: row.last_outreach_sent_at,
+    lastOutreachReplyAt: row.last_outreach_reply_at,
+    canReceiveWeeklyCheck: !!row.email,
+  }));
+
   return res.json(
-    result.rows.map((row) => ({
-      id: Number(row.id),
-      name: row.name,
-      facilityRowId: row.facility_row_id,
-      providerName: row.provider_name,
-      oneLineDescription: row.one_line_description,
-      suburb: row.suburb,
-      state: row.state,
-      postcode: row.postcode,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      status: row.status,
-      primaryImageUrl: row.primary_image_url,
-      phone: row.phone,
-      email: row.email,
-      website: row.website,
-      websiteSaysVacancies: row.website_says_vacancies,
-      facilityConfirmedVacancies: row.facility_confirmed_vacancies,
-      websiteCheckedAt: row.website_checked_at,
-      facilityConfirmedAt: row.facility_confirmed_at,
-      conflictFlag: row.conflict_flag,
-      lastOutreachSentAt: row.last_outreach_sent_at,
-      lastOutreachReplyAt: row.last_outreach_reply_at,
-      canReceiveWeeklyCheck: !!row.email,
-    })),
+    {
+      items,
+      total: countResult.rows[0]?.count ?? 0,
+      limit,
+      offset,
+      stateCounts: stateCountsResult.rows.map((row) => ({
+        state: row.state || "",
+        count: row.count ?? 0,
+      })),
+    },
   );
 });
 
@@ -1228,6 +1918,212 @@ app.post("/api/admin/nursing-homes/import", adminAuth, async (req, res) => {
   }
 
   return res.json({ created, updated, skipped });
+});
+
+function normalizeImportText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+async function findNursingHomeForImport(row) {
+  if (row.facilityId != null && Number.isFinite(Number(row.facilityId))) {
+    const byId = await query(`SELECT * FROM nursing_homes WHERE id = $1 LIMIT 1`, [Number(row.facilityId)]);
+    if (byId.rows[0]) return byId.rows[0];
+  }
+
+  const facilityRowId = String(row.facilityRowId || "").trim();
+  if (facilityRowId) {
+    const byRowId = await query(`SELECT * FROM nursing_homes WHERE facility_row_id = $1 LIMIT 1`, [facilityRowId]);
+    if (byRowId.rows[0]) return byRowId.rows[0];
+  }
+
+  const website = String(row.website || "").trim();
+  if (website) {
+    const byWebsite = await query(`SELECT * FROM nursing_homes WHERE website = $1 LIMIT 1`, [website]);
+    if (byWebsite.rows[0]) return byWebsite.rows[0];
+  }
+
+  const governmentListingUrl = String(row.governmentListingUrl || "").trim();
+  if (governmentListingUrl) {
+    const byGovUrl = await query(`SELECT * FROM nursing_homes WHERE government_listing_url = $1 LIMIT 1`, [governmentListingUrl]);
+    if (byGovUrl.rows[0]) return byGovUrl.rows[0];
+  }
+
+  const facilityName = normalizeImportText(row.facilityName || row.name);
+  const suburb = normalizeImportText(row.suburb);
+  const postcode = String(row.postcode || "").trim();
+  if (facilityName && suburb && postcode) {
+    const byName = await query(
+      `SELECT * FROM nursing_homes
+       WHERE LOWER(name) = LOWER($1) AND LOWER(suburb) = LOWER($2) AND postcode = $3
+       LIMIT 1`,
+      [facilityName, suburb, postcode],
+    );
+    if (byName.rows[0]) return byName.rows[0];
+  }
+
+  return null;
+}
+
+function normalizeVacancyValue(value) {
+  const txt = normalizeImportText(value);
+  if (!txt) return "unknown";
+  if (["yes", "y", "true", "1", "vacancy", "vacancies", "available"].includes(txt)) return "yes";
+  if (["no", "n", "false", "0", "full", "none", "no_vacancy"].includes(txt)) return "no";
+  return "unknown";
+}
+
+function maybePublicAssetUrl(value, fallbackFileName = "") {
+  const raw = String(value || fallbackFileName || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
+
+  const normalized = raw.replace(/\\/g, "/");
+  const publicIdx = normalized.toLowerCase().indexOf("/public/");
+  if (publicIdx >= 0) {
+    return normalized.slice(publicIdx + "/public".length);
+  }
+
+  const uploadsIdx = normalized.toLowerCase().indexOf("/uploads/");
+  if (uploadsIdx >= 0) {
+    return normalized.slice(uploadsIdx);
+  }
+
+  return `/${normalized.replace(/^\/+/, "")}`;
+}
+
+app.post("/api/admin/nursing-homes/import-vacancy-checks", adminAuth, async (req, res) => {
+  const rows = Array.isArray(req.body) ? req.body : [];
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const existing = await findNursingHomeForImport(row);
+    if (!existing) {
+      skipped++;
+      continue;
+    }
+
+    const websiteSaysVacancies = normalizeVacancyValue(row.websiteSaysVacancies ?? row.vacancyStatus);
+    const facilityConfirmedVacancies = normalizeVacancyValue(row.facilityConfirmedVacancies);
+    const checkedAt = String(row.websiteCheckedAt || row.checkedAt || "").trim() || new Date().toISOString();
+    const websiteSourceUrl = String(row.websiteSourceUrl || row.sourceUrl || "").trim() || null;
+    const facilityConfirmedAt = String(row.facilityConfirmedAt || "").trim() || null;
+    const facilityConfirmationSource = String(row.facilityConfirmationSource || row.sourceType || "").trim() || null;
+    const conflictFlag =
+      websiteSaysVacancies !== "unknown" &&
+      facilityConfirmedVacancies !== "unknown" &&
+      websiteSaysVacancies !== facilityConfirmedVacancies;
+
+    await query(
+      `UPDATE nursing_homes
+       SET website_says_vacancies = $2,
+           facility_confirmed_vacancies = $3,
+           website_checked_at = $4,
+           website_source_url = COALESCE($5, website_source_url),
+           facility_confirmed_at = COALESCE($6, facility_confirmed_at),
+           facility_confirmation_source = COALESCE($7, facility_confirmation_source),
+           conflict_flag = $8
+       WHERE id = $1`,
+      [
+        existing.id,
+        websiteSaysVacancies,
+        facilityConfirmedVacancies,
+        checkedAt,
+        websiteSourceUrl,
+        facilityConfirmedAt,
+        facilityConfirmationSource,
+        conflictFlag,
+      ],
+    );
+    updated++;
+  }
+
+  return res.json({ created, updated, skipped });
+});
+
+app.post("/api/admin/nursing-homes/import-photo-manifest", adminAuth, async (req, res) => {
+  const rows = Array.isArray(req.body) ? req.body : [];
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const row of rows) {
+    const existing = await findNursingHomeForImport(row);
+    if (!existing) {
+      skipped++;
+      continue;
+    }
+
+    const photoUrl =
+      maybePublicAssetUrl(row.localPath, row.fileName) ||
+      String(row.sourceUrl || "").trim();
+
+    if (!photoUrl) {
+      skipped++;
+      continue;
+    }
+
+    const gallery = toJsonArray(existing.gallery_image_urls);
+    const nextGallery = gallery.includes(photoUrl) ? gallery : [...gallery, photoUrl];
+    const isPrimary = !!row.isPrimary;
+
+    await query(
+      `UPDATE nursing_homes
+       SET primary_image_url = CASE
+             WHEN $2 THEN $3
+             WHEN primary_image_url IS NULL OR primary_image_url = '' THEN $3
+             ELSE primary_image_url
+           END,
+           gallery_image_urls = $4::jsonb
+       WHERE id = $1`,
+      [existing.id, isPrimary, photoUrl, JSON.stringify(nextGallery)],
+    );
+    updated++;
+  }
+
+  return res.json({ created, updated, skipped });
+});
+
+app.post("/api/admin/facility-outreach/send-weekly", adminAuth, async (req, res) => {
+  const requestedIds = Array.isArray(req.body?.facilityIds)
+    ? req.body.facilityIds.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+    : [];
+
+  const facilitiesResult = requestedIds.length
+    ? await query(
+        `SELECT * FROM nursing_homes
+         WHERE id = ANY($1::bigint[])
+         ORDER BY name ASC`,
+        [requestedIds],
+      )
+    : await query(
+        `SELECT * FROM nursing_homes
+         WHERE status = 'ACTIVE'
+         ORDER BY name ASC`,
+      );
+
+  let sent = 0;
+  let skipped = 0;
+  const sentAt = new Date().toISOString();
+
+  for (const facility of facilitiesResult.rows) {
+    if (!isValidEmail(facility.email)) {
+      skipped++;
+      continue;
+    }
+
+    await logFacilityLoginLink(facility);
+    await query(
+      `UPDATE nursing_homes
+       SET last_outreach_sent_at = $2
+       WHERE id = $1`,
+      [facility.id, sentAt],
+    );
+    sent++;
+  }
+
+  return res.json({ sent, skipped });
 });
 
 app.post("/api/admin/scan-facility", adminAuth, async (req, res) => {
@@ -1615,8 +2511,16 @@ app.get("/blog/:slug", (req, res, next) => {
 // ── Public stats ─────────────────────────────────────────────────────────────
 
 // POST /api/chat-enquiry — stores a chat message from the chat widget
-app.post("/api/chat-enquiry", async (req, res) => {
-  const { name, email, message } = req.body ?? {};
+app.post("/api/chat-enquiry", enquiryRateLimit, async (req, res) => {
+  const name = cleanText(req.body?.name, 120);
+  const email = cleanText(req.body?.email, 200);
+  const message = cleanText(req.body?.message, 4000);
+  if (!message) {
+    return res.status(400).json({ message: "Message is required." });
+  }
+  if (email && !isValidEmail(email)) {
+    return res.status(400).json({ message: "Email address is invalid." });
+  }
   try {
     await query(
       `INSERT INTO chat_enquiries (name, email, message) VALUES ($1, $2, $3)`,

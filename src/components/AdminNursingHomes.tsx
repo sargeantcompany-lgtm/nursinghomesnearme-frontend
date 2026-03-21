@@ -336,8 +336,9 @@ function facilityPreviewPath(id?: number | null): string {
 export default function AdminNursingHomes() {
   const PAGE_SIZE = 10;
   const [token, setToken] = useState<string>(() => {
+    const savedToken = localStorage.getItem("nhnm_admin_token");
     const savedSession = localStorage.getItem("nhnm_admin_session");
-    return (TOKEN_ENV ?? "").trim() || (savedSession ? "cookie-session" : "");
+    return (TOKEN_ENV ?? "").trim() || (savedToken ?? "").trim() || (savedSession ? "cookie-session" : "");
   });
 
   const [list, setList] = useState<NursingHomeListItem[]>([]);
@@ -521,7 +522,7 @@ export default function AdminNursingHomes() {
     setScanning(true);
     setScanMessage(null);
     try {
-      const data = await apiFetch<Record<string, unknown>>("/api/admin/nursing-homes/scan-facility", {
+      const data = await apiFetch<Record<string, unknown>>("/api/admin/scan-facility", {
         method: "POST",
         body: JSON.stringify({ url }),
       });
@@ -678,7 +679,7 @@ export default function AdminNursingHomes() {
       const nh = withWebsite[i];
       try {
         const result = await apiFetch<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>(
-          "/api/admin/nursing-homes/scan-vacancy",
+          "/api/admin/scan-vacancy",
           { method: "POST", body: JSON.stringify({ facilityId: nh.id }) },
         );
         setList((prev) =>
