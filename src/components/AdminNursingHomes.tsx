@@ -30,6 +30,14 @@ type NursingHomeListItem = {
   canReceiveWeeklyCheck?: boolean;
 };
 
+type NursingHomeListResponse = {
+  items: NursingHomeListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  stateCounts: Array<{ state: string; count: number }>;
+};
+
 type RoomOption = {
   roomType?: string | null;
   bathroomType?: string | null;
@@ -326,12 +334,15 @@ function facilityPreviewPath(id?: number | null): string {
 }
 
 export default function AdminNursingHomes() {
+  const PAGE_SIZE = 10;
   const [token, setToken] = useState<string>(() => {
-    const saved = localStorage.getItem("nhnm_admin_token");
-    return saved ?? (TOKEN_ENV ?? "");
+    const savedSession = localStorage.getItem("nhnm_admin_session");
+    return (TOKEN_ENV ?? "").trim() || (savedSession ? "cookie-session" : "");
   });
 
   const [list, setList] = useState<NursingHomeListItem[]>([]);
+  const [totalFacilities, setTotalFacilities] = useState(0);
+  const [pageOffset, setPageOffset] = useState(0);
   const [selectedId, setSelectedId] = useState<number | "NEW">("NEW");
 
   const [loadingList, setLoadingList] = useState(false);
@@ -380,32 +391,16 @@ export default function AdminNursingHomes() {
     () => [...list].sort((a, b) => a.name.localeCompare(b.name)),
     [list]
   );
-  const stateOptions = useMemo(() => {
-    const states = Array.from(new Set(list.map((nh) => (nh.state ?? "").trim()).filter(Boolean))).sort();
-    return ["ALL", ...states];
-  }, [list]);
+  const [stateCountsList, setStateCountsList] = useState<Array<{ state: string; count: number }>>([]);
+  const stateOptions = useMemo(() => ["ALL", ...stateCountsList.map((item) => item.state).filter(Boolean)], [stateCountsList]);
   const stateCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const item of list) {
-      const key = (item.state ?? "").trim();
-      if (!key) continue;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+    for (const item of stateCountsList) {
+      counts.set(item.state, item.count);
     }
     return counts;
-  }, [list]);
-  const filteredList = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const inState = stateFilter === "ALL"
-      ? sortedList
-      : sortedList.filter((nh) => (nh.state ?? "").trim().toUpperCase() === stateFilter.toUpperCase());
-    if (!needle) return inState;
-    return inState.filter((nh) =>
-      [nh.name, nh.suburb ?? "", nh.state ?? "", nh.postcode ?? ""]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle),
-    );
-  }, [search, sortedList, stateFilter]);
+  }, [stateCountsList]);
+  const filteredList = sortedList;
   const missingGeoCount = useMemo(
     () => list.filter((nh) => nh.latitude == null || nh.longitude == null).length,
     [list],
@@ -456,8 +451,8 @@ export default function AdminNursingHomes() {
     if (init?.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
-    if (token.trim()) headers.set("X-Admin-Token", token.trim());
-    const res = await fetch(path, { ...init, headers });
+    if (token.trim() && token.trim() !== "cookie-session") headers.set("X-Admin-Token", token.trim());
+    const res = await fetch(path, { ...init, headers, credentials: "include" });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       throw new Error(`${res.status} ${res.statusText}${text ? ` — ${text}` : ""}`);
@@ -476,9 +471,9 @@ export default function AdminNursingHomes() {
       headers.set("Content-Type", "application/json");
     }
 
-    if (token.trim()) headers.set("X-Admin-Token", token.trim());
+    if (token.trim() && token.trim() !== "cookie-session") headers.set("X-Admin-Token", token.trim());
 
-    const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+    const res = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: "include" });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
@@ -488,6 +483,36 @@ export default function AdminNursingHomes() {
     const ct = res.headers.get("content-type") || "";
     if (!ct.includes("application/json")) return {} as T;
     return (await res.json()) as T;
+  }
+
+  async function refreshList(nextOffset = pageOffset) {
+    setError("");
+    setNotice("");
+    setLoadingList(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("limit", String(PAGE_SIZE));
+      params.set("offset", String(nextOffset));
+      if (search.trim()) params.set("search", search.trim());
+      if (stateFilter !== "ALL") params.set("state", stateFilter);
+
+      const data = await apiFetch<NursingHomeListResponse>(`/api/admin/nursing-homes?${params.toString()}`);
+      setList(data.items ?? []);
+      setTotalFacilities(data.total ?? 0);
+      setPageOffset(data.offset ?? nextOffset);
+      setStateCountsList(data.stateCounts ?? []);
+
+      if (selectedId !== "NEW") {
+        const selectedStillVisible = (data.items ?? []).some((item) => item.id === selectedId);
+        if (!selectedStillVisible && data.items?.length) {
+          setSelectedId(data.items[0].id);
+        }
+      }
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setLoadingList(false);
+    }
   }
 
   async function handleScan() {
@@ -695,20 +720,6 @@ export default function AdminNursingHomes() {
     }
   }
   void patchVacancyConfirmation;
-
-  async function refreshList() {
-    setError("");
-    setNotice("");
-    setLoadingList(true);
-    try {
-      const data = await apiFetch<NursingHomeListItem[]>("/api/admin/nursing-homes");
-      setList(data);
-    } catch (e) {
-      setError(getErrorMessage(e));
-    } finally {
-      setLoadingList(false);
-    }
-  }
 
   async function loadOne(id: number) {
     setError("");
@@ -1230,13 +1241,10 @@ export default function AdminNursingHomes() {
   }
 
   useEffect(() => {
-    localStorage.setItem("nhnm_admin_token", token);
-  }, [token]);
-
-  useEffect(() => {
-    refreshList().catch(() => {});
+    setPageOffset(0);
+    refreshList(0).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [search, stateFilter]);
 
   useEffect(() => {
     if (selectedId === "NEW") return;
@@ -1259,17 +1267,17 @@ export default function AdminNursingHomes() {
 
         <div style={topCard}>
           <label style={{ display: "block", fontWeight: 700, marginBottom: 6 }}>
-            Admin Token
+            Admin Override Token
           </label>
           <input
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="Paste token here (X-Admin-Token)"
+            placeholder="Optional: paste a dev override token"
             style={inputStyle}
           />
 
           <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
-            <button onClick={() => refreshList()} disabled={disabled} style={primaryBtn}>
+            <button onClick={() => refreshList(pageOffset)} disabled={disabled} style={primaryBtn}>
               {loadingList ? "Refreshing..." : "Refresh List"}
             </button>
 
@@ -1388,9 +1396,9 @@ export default function AdminNursingHomes() {
           </div>
 
           <div style={{ marginTop: 12, display: "flex", gap: 16, flexWrap: "wrap", color: "#334155", fontSize: 14 }}>
-            <div><strong>{list.length}</strong> facilities loaded</div>
-            <div><strong>{list.length - missingGeoCount}</strong> with geo</div>
-            <div><strong>{missingGeoCount}</strong> missing geo</div>
+            <div><strong>{totalFacilities}</strong> facilities matched</div>
+            <div><strong>{list.length - missingGeoCount}</strong> with geo on this page</div>
+            <div><strong>{missingGeoCount}</strong> missing geo on this page</div>
           </div>
 
           <div style={{ marginTop: 10, color: "#64748b", fontSize: 13 }}>
@@ -1487,7 +1495,7 @@ export default function AdminNursingHomes() {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                 {stateOptions.map((state) => {
                   const active = stateFilter === state;
-                  const count = state === "ALL" ? list.length : stateCounts.get(state) ?? 0;
+                  const count = state === "ALL" ? stateCountsList.reduce((sum, item) => sum + item.count, 0) : stateCounts.get(state) ?? 0;
                   return (
                     <button
                       key={state}
@@ -1518,7 +1526,7 @@ export default function AdminNursingHomes() {
                     gap: 12,
                   }}
                 >
-                  {filteredList.slice(0, 120).map((nh) => {
+                  {filteredList.map((nh) => {
                     const outreachStatus = !nh.canReceiveWeeklyCheck
                       ? "Missing facility email"
                       : nh.lastOutreachSentAt
@@ -1613,7 +1621,7 @@ export default function AdminNursingHomes() {
                 </div>
               ) : (
                 <SmallCardGallery
-                  items={filteredList.slice(0, 120)}
+                  items={filteredList}
                   onEdit={(id) => {
                     setSelectedId(id);
                     setShowFacilitiesBoard(false);
@@ -1621,11 +1629,27 @@ export default function AdminNursingHomes() {
                 />
               )}
 
-              {filteredList.length > 120 ? (
-                <div style={{ marginTop: 10, fontSize: 12, color: "#64748b" }}>
-                  Showing the first 120 facilities in this view. Use the state filter or search to narrow it further.
+              <div style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => refreshList(Math.max(0, pageOffset - PAGE_SIZE))}
+                  disabled={disabled || pageOffset === 0}
+                  style={secondaryBtn}
+                >
+                  Previous 10
+                </button>
+                <button
+                  type="button"
+                  onClick={() => refreshList(pageOffset + PAGE_SIZE)}
+                  disabled={disabled || pageOffset + PAGE_SIZE >= totalFacilities}
+                  style={secondaryBtn}
+                >
+                  Next 10
+                </button>
+                <div style={{ color: "#64748b", fontSize: 13 }}>
+                  Showing {totalFacilities === 0 ? 0 : pageOffset + 1} to {Math.min(pageOffset + list.length, totalFacilities)} of {totalFacilities}
                 </div>
-              ) : null}
+              </div>
             </div>
           </div>
         ) : null}
@@ -1637,33 +1661,30 @@ export default function AdminNursingHomes() {
               Facilities ({filteredList.length})
             </div>
 
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, suburb, state or postcode"
-              disabled={disabled}
-              style={{ ...inputStyle, marginBottom: 10 }}
-            />
-
-            <select
-              value={selectedId === "NEW" ? "NEW" : String(selectedId)}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v === "NEW") newFacility();
-                else setSelectedId(Number(v));
-              }}
-              disabled={disabled}
-              style={inputStyle}
-            >
-              <option value="NEW">+ Create new…</option>
-              {filteredList.map((nh) => (
-                <option key={nh.id} value={nh.id}>
-                  {nh.name}
-                  {nh.suburb ? ` — ${nh.suburb}` : ""}
-                  {nh.state ? ` (${nh.state})` : ""}
-                </option>
-              ))}
-            </select>
+            <div style={{ display: "grid", gap: 10 }}>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, facility, state or postcode"
+                disabled={disabled}
+                style={inputStyle}
+              />
+              <select
+                value={stateFilter}
+                onChange={(e) => setStateFilter(e.target.value)}
+                disabled={disabled}
+                style={inputStyle}
+              >
+                {stateOptions.map((state) => (
+                  <option key={state} value={state}>
+                    {state === "ALL" ? "All states" : state}
+                  </option>
+                ))}
+              </select>
+              <button type="button" onClick={newFacility} disabled={disabled} style={secondaryBtn}>
+                + Create new
+              </button>
+            </div>
 
             <div style={{ marginTop: 12, maxHeight: 420, overflow: "auto", display: "grid", gap: 8 }}>
               {filteredList.map((nh) => {
@@ -1709,6 +1730,28 @@ export default function AdminNursingHomes() {
                   </button>
                 );
               })}
+            </div>
+
+            <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => refreshList(Math.max(0, pageOffset - PAGE_SIZE))}
+                disabled={disabled || pageOffset === 0}
+                style={secondaryBtn}
+              >
+                Previous 10
+              </button>
+              <button
+                type="button"
+                onClick={() => refreshList(pageOffset + PAGE_SIZE)}
+                disabled={disabled || pageOffset + PAGE_SIZE >= totalFacilities}
+                style={secondaryBtn}
+              >
+                Next 10
+              </button>
+              <div style={{ color: "#64748b", fontSize: 13 }}>
+                Showing {totalFacilities === 0 ? 0 : pageOffset + 1} to {Math.min(pageOffset + list.length, totalFacilities)} of {totalFacilities}
+              </div>
             </div>
 
             <div style={{ marginTop: 12, fontSize: 13, color: "#64748b" }}>
@@ -1774,18 +1817,28 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, addressLine1: v }))}
                 disabled={disabled}
               />
-              <Field
-                label="Website"
-                value={form.website}
-                onChange={(v) => setForm((p) => ({ ...p, website: v }))}
-                disabled={disabled}
-              />
-              <Field
-                label="Government listing"
-                value={form.governmentListingUrl}
-                onChange={(v) => setForm((p) => ({ ...p, governmentListingUrl: v }))}
-                disabled={disabled}
-              />
+              <div>
+                <Field
+                  label="Website"
+                  value={form.website}
+                  onChange={(v) => setForm((p) => ({ ...p, website: v }))}
+                  disabled={disabled}
+                />
+                {form.website.trim() && (
+                  <a href={form.website.trim()} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#0369a1", textDecoration: "none", marginTop: 4, display: "inline-block" }}>Open ↗</a>
+                )}
+              </div>
+              <div>
+                <Field
+                  label="Government listing"
+                  value={form.governmentListingUrl}
+                  onChange={(v) => setForm((p) => ({ ...p, governmentListingUrl: v }))}
+                  disabled={disabled}
+                />
+                {form.governmentListingUrl.trim() && (
+                  <a href={form.governmentListingUrl.trim()} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#0369a1", textDecoration: "none", marginTop: 4, display: "inline-block" }}>Open ↗</a>
+                )}
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-end" }}>
                 {form.website.trim() && (
                   <button
@@ -2016,12 +2069,17 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, phone: v }))}
                 disabled={disabled}
               />
-              <Field
-                label="Website"
-                value={form.website}
-                onChange={(v) => setForm((p) => ({ ...p, website: v }))}
-                disabled={disabled}
-              />
+              <div>
+                <Field
+                  label="Website"
+                  value={form.website}
+                  onChange={(v) => setForm((p) => ({ ...p, website: v }))}
+                  disabled={disabled}
+                />
+                {form.website.trim() && (
+                  <a href={form.website.trim()} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#0369a1", textDecoration: "none", marginTop: 4, display: "inline-block" }}>Open ↗</a>
+                )}
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, justifyContent: "flex-end" }}>
                 {form.website.trim() && (
                   <button
@@ -2247,6 +2305,9 @@ export default function AdminNursingHomes() {
               >
                 {roomScanning ? "Scanning MyAgedCare…" : "🔍 Scan rooms from MyAgedCare"}
               </button>
+              {form.governmentListingUrl.trim() && (
+                <a href={form.governmentListingUrl.trim()} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#0369a1", textDecoration: "none", whiteSpace: "nowrap" }}>Open gov page ↗</a>
+              )}
               {roomScanMsg && (
                 <span style={{ fontSize: 13, color: roomScanMsg.includes("failed") || roomScanMsg.includes("No room") ? "#991b1b" : "#166534" }}>
                   {roomScanMsg}
@@ -2483,7 +2544,7 @@ export default function AdminNursingHomes() {
                 {saving ? "Saving..." : "Save"}
               </button>
 
-              <button onClick={() => refreshList()} disabled={disabled} style={secondaryBtn}>
+              <button onClick={() => refreshList(pageOffset)} disabled={disabled} style={secondaryBtn}>
                 Refresh
               </button>
 
