@@ -6,15 +6,15 @@ function normalizeApiBase(value?: string): string {
 }
 
 function detectApiBase(): string {
+  const fromEnv = normalizeApiBase(import.meta.env.VITE_API_BASE_URL as string | undefined);
+  if (fromEnv) return fromEnv;
+
   if (typeof window !== "undefined") {
     const host = window.location.hostname.toLowerCase();
     if (host === "www.nursinghomesnearme.com.au" || host === "nursinghomesnearme.com.au") {
-      return "";
+      return "https://nursinghomesnearmebackend-production.up.railway.app";
     }
   }
-
-  const fromEnv = normalizeApiBase(import.meta.env.VITE_API_BASE_URL as string | undefined);
-  if (fromEnv) return fromEnv;
 
   return "";
 }
