@@ -359,6 +359,7 @@ export default function AdminNursingHomes() {
   const [uploadingPrimary, setUploadingPrimary] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [importingSheet, setImportingSheet] = useState(false);
+  const [importProgress, setImportProgress] = useState("");
   const [importingVacancyChecks, setImportingVacancyChecks] = useState(false);
   const [importingPhotoManifest, setImportingPhotoManifest] = useState(false);
   const [sendingWeeklyCheck, setSendingWeeklyCheck] = useState(false);
@@ -1062,18 +1063,31 @@ export default function AdminNursingHomes() {
         throw new Error("No valid rows found. Required: name, suburb, state, postcode.");
       }
 
-      const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
-        "/api/admin/nursing-homes/import",
-        {
-          method: "POST",
-          body: JSON.stringify(normalized),
-        },
-      );
+      const BATCH_SIZE = 50;
+      let created = 0, updated = 0, skipped = 0;
+      const batches = Math.ceil(normalized.length / BATCH_SIZE);
 
-      setNotice(`Import complete. Created ${res.created}, updated ${res.updated}, skipped ${res.skipped}.`);
+      for (let i = 0; i < batches; i++) {
+        const batch = normalized.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        setImportProgress(`Batch ${i + 1} of ${batches} (${Math.min((i + 1) * BATCH_SIZE, normalized.length)}/${normalized.length} rows)…`);
+        const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
+          "/api/admin/nursing-homes/import",
+          {
+            method: "POST",
+            body: JSON.stringify(batch),
+          },
+        );
+        created += res.created;
+        updated += res.updated;
+        skipped += res.skipped;
+      }
+
+      setImportProgress("");
+      setNotice(`Import complete. Created ${created}, updated ${updated}, skipped ${skipped}.`);
       await refreshList();
     } catch (e) {
       setError(getErrorMessage(e));
+      setImportProgress("");
     } finally {
       setImportingSheet(false);
     }
@@ -1487,7 +1501,7 @@ export default function AdminNursingHomes() {
             </button>
 
             <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              {importingSheet ? "Uploading..." : "Upload Facility CSV"}
+              {importingSheet ? (importProgress || "Uploading...") : "Upload Facility CSV"}
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
