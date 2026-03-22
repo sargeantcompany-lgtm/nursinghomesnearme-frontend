@@ -316,52 +316,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
   </div>
 </div>
 
-<!-- ══ HOW WE FIT IN (visible before quiz starts) ══ -->
-<div id="how-we-help">
-
-  <div class="sec-h" style="margin-bottom:18px">
-    <span class="sec-h-ico">🧭</span>
-    <span class="sec-h-t">Three tools. One place. All free.</span>
-  </div>
-
-  <div class="tool-cards">
-    <div class="tool-card">
-      <div class="tool-card-ico">🗺️</div>
-      <div class="tool-card-t">ACAT Tracker & Guide</div>
-      <div class="tool-card-d">This tool. Understand the process in plain language — what ACAT is, where you are in it, exact phone scripts, real wait times, and what to do at every stage.</div>
-      <span class="tool-card-badge">Free · No registration</span>
-    </div>
-    <div class="tool-card">
-      <div class="tool-card-ico">🏡</div>
-      <div class="tool-card-t">Placement Support</div>
-      <div class="tool-card-d">Once you have ACAT approval, we help you find the right nursing home — matching vacancies, fees, care type, and location. Gold Coast based, expanding nationally.</div>
-      <span class="tool-card-badge">Free · No referral fees</span>
-    </div>
-    <div class="tool-card">
-      <div class="tool-card-ico">🔵</div>
-      <div class="tool-card-t">CareCircle App</div>
-      <div class="tool-card-d">Free family coordination app for the long wait. Track medications, appointments, visits, and updates — so the whole family stays in sync during the months between approval and placement.</div>
-      <span class="tool-card-badge">Free · iOS & Android</span>
-    </div>
-  </div>
-
-  <div class="sec-h" style="margin-bottom:12px">
-    <span class="sec-h-ico">✅</span>
-    <span class="sec-h-t">What makes us different</span>
-  </div>
-  <div class="cmp-table-wrap" style="margin-bottom:8px">
-  <table class="cmp-table">
-    <tr><th>What we do</th><th>How</th></tr>
-    <tr class="us"><td>Explain the ACAT process in plain language</td><td>This free guide — personalised action plan, real wait times, exact phone scripts</td></tr>
-    <tr><td>Help you find the right nursing home after approval</td><td>Direct vacancy checks, fee comparisons, care type matching — Gold Coast &amp; South East QLD</td></tr>
-    <tr class="us"><td>Keep the whole family in sync during the wait</td><td>CareCircle app — free, shared medication tracking, appointments, visit logs</td></tr>
-    <tr><td>We never take referral payments from facilities</td><td>Our advice is not influenced by which facility pays more — there are none</td></tr>
-    <tr class="us"><td>No cost to families, ever</td><td>Free placement support, free ACAT guide, free CareCircle app</td></tr>
-  </table>
-  </div>
-  <p style="font-size:11px;color:var(--light);margin-bottom:32px">Our placement support is strongest for South East Queensland — Gold Coast and Brisbane. If you are elsewhere in Australia, this ACAT guide still applies in full and we can point you in the right direction.</p>
-
-</div><!-- /how-we-help -->
+<div id="how-we-help"></div><!-- placeholder for show/hide JS -->
 
 <div class="main">
 

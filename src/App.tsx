@@ -584,7 +584,7 @@ function HomePage() {
               {
                 num: "3",
                 title: "CareCircle",
-                desc: "For the 12–24 months most families wait for a bed. Coordinate visits, track medications, share updates, manage bills — the whole family in one place. No app download needed.",
+                desc: "For people stuck in the gap — needing care now but not yet in a facility. Build a care team from family, friends, nurses and paid carers. Contracts, scheduling, day organisation and access to every support available — all in one place.",
                 color: "#6b21a8",
                 bg: "#faf5ff",
                 border: "#e9d5ff",
@@ -636,21 +636,20 @@ function HomePage() {
           <div style={{ background: "#f0fdf9", border: "1.5px solid #a7f3d0", borderRadius: 20, padding: "32px 36px", marginBottom: 24 }}>
             <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
               <div style={{ flex: "1 1 280px" }}>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#059669", marginBottom: 10 }}>While you wait for placement</div>
+                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", color: "#059669", marginBottom: 10 }}>Filling the gap in aged care</div>
                 <h3 style={{ fontSize: 22, fontWeight: 700, color: "#0b3b5b", margin: "0 0 10px", letterSpacing: "-0.02em", lineHeight: 1.25 }}>
-                  Most families wait 12–24 months for a nursing home bed.
+                  Needing care but not yet in a facility? CareCircle fills that gap.
                 </h3>
                 <p style={{ fontSize: 15, color: "#374151", lineHeight: 1.65, margin: 0 }}>
-                  CareCircle was built for exactly this period — keeping your family organised, informed, and supported
-                  while your loved one is at home or in transition care waiting for placement.
+                  CareCircle lets you build a real care team — family, friends, nurses and paid carers — and manage everything in one place. Contracts for paid workers, day scheduling, task sharing, and access to every support available. Care at home, organised properly.
                 </p>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, flex: "1 1 260px" }}>
                 {[
-                  { icon: "🗓️", text: "Coordinate visits & tasks" },
-                  { icon: "💊", text: "Track medications & allergies" },
-                  { icon: "📋", text: "Share updates with family" },
-                  { icon: "💰", text: "Manage bills & due dates" },
+                  { icon: "👥", text: "Build your care circle" },
+                  { icon: "📝", text: "Contracts for paid carers" },
+                  { icon: "🗓️", text: "Organise the day" },
+                  { icon: "🔗", text: "Access all available support" },
                 ].map(({ icon, text }) => (
                   <div key={text} style={{ display: "flex", alignItems: "center", gap: 10, background: "white", border: "1px solid #d1fae5", borderRadius: 12, padding: "10px 14px" }}>
                     <span style={{ fontSize: 18 }}>{icon}</span>
@@ -671,13 +670,12 @@ function HomePage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 20, flexWrap: "wrap", marginBottom: 32 }}>
               <div>
-                <div style={{ color: "#e8563a", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Family coordination app</div>
+                <div style={{ color: "#e8563a", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Care at home — organised properly</div>
                 <h2 style={{ fontFamily: "Georgia,\"Times New Roman\",serif", fontSize: 30, fontWeight: 700, color: "#fff", margin: "0 0 14px", lineHeight: 1.15 }}>
-                  CareCircle — keep the whole family across everything
+                  CareCircle — care at home using the people around you
                 </h2>
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 15, lineHeight: 1.7, margin: 0, maxWidth: 540 }}>
-                  One place for visits, tasks, medications, bills, and quick family updates.
-                  Invite family members, carers, and neighbours — everyone sees what they need to.
+                  When a nursing home isn't the right answer yet, CareCircle helps you build a real care team from the people already in your life — plus nurses and paid carers when needed. Contracts, scheduling, day organisation and access to every support available. The gap in aged care, finally filled.
                 </p>
               </div>
               <Link
