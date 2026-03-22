@@ -1008,6 +1008,8 @@ export default function AdminNursingHomes() {
             phone: get("phone", "Phone"),
             website: get("website", "Website", "source_url", "Source URL"),
             email: getFirstEmail("email", "Email"),
+            facebookUrl: get("facebookUrl", "facebook_url", "Facebook URL"),
+            instagramUrl: get("instagramUrl", "instagram_url", "Instagram URL"),
             governmentListingUrl: get("governmentListingUrl", "government_listing_url", "Government Listing URL"),
             sourcePrimary: get("sourcePrimary", "source_primary", "Source Primary"),
             facilityType: get("facilityType", "facility_type", "Facility Type"),
@@ -1075,6 +1077,119 @@ export default function AdminNursingHomes() {
       setError(getErrorMessage(e));
     } finally {
       setImportingSheet(false);
+    }
+  }
+
+  async function exportAllCsv() {
+    setError("");
+    setNotice("Preparing export…");
+    try {
+      const data = await apiFetch<Record<string, unknown>[]>("/api/admin/nursing-homes/export");
+      const XLSX = await import("xlsx");
+      const listToCell = (v: unknown) =>
+        Array.isArray(v) ? (v as string[]).join("|") : (v == null ? "" : String(v));
+      const rows = data.map((f) => ({
+        name: f.name ?? "",
+        facilityRowId: f.facilityRowId ?? "",
+        slug: f.slug ?? "",
+        abn: f.abn ?? "",
+        providerName: f.providerName ?? "",
+        oneLineDescription: f.oneLineDescription ?? "",
+        description: f.description ?? "",
+        overviewHeading: f.overviewHeading ?? "",
+        providerOverview: f.providerOverview ?? "",
+        accommodationSummary: f.accommodationSummary ?? "",
+        pricingSummary: f.pricingSummary ?? "",
+        radFrom: f.radFrom ?? "",
+        radTo: f.radTo ?? "",
+        dapFrom: f.dapFrom ?? "",
+        dapTo: f.dapTo ?? "",
+        staffingSummary: f.staffingSummary ?? "",
+        foodHighlights: f.foodHighlights ?? "",
+        visitingHours: f.visitingHours ?? "",
+        admissionsProcess: f.admissionsProcess ?? "",
+        waitingListSummary: f.waitingListSummary ?? "",
+        transportNotes: f.transportNotes ?? "",
+        reviewSummary: f.reviewSummary ?? "",
+        reviewCount: f.reviewCount ?? "",
+        addressLine1: f.addressLine1 ?? "",
+        addressLine2: f.addressLine2 ?? "",
+        suburb: f.suburb ?? "",
+        state: f.state ?? "",
+        postcode: f.postcode ?? "",
+        phone: f.phone ?? "",
+        email: f.email ?? "",
+        facebookUrl: f.facebookUrl ?? "",
+        instagramUrl: f.instagramUrl ?? "",
+        website: f.website ?? "",
+        governmentListingUrl: f.governmentListingUrl ?? "",
+        sourcePrimary: f.sourcePrimary ?? "",
+        facilityType: f.facilityType ?? "",
+        beds: f.beds ?? "",
+        latitude: f.latitude ?? "",
+        longitude: f.longitude ?? "",
+        status: f.status ?? "",
+        activeVacancies: f.activeVacancies ?? "",
+        primaryImageUrl: f.primaryImageUrl ?? "",
+        galleryImageUrls: listToCell(f.galleryImageUrls),
+        featureTags: listToCell(f.featureTags),
+        otherTags: listToCell(f.otherTags),
+        languages: listToCell(f.languages),
+        careTypes: listToCell(f.careTypes),
+        specialties: listToCell(f.specialties),
+        roomTypes: listToCell(f.roomTypes),
+        amenities: listToCell(f.amenities),
+        alliedHealth: listToCell(f.alliedHealth),
+        heroBadges: listToCell(f.heroBadges),
+        servicesIncluded: listToCell(f.servicesIncluded),
+        nearbyHospitals: listToCell(f.nearbyHospitals),
+        faqItems: listToCell(f.faqItems),
+        internalNotes: f.internalNotes ?? "",
+        websiteSaysVacancies: f.websiteSaysVacancies ?? "",
+        facilityConfirmedVacancies: f.facilityConfirmedVacancies ?? "",
+        websiteCheckedAt: f.websiteCheckedAt ?? "",
+        facilityConfirmedAt: f.facilityConfirmedAt ?? "",
+        websiteSourceUrl: f.websiteSourceUrl ?? "",
+        facilityConfirmationSource: f.facilityConfirmationSource ?? "",
+        conflictFlag: f.conflictFlag ? "true" : "",
+        lastProfileScanAt: f.lastProfileScanAt ?? "",
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Facilities");
+      const date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `nursing-homes-export-${date}.csv`, { bookType: "csv" });
+      setNotice(`Export complete — ${rows.length} facilities downloaded.`);
+    } catch (e) {
+      setError(getErrorMessage(e));
+      setNotice("");
+    }
+  }
+
+  async function deleteAllFacilities() {
+    const answer = window.prompt(
+      `⚠️ This will permanently delete ALL facilities from the database.\n\nType DELETE to confirm:`
+    );
+    if (answer?.trim() !== "DELETE") {
+      setNotice("Delete cancelled.");
+      return;
+    }
+    setError("");
+    setNotice("Deleting all facilities…");
+    try {
+      const res = await apiFetch<{ deleted: number }>("/api/admin/nursing-homes/delete-all", {
+        method: "DELETE",
+        headers: { "X-Confirm-Delete-All": "DELETE_ALL_FACILITIES" },
+      });
+      setNotice(`Deleted ${res.deleted} facilities.`);
+      setSelectedId(null);
+      setCurrentId(null);
+      setCurrentMeta(null);
+      setForm(emptyForm());
+      await refreshList();
+    } catch (e) {
+      setError(getErrorMessage(e));
+      setNotice("");
     }
   }
 
@@ -1434,6 +1549,22 @@ export default function AdminNursingHomes() {
             >
               Download Vacancy Template
             </a>
+
+            <button
+              onClick={() => exportAllCsv()}
+              disabled={disabled}
+              style={{ ...secondaryBtn, background: "#0f766e", color: "#fff", borderColor: "#0f766e" }}
+            >
+              ⬇ Export All as CSV
+            </button>
+
+            <button
+              onClick={() => deleteAllFacilities()}
+              disabled={disabled}
+              style={{ ...secondaryBtn, background: "#991b1b", color: "#fff", borderColor: "#991b1b" }}
+            >
+              🗑 Delete All Facilities
+            </button>
 
             <button onClick={() => sendWeeklyVacancyCheck()} disabled={disabled} style={secondaryBtn}>
               {sendingWeeklyCheck
