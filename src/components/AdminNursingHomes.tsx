@@ -680,26 +680,59 @@ export default function AdminNursingHomes() {
     }
   }
 
-  async function handleBulkGapFill() {
-    if (!window.confirm("This will scan all facilities with missing beds/description/pricing via Firecrawl and save directly to the database. Continue?")) return;
-    setBulkGapFilling(true);
-    setBulkGapFillProgress("");
-    setNotice("");
+  type GapCandidate = { id: number; name: string; suburb: string; state: string; hasWebsite: boolean; hasGovUrl: boolean; missingFields: string[] };
+  type GapResult = { id: number; name: string; status: "filled" | "unchanged" | "error"; missingFields: string[]; error?: string };
+
+  const [gapCandidates, setGapCandidates] = useState<GapCandidate[]>([]);
+  const [gapResults, setGapResults] = useState<GapResult[]>([]);
+  const [gapCurrentName, setGapCurrentName] = useState("");
+  const [showGapPanel, setShowGapPanel] = useState(false);
+  const gapStopRef = React.useRef(false);
+
+  async function handleLoadGapCandidates() {
     setError("");
+    setBulkGapFilling(true);
     try {
-      setBulkGapFillProgress("running…");
-      const result = await apiFetch<{ processed: number; filled: number; unchanged: number; errors: number; errorDetails: string[] }>(
-        "/api/admin/nursing-homes/bulk-gap-fill",
-        { method: "POST", body: JSON.stringify({}) }
-      );
-      setNotice(`Bulk gap-fill done: ${result.filled} filled, ${result.unchanged} unchanged, ${result.errors} errors.${result.errorDetails?.length ? " Errors: " + result.errorDetails.slice(0, 3).join("; ") : ""}`);
-      await refreshList();
+      const candidates = await apiFetch<GapCandidate[]>("/api/admin/nursing-homes/gap-candidates");
+      setGapCandidates(candidates);
+      setGapResults([]);
+      setShowGapPanel(true);
     } catch (e: unknown) {
-      setError(`Bulk gap-fill failed: ${e instanceof Error ? e.message : String(e)}`);
+      setError(`Failed to load gap candidates: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBulkGapFilling(false);
-      setBulkGapFillProgress("");
     }
+  }
+
+  async function handleBulkGapFill() {
+    if (!gapCandidates.length) return;
+    gapStopRef.current = false;
+    setBulkGapFilling(true);
+    setGapResults([]);
+    setError("");
+
+    for (let i = 0; i < gapCandidates.length; i++) {
+      if (gapStopRef.current) break;
+      const c = gapCandidates[i];
+      setGapCurrentName(`${i + 1}/${gapCandidates.length} — ${c.name}`);
+      try {
+        await apiFetch(`/api/admin/nursing-homes/gap-fill/${c.id}`, { method: "POST" });
+        setGapResults((prev) => [...prev, { id: c.id, name: c.name, status: "filled", missingFields: c.missingFields }]);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes("unchanged") || msg.includes("200")) {
+          setGapResults((prev) => [...prev, { id: c.id, name: c.name, status: "unchanged", missingFields: c.missingFields }]);
+        } else {
+          setGapResults((prev) => [...prev, { id: c.id, name: c.name, status: "error", missingFields: c.missingFields, error: msg }]);
+        }
+      }
+      // small delay to respect Firecrawl rate limits
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+
+    setBulkGapFilling(false);
+    setGapCurrentName("");
+    await refreshList();
   }
 
   async function handleScanAllVacancies() {
@@ -1415,7 +1448,7 @@ export default function AdminNursingHomes() {
             </button>
 
             <button
-              onClick={() => handleBulkGapFill()}
+              onClick={showGapPanel && gapCandidates.length > 0 ? handleBulkGapFill : handleLoadGapCandidates}
               disabled={disabled || bulkGapFilling}
               style={{
                 ...secondaryBtn,
@@ -1425,8 +1458,20 @@ export default function AdminNursingHomes() {
                 fontWeight: 700,
               }}
             >
-              {bulkGapFilling ? `Filling gaps… ${bulkGapFillProgress}` : "Bulk Fill All Gaps (Gov)"}
+              {bulkGapFilling
+                ? `Scanning… ${gapCurrentName}`
+                : showGapPanel && gapCandidates.length > 0
+                ? `▶ Start gap-fill (${gapCandidates.length} facilities)`
+                : "Bulk Gap-Fill"}
             </button>
+            {bulkGapFilling && (
+              <button
+                onClick={() => { gapStopRef.current = true; }}
+                style={{ ...secondaryBtn, color: "#991b1b", borderColor: "#fecaca" }}
+              >
+                Stop
+              </button>
+            )}
 
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>
               API: {API_BASE}
@@ -1458,6 +1503,78 @@ export default function AdminNursingHomes() {
 
           {error ? <Alert color="#991b1b" bg="#fee2e2" title="Error" text={error} /> : null}
           {notice ? <Alert color="#166534" bg="#dcfce7" title="OK" text={notice} /> : null}
+
+          {/* Gap-fill panel */}
+          {showGapPanel && (
+            <div style={{ marginTop: 16, border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
+              <div style={{ background: "#0b3b5b", color: "#fff", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 700 }}>
+                  Gap-Fill Queue — {gapCandidates.length} facilities need data
+                </span>
+                <button
+                  onClick={() => { setShowGapPanel(false); setGapCandidates([]); setGapResults([]); }}
+                  style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: 18 }}
+                >×</button>
+              </div>
+              <div style={{ maxHeight: 400, overflowY: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+                      <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#475569" }}>Facility</th>
+                      <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#475569" }}>Missing</th>
+                      <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#475569" }}>Sources</th>
+                      <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#475569" }}>Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {gapCandidates.map((c, i) => {
+                      const result = gapResults.find((r) => r.id === c.id);
+                      const isCurrent = bulkGapFilling && !result && gapCurrentName.includes(c.name);
+                      return (
+                        <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9", background: i % 2 === 0 ? "#fff" : "#fafbfc" }}>
+                          <td style={{ padding: "8px 12px", color: "#0f172a" }}>
+                            <button
+                              onClick={() => setSelectedId(c.id)}
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "#0369a1", fontWeight: 600, padding: 0, textAlign: "left" }}
+                            >
+                              {c.name}
+                            </button>
+                            <div style={{ fontSize: 11, color: "#94a3b8" }}>{c.suburb}, {c.state}</div>
+                          </td>
+                          <td style={{ padding: "8px 12px", color: "#64748b", fontSize: 12 }}>
+                            {c.missingFields.join(", ")}
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              {c.hasGovUrl && <span style={{ background: "#dbeafe", color: "#1e40af", borderRadius: 999, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>Gov</span>}
+                              {c.hasWebsite && <span style={{ background: "#dcfce7", color: "#166534", borderRadius: 999, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>Web</span>}
+                              {!c.hasGovUrl && !c.hasWebsite && <span style={{ color: "#94a3b8", fontSize: 11 }}>No URLs</span>}
+                            </div>
+                          </td>
+                          <td style={{ padding: "8px 12px" }}>
+                            {result?.status === "filled" && <span style={{ color: "#166534", fontWeight: 700 }}>✓ Filled</span>}
+                            {result?.status === "unchanged" && <span style={{ color: "#92400e" }}>— No change</span>}
+                            {result?.status === "error" && <span style={{ color: "#991b1b", fontSize: 12 }} title={result.error}>✗ Error</span>}
+                            {isCurrent && <span style={{ color: "#0369a1" }}>⟳ Scanning…</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {gapResults.length > 0 && (
+                <div style={{ padding: "10px 16px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", fontSize: 13, color: "#475569" }}>
+                  {gapResults.filter((r) => r.status === "filled").length} filled ·{" "}
+                  {gapResults.filter((r) => r.status === "unchanged").length} unchanged ·{" "}
+                  {gapResults.filter((r) => r.status === "error").length} errors
+                  {!bulkGapFilling && gapResults.length === gapCandidates.length && (
+                    <span style={{ marginLeft: 12, color: "#166534", fontWeight: 700 }}>Complete</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Vacancy confirmation queue removed — will be rebuilt as part of three-source vacancy model */}
