@@ -485,8 +485,6 @@ export default function NursingHomeDetails() {
                     <Fact label="Address" value={[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ") || "Not listed"} />
                     <Fact label="Phone" value={data.phone || "Not listed"} />
                     <Fact label="Email" value={data.email || "Not listed"} />
-                    <Fact label="Website" value={cleanWebsite || "Not listed"} />
-                    {cleanGovernmentListing ? <Fact label="Government listing" value={cleanGovernmentListing} /> : null}
                   </div>
                   {(data.phone || data.email || cleanWebsite) ? (
                     <div style={{ ...heroActions, marginTop: 16 }}>
