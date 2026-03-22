@@ -371,6 +371,8 @@ export default function AdminNursingHomes() {
   const [scanMessage, setScanMessage] = useState<string | null>(null);
   const [roomScanning, setRoomScanning] = useState(false);
   const [roomScanMsg, setRoomScanMsg] = useState<string | null>(null);
+  const [photoScanning, setPhotoScanning] = useState(false);
+  const [photoScanMsg, setPhotoScanMsg] = useState<string | null>(null);
   const [scanningVacancies, setScanningVacancies] = useState(false);
   const [vacancyScanProgress, setVacancyScanProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkGapFilling, setBulkGapFilling] = useState(false);
@@ -503,12 +505,7 @@ export default function AdminNursingHomes() {
       setPageOffset(data.offset ?? nextOffset);
       setStateCountsList(data.stateCounts ?? []);
 
-      if (selectedId !== "NEW") {
-        const selectedStillVisible = (data.items ?? []).some((item) => item.id === selectedId);
-        if (!selectedStillVisible && data.items?.length) {
-          setSelectedId(data.items[0].id);
-        }
-      }
+      // Do not auto-jump to a different item when the selected one scrolls off the page
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -646,6 +643,40 @@ export default function AdminNursingHomes() {
       setRoomScanMsg(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setRoomScanning(false);
+    }
+  }
+
+  async function handleScanPhotos() {
+    const url = form.website.trim();
+    if (!url) {
+      setPhotoScanMsg("No website URL set on this facility.");
+      return;
+    }
+    setPhotoScanning(true);
+    setPhotoScanMsg(null);
+    try {
+      const data = await apiFetch<Record<string, unknown>>("/api/admin/nursing-homes/scan-photos", {
+        method: "POST",
+        body: JSON.stringify({ url }),
+      });
+      const primary = (data.primaryImageUrl as string | undefined)?.trim() ?? "";
+      const gallery = (data.galleryImageUrls as string[] | undefined) ?? [];
+      let populated = 0;
+      setForm((p) => {
+        const newPrimary = primary && !p.primaryImageUrl ? primary : p.primaryImageUrl;
+        if (primary && !p.primaryImageUrl) populated++;
+        const merged = [
+          ...linesToList(p.galleryImageUrlsText),
+          ...gallery,
+        ].filter((v, i, a) => v && a.indexOf(v) === i);
+        populated += gallery.filter((u) => !linesToList(p.galleryImageUrlsText).includes(u)).length;
+        return { ...p, primaryImageUrl: newPrimary, galleryImageUrlsText: merged.join("\n") };
+      });
+      setPhotoScanMsg(populated > 0 ? `Found ${populated} photo(s). Review and save.` : "No photos found on this page.");
+    } catch (e: unknown) {
+      setPhotoScanMsg(`Photo scan failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setPhotoScanning(false);
     }
   }
 
@@ -1948,6 +1979,22 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, primaryImageUrl: v }))}
                 disabled={disabled}
               />
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={handleScanPhotos}
+                  disabled={photoScanning || disabled || !form.website.trim()}
+                  style={{ ...secondaryBtn, background: "#0b3b5b", color: "#fff", borderColor: "#0b3b5b" }}
+                >
+                  {photoScanning ? "Scanning for photos…" : "📷 Scan website for photos"}
+                </button>
+                {photoScanMsg && (
+                  <span style={{ fontSize: 13, color: photoScanMsg.includes("failed") || photoScanMsg.includes("No photos") ? "#991b1b" : "#166534" }}>
+                    {photoScanMsg}
+                  </span>
+                )}
+              </div>
 
               <label style={{ display: "block" }}>
                 <div style={labelStyle}>Upload Primary Photo</div>
