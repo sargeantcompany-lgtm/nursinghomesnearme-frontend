@@ -157,16 +157,6 @@ function cleanDescription(value?: string | null, fallback?: string | null): stri
   return sentences.slice(0, 4).join(" ") || trimmed;
 }
 
-function cleanLongDescription(value?: string | null, fallback?: string | null): string {
-  const base = cleanText(value) || cleanText(fallback);
-  if (!base) return "";
-  return base
-    .replace(/skip to content/gi, "")
-    .replace(/search for:/gi, "")
-    .replace(/\b(book a tour|menu|careers|contact)\b/gi, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function pickBestImages(data: NursingHomePublicDetails | null): string[] {
   if (!data) return [];

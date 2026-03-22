@@ -1,5 +1,5 @@
 // src/components/AdminNursingHomes.tsx
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { API_BASE, TOKEN_ENV } from "../lib/runtimeConfig";
 import AdminTopNav from "./AdminTopNav";
@@ -382,7 +382,6 @@ export default function AdminNursingHomes() {
   const [scanningVacancies, setScanningVacancies] = useState(false);
   const [vacancyScanProgress, setVacancyScanProgress] = useState<{ done: number; total: number } | null>(null);
   const [bulkGapFilling, setBulkGapFilling] = useState(false);
-  const [bulkGapFillProgress, setBulkGapFillProgress] = useState("");
   const [vacancyScanResults, setVacancyScanResults] = useState<Array<{ facilityId: number; facilityName: string; websiteSaysVacancies: string; vacancySummary: string | null }>>([]);
   const [currentMeta, setCurrentMeta] = useState<{
     websiteSaysVacancies?: string | null;
@@ -1182,7 +1181,7 @@ export default function AdminNursingHomes() {
         headers: { "X-Confirm-Delete-All": "DELETE_ALL_FACILITIES" },
       });
       setNotice(`Deleted ${res.deleted} facilities.`);
-      setSelectedId(null);
+      setSelectedId("NEW");
       setCurrentId(null);
       setCurrentMeta(null);
       setForm(emptyForm());
