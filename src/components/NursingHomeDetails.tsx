@@ -26,6 +26,7 @@ type NursingHomePublicDetails = {
   addressLine2?: string | null;
   phone?: string | null;
   email?: string | null;
+  facebookUrl?: string | null;
   website: string | null;
   governmentListingUrl?: string | null;
   sourcePrimary?: string | null;
@@ -339,6 +340,11 @@ export default function NursingHomeDetails() {
                         Government listing
                       </a>
                     ) : null}
+                    {data.facebookUrl ? (
+                      <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...heroSubtleButton, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>
+                        Facebook
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -494,13 +500,18 @@ export default function NursingHomeDetails() {
                     <Fact label="Phone" value={data.phone || "Not listed"} />
                     <Fact label="Email" value={data.email || "Not listed"} />
                   </div>
-                  {(data.phone || data.email || cleanWebsite) ? (
+                  {(data.phone || data.email || cleanWebsite || data.facebookUrl) ? (
                     <div style={{ ...heroActions, marginTop: 16 }}>
                       {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
                       {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Send email</a> : null}
                       {cleanWebsite ? (
                         <a href={cleanWebsite} target="_blank" rel="noreferrer" style={contactPill}>
                           Contact via website
+                        </a>
+                      ) : null}
+                      {data.facebookUrl ? (
+                        <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>
+                          Facebook
                         </a>
                       ) : null}
                     </div>

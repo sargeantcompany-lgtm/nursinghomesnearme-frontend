@@ -78,6 +78,7 @@ type NursingHome = {
 
   // admin-only
   email?: string | null;
+  facebookUrl?: string | null;
   internalNotes?: string | null;
   status?: "ACTIVE" | "INACTIVE" | string;
   activeVacancies?: number | null;
@@ -142,6 +143,7 @@ type UpsertForm = {
 
   // admin-only
   email: string;
+  facebookUrl: string;
   internalNotes: string;
   status: "ACTIVE" | "INACTIVE";
   activeVacancies: string; // convert on save
@@ -283,6 +285,7 @@ function emptyForm(): UpsertForm {
     conflictFlag: false,
 
     email: "",
+    facebookUrl: "",
     internalNotes: "",
     status: "ACTIVE",
     activeVacancies: "",
@@ -836,6 +839,7 @@ export default function AdminNursingHomes() {
         conflictFlag: !!nh.conflictFlag,
 
         email: (nh.email ?? "") as string,
+        facebookUrl: (nh.facebookUrl ?? "") as string,
         internalNotes: (nh.internalNotes ?? "") as string,
         status: nh.status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
         activeVacancies: nh.activeVacancies == null ? "" : String(nh.activeVacancies),
@@ -897,6 +901,7 @@ export default function AdminNursingHomes() {
 
         // admin-only
         email: form.email.trim() || null,
+        facebookUrl: form.facebookUrl.trim() || null,
         internalNotes: form.internalNotes.trim() || null,
         status: form.status,
         activeVacancies: parseOptionalNumber(form.activeVacancies),
@@ -2059,6 +2064,13 @@ export default function AdminNursingHomes() {
                 disabled={disabled}
               />
               <Field
+                label="Facebook URL"
+                value={form.facebookUrl}
+                onChange={(v) => setForm((p) => ({ ...p, facebookUrl: v }))}
+                disabled={disabled}
+                placeholder="https://www.facebook.com/facilityname"
+              />
+              <Field
                 label="Suburb *"
                 value={form.suburb}
                 onChange={(v) => setForm((p) => ({ ...p, suburb: v }))}
@@ -3172,8 +3184,9 @@ function Field(props: {
   disabled: boolean;
   asSelect?: boolean;
   options?: Array<{ value: string; label: string }>;
+  placeholder?: string;
 }) {
-  const { label, value, onChange, disabled, asSelect, options } = props;
+  const { label, value, onChange, disabled, asSelect, options, placeholder } = props;
 
   return (
     <label style={{ display: "block" }}>
@@ -3187,7 +3200,7 @@ function Field(props: {
           ))}
         </select>
       ) : (
-        <input value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} style={inputStyle} />
+        <input value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} style={inputStyle} placeholder={placeholder} />
       )}
     </label>
   );
