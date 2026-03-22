@@ -258,6 +258,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .sources{font-size:11px;color:var(--light);line-height:1.8;margin-top:24px;padding:16px;background:var(--cream);border-radius:10px}
 .sources strong{color:var(--mid);font-size:12px;display:block;margin-bottom:3px}
 
+/* ── HOW WE FIT IN section ── */
+#how-we-help{max-width:760px;margin:0 auto;padding:40px 20px 0}
+.tool-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:36px}
+.tool-card{background:#fff;border:1.5px solid var(--border);border-radius:18px;padding:22px 20px}
+.tool-card-ico{font-size:28px;margin-bottom:10px}
+.tool-card-t{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.tool-card-d{font-size:12px;color:var(--mid);line-height:1.6}
+.tool-card-badge{display:inline-block;margin-top:10px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--teal-p);color:var(--teal)}
+.cmp-table-wrap{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:8px}
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px}
+.cmp-table th{background:var(--navy);color:#fff;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.4px}
+.cmp-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;line-height:1.5}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table .us{background:#f0fdf4}
+.cmp-table .us td:first-child{font-weight:700;color:var(--teal)}
+.cmp-tick{color:var(--green);font-weight:700}
+.cmp-no{color:var(--mid)}
+.cmp-partial{color:var(--amber);font-weight:600}
+
+/* ── CareCircle callout ── */
+.carecircle-callout{border-radius:16px;padding:22px 24px;margin-bottom:24px;background:linear-gradient(135deg,#0d2a3b,#0f3340);border:1px solid rgba(125,211,216,.2)}
+.cc-pill{display:inline-block;background:rgba(26,107,114,.4);font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:3px 10px;border-radius:100px;color:#7dd3d8;margin-bottom:10px}
+.cc-h{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:6px}
+.cc-d{font-size:13px;color:rgba(255,255,255,.7);line-height:1.65;margin-bottom:14px}
+.cc-feats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.cc-feat{font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;background:rgba(125,211,216,.12);color:#7dd3d8;border:1px solid rgba(125,211,216,.2)}
+.cc-link{display:inline-block;background:var(--teal);color:#fff;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:700;text-decoration:none;transition:all .2s}
+.cc-link:hover{background:var(--teal-l)}
+
 @media(max-width:580px){
   .q-card{padding:24px 20px 20px}
   .opts-grid{grid-template-columns:1fr}
@@ -289,6 +318,91 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     </div>
   </div>
 </div>
+
+<!-- ══ HOW WE FIT IN (visible before quiz starts) ══ -->
+<div id="how-we-help">
+
+  <div class="sec-h" style="margin-bottom:18px">
+    <span class="sec-h-ico">🧭</span>
+    <span class="sec-h-t">Three tools. One place. All free.</span>
+  </div>
+
+  <div class="tool-cards">
+    <div class="tool-card">
+      <div class="tool-card-ico">🗺️</div>
+      <div class="tool-card-t">ACAT Tracker & Guide</div>
+      <div class="tool-card-d">This tool. Understand the process in plain language — what ACAT is, where you are in it, exact phone scripts, real wait times, and what to do at every stage.</div>
+      <span class="tool-card-badge">Free · No registration</span>
+    </div>
+    <div class="tool-card">
+      <div class="tool-card-ico">🏡</div>
+      <div class="tool-card-t">Placement Support</div>
+      <div class="tool-card-d">Once you have ACAT approval, we help you find the right nursing home — matching vacancies, fees, care type, and location. Gold Coast based, expanding nationally.</div>
+      <span class="tool-card-badge">Free · No referral fees</span>
+    </div>
+    <div class="tool-card">
+      <div class="tool-card-ico">🔵</div>
+      <div class="tool-card-t">CareCircle App</div>
+      <div class="tool-card-d">Free family coordination app for the long wait. Track medications, appointments, visits, and updates — so the whole family stays in sync during the months between approval and placement.</div>
+      <span class="tool-card-badge">Free · iOS & Android</span>
+    </div>
+  </div>
+
+  <div class="sec-h" style="margin-bottom:12px">
+    <span class="sec-h-ico">🔍</span>
+    <span class="sec-h-t">How we compare to other options</span>
+  </div>
+  <div style="overflow-x:auto;margin-bottom:6px">
+  <div class="cmp-table-wrap">
+  <table class="cmp-table">
+    <tr>
+      <th>What you need</th>
+      <th>Us (nursinghomesnearme.com.au)</th>
+      <th>Aged Care Decisions</th>
+      <th>My Aged Care (official)</th>
+    </tr>
+    <tr class="us">
+      <td>Understand the ACAT process</td>
+      <td><span class="cmp-tick">✓</span> This guide + personalized plan</td>
+      <td><span class="cmp-tick">✓</span> Articles and guides</td>
+      <td><span class="cmp-no">— General info only</span></td>
+    </tr>
+    <tr>
+      <td>Apply for an ACAT assessment</td>
+      <td><span class="cmp-no">— We guide you there</span></td>
+      <td><span class="cmp-no">— Guides you to My Aged Care</span></td>
+      <td><span class="cmp-tick">✓</span> Required — start here: 1800 200 422</td>
+    </tr>
+    <tr class="us">
+      <td>Find a nursing home after approval</td>
+      <td><span class="cmp-tick">✓</span> Placement support (Gold Coast + QLD)</td>
+      <td><span class="cmp-tick">✓</span> Strong — especially Brisbane</td>
+      <td><span class="cmp-partial">~ Find a provider tool, no shortlisting</span></td>
+    </tr>
+    <tr>
+      <td>Coordinate family during the wait</td>
+      <td><span class="cmp-tick">✓</span> CareCircle app — free, unique</td>
+      <td><span class="cmp-no">— Not offered</span></td>
+      <td><span class="cmp-no">— Not offered</span></td>
+    </tr>
+    <tr class="us">
+      <td>Check vacancy availability</td>
+      <td><span class="cmp-tick">✓</span> Direct facility checks</td>
+      <td><span class="cmp-tick">✓</span> Specialists call facilities</td>
+      <td><span class="cmp-no">— Listed but not live</span></td>
+    </tr>
+    <tr>
+      <td>Referral payments from facilities</td>
+      <td><span class="cmp-tick">✓ None — we don't take them</span></td>
+      <td><span class="cmp-partial">~ Charges facilities, not families</span></td>
+      <td><span class="cmp-no">— Government service</span></td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <p style="font-size:11px;color:var(--light);margin-bottom:32px">Our placement support is strongest for South East Queensland. If you are in Brisbane or the Gold Coast, we can help directly. If you are elsewhere, this ACAT guide is still fully relevant and we can point you in the right direction.</p>
+
+</div><!-- /how-we-help -->
 
 <div class="main">
 
@@ -466,11 +580,13 @@ let signals = [];
 
 function startQuiz() {
   document.getElementById('hero-section').style.display='none';
+  document.getElementById('how-we-help').style.display='none';
   goScreen(1);
 }
 function showHero() {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('hero-section').style.display='block';
+  document.getElementById('how-we-help').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function goScreen(n) {
@@ -1002,6 +1118,23 @@ function buildResults() {
       ⏳ <strong>Lifetime cap (new entrants from Nov 2025):</strong> $135,318.69 on non-clinical contributions<br>
       ⏳ <strong>Lifetime cap (old HCP / grandfathered before Sep 2024):</strong> $84,572 — contributions already paid count toward this
     </div>
+    </div>`;
+  }
+
+  // ══ CARECIRCLE CALLOUT (long-wait scenarios) ══
+  if(isNH || isWaitingFund || hasChangingNeeds) {
+    html += `<div class="carecircle-callout">
+      <div class="cc-pill">Free Family Tool</div>
+      <div class="cc-h">While you wait — CareCircle keeps your family in sync</div>
+      <div class="cc-d">The wait between ACAT approval and a bed can be 6–18 months or longer. CareCircle is our free app that helps families stay coordinated during that time — so nothing falls through the cracks and everyone knows what's happening.</div>
+      <div class="cc-feats">
+        <span class="cc-feat">📋 Shared medication tracking</span>
+        <span class="cc-feat">📅 Appointment calendar</span>
+        <span class="cc-feat">💬 Family updates feed</span>
+        <span class="cc-feat">🏠 Visit log</span>
+        <span class="cc-feat">📁 Document storage</span>
+      </div>
+      <a href="/" class="cc-link">Learn about CareCircle →</a>
     </div>`;
   }
 
