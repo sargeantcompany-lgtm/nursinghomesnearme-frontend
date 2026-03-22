@@ -34,6 +34,7 @@ import BlogIndex from "./components/BlogIndex";
 import BlogPost from "./components/BlogPost";
 import CareCircleApp from "./components/CareCircleApp";
 import AcatPathwayFinderPage from "./components/AcatPathwayFinderPage";
+import AgedCareFeesPage from "./components/AgedCareFeesPage";
 import ChatWidget from "./components/ChatWidget";
 import { API_BASE } from "./lib/runtimeConfig";
 
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/acat-pathway-finder" element={<AcatPathwayFinderPage />} />
+        <Route path="/aged-care-fees-and-charges" element={<AgedCareFeesPage />} />
         <Route path="/carecircle" element={<CareCircleApp />} />
         <Route path="/facility/respond/:matchResponseToken" element={<FacilityRespond />} />
         <Route path="/facility/login" element={<FacilityLogin />} />
