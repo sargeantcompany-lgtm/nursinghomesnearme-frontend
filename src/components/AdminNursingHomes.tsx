@@ -79,6 +79,7 @@ type NursingHome = {
   // admin-only
   email?: string | null;
   facebookUrl?: string | null;
+  instagramUrl?: string | null;
   internalNotes?: string | null;
   status?: "ACTIVE" | "INACTIVE" | string;
   activeVacancies?: number | null;
@@ -144,6 +145,7 @@ type UpsertForm = {
   // admin-only
   email: string;
   facebookUrl: string;
+  instagramUrl: string;
   internalNotes: string;
   status: "ACTIVE" | "INACTIVE";
   activeVacancies: string; // convert on save
@@ -286,6 +288,7 @@ function emptyForm(): UpsertForm {
 
     email: "",
     facebookUrl: "",
+    instagramUrl: "",
     internalNotes: "",
     status: "ACTIVE",
     activeVacancies: "",
@@ -537,6 +540,8 @@ export default function AdminNursingHomes() {
         postcode:           String(data.postcode || p.postcode),
         phone:              String(data.phone || p.phone),
         email:              String(data.email || p.email),
+        facebookUrl:        String(data.facebookUrl || p.facebookUrl),
+        instagramUrl:       String(data.instagramUrl || p.instagramUrl),
         featureTagsText:    [
           ...linesToList(p.featureTagsText),
           ...((data.careTypes as string[]) || []),
@@ -840,6 +845,7 @@ export default function AdminNursingHomes() {
 
         email: (nh.email ?? "") as string,
         facebookUrl: (nh.facebookUrl ?? "") as string,
+        instagramUrl: (nh.instagramUrl ?? "") as string,
         internalNotes: (nh.internalNotes ?? "") as string,
         status: nh.status === "INACTIVE" ? "INACTIVE" : "ACTIVE",
         activeVacancies: nh.activeVacancies == null ? "" : String(nh.activeVacancies),
@@ -902,6 +908,7 @@ export default function AdminNursingHomes() {
         // admin-only
         email: form.email.trim() || null,
         facebookUrl: form.facebookUrl.trim() || null,
+        instagramUrl: form.instagramUrl.trim() || null,
         internalNotes: form.internalNotes.trim() || null,
         status: form.status,
         activeVacancies: parseOptionalNumber(form.activeVacancies),
@@ -2069,6 +2076,13 @@ export default function AdminNursingHomes() {
                 onChange={(v) => setForm((p) => ({ ...p, facebookUrl: v }))}
                 disabled={disabled}
                 placeholder="https://www.facebook.com/facilityname"
+              />
+              <Field
+                label="Instagram URL"
+                value={form.instagramUrl}
+                onChange={(v) => setForm((p) => ({ ...p, instagramUrl: v }))}
+                disabled={disabled}
+                placeholder="https://www.instagram.com/facilityname"
               />
               <Field
                 label="Suburb *"

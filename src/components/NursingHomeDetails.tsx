@@ -27,6 +27,7 @@ type NursingHomePublicDetails = {
   phone?: string | null;
   email?: string | null;
   facebookUrl?: string | null;
+  instagramUrl?: string | null;
   website: string | null;
   governmentListingUrl?: string | null;
   sourcePrimary?: string | null;
@@ -345,6 +346,11 @@ export default function NursingHomeDetails() {
                         Facebook
                       </a>
                     ) : null}
+                    {data.instagramUrl ? (
+                      <a href={data.instagramUrl} target="_blank" rel="noreferrer" style={{ ...heroSubtleButton, background: "#E1306C", color: "#fff", borderColor: "#E1306C" }}>
+                        Instagram
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -500,7 +506,7 @@ export default function NursingHomeDetails() {
                     <Fact label="Phone" value={data.phone || "Not listed"} />
                     <Fact label="Email" value={data.email || "Not listed"} />
                   </div>
-                  {(data.phone || data.email || cleanWebsite || data.facebookUrl) ? (
+                  {(data.phone || data.email || cleanWebsite || data.facebookUrl || data.instagramUrl) ? (
                     <div style={{ ...heroActions, marginTop: 16 }}>
                       {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
                       {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Send email</a> : null}
@@ -512,6 +518,11 @@ export default function NursingHomeDetails() {
                       {data.facebookUrl ? (
                         <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>
                           Facebook
+                        </a>
+                      ) : null}
+                      {data.instagramUrl ? (
+                        <a href={data.instagramUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#E1306C", color: "#fff", borderColor: "#E1306C" }}>
+                          Instagram
                         </a>
                       ) : null}
                     </div>
