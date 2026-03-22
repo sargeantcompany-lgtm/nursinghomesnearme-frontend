@@ -556,6 +556,54 @@ function HomePage() {
           </p>
         </section>
 
+        {/* What we do */}
+        <section style={{ width: "100%", margin: "8px 0 32px", boxSizing: "border-box" }} aria-label="How it works">
+          <h2 className="underHeroH1" style={{ marginBottom: 6 }}>Three free tools — one place</h2>
+          <p className="underHeroP" style={{ marginBottom: 24 }}>
+            This is not a directory. You can't browse every facility and pick one off a list — because that's not how aged care actually works.
+            Instead we give you the tools and the people to navigate it properly.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+            {[
+              {
+                num: "1",
+                title: "Placement support",
+                desc: "Tell us your situation and we match you to the best available options right now — factoring in care needs, location, cost, and what's actually vacant. Free, independent, no pressure.",
+                color: "#0b3b5b",
+                bg: "#eff6ff",
+                border: "#bfdbfe",
+              },
+              {
+                num: "2",
+                title: "ACAT tracker & guide",
+                desc: "ACAT approval is required before entering a nursing home. Our free tracker shows where you are in the process, typical wait times by state, and exactly what to do next.",
+                color: "#065f46",
+                bg: "#f0fdf9",
+                border: "#a7f3d0",
+              },
+              {
+                num: "3",
+                title: "CareCircle",
+                desc: "For the 12–24 months most families wait for a bed. Coordinate visits, track medications, share updates, manage bills — the whole family in one place. No app download needed.",
+                color: "#6b21a8",
+                bg: "#faf5ff",
+                border: "#e9d5ff",
+              },
+            ].map(({ num, title, desc, color, bg, border }) => (
+              <div key={num} style={{ background: bg, border: `1.5px solid ${border}`, borderRadius: 18, padding: "24px 22px" }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: color, color: "#fff", fontWeight: 900, fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                  {num}
+                </div>
+                <p style={{ fontWeight: 800, fontSize: 16, color, margin: "0 0 8px" }}>{title}</p>
+                <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.65, margin: 0 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 16, padding: "14px 20px", background: "#fafaf8", border: "1px solid #e5e7eb", borderRadius: 12, fontSize: 13, color: "#6b7280", lineHeight: 1.6 }}>
+            <strong style={{ color: "#374151" }}>How we're different:</strong> We don't take payments from facilities for referrals — our service is funded independently. That means our advice is based on what's right for you, not who pays us the most.
+          </div>
+        </section>
+
         <div ref={formRef}>
           <PlacementForm />
         </div>
