@@ -254,8 +254,8 @@ export default function NursingHomeDetails() {
   const cleanProvider = cleanText(data?.providerName);
   const cleanOneLine = cleanDescription(data?.oneLineDescription);
   const overviewHeading = cleanText(data?.overviewHeading) || "Overview";
-  const cleanOverview = cleanDescription(data?.description, data?.providerOverview || data?.oneLineDescription) || "Full facility profile coming soon.";
-  const cleanLongOverview = cleanLongDescription(data?.description, data?.providerOverview || data?.oneLineDescription);
+  const cleanOverview = cleanDescription(data?.oneLineDescription, data?.providerOverview) || "Full facility profile coming soon.";
+  const cleanLongOverview = cleanDescription(data?.description);
   const cleanAccommodationSummary = cleanDescription(data?.accommodationSummary);
   const cleanPricingSummary = cleanDescription(data?.pricingSummary);
   const cleanFoodHighlights = cleanDescription(data?.foodHighlights);
@@ -387,7 +387,7 @@ export default function NursingHomeDetails() {
                   </InfoPanel>
 
                   {cleanLongOverview && cleanLongOverview !== cleanOverview ? (
-                    <InfoPanel title="Long description">
+                    <InfoPanel title="About">
                       <p style={bodyText}>{cleanLongOverview}</p>
                     </InfoPanel>
                   ) : null}
