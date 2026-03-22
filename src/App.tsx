@@ -24,6 +24,12 @@ import NursingHomesSouthport from "./components/NursingHomesSouthport";
 import NursingHomesRobina from "./components/NursingHomesRobina";
 import NursingHomesBurleigh from "./components/NursingHomesBurleigh";
 import NursingHomesNerang from "./components/NursingHomesNerang";
+import NursingHomesLabrador from "./components/NursingHomesLabrador";
+import NursingHomesAshmore from "./components/NursingHomesAshmore";
+import NursingHomesHelensvale from "./components/NursingHomesHelensvale";
+import NursingHomesCoomera from "./components/NursingHomesCoomera";
+import NursingHomesPalmBeach from "./components/NursingHomesPalmBeach";
+import NursingHomesBroadbeach from "./components/NursingHomesBroadbeach";
 import SiteStructuredData from "./components/SiteStructuredData";
 import SeoHead from "./components/SeoHead";
 import FacilityRespond from "./components/FacilityRespond";
@@ -77,6 +83,12 @@ export default function App() {
         <Route path="/nursing-homes-robina" element={<NursingHomesRobina />} />
         <Route path="/nursing-homes-burleigh" element={<NursingHomesBurleigh />} />
         <Route path="/nursing-homes-nerang" element={<NursingHomesNerang />} />
+        <Route path="/nursing-homes-labrador" element={<NursingHomesLabrador />} />
+        <Route path="/nursing-homes-ashmore" element={<NursingHomesAshmore />} />
+        <Route path="/nursing-homes-helensvale" element={<NursingHomesHelensvale />} />
+        <Route path="/nursing-homes-coomera" element={<NursingHomesCoomera />} />
+        <Route path="/nursing-homes-palm-beach" element={<NursingHomesPalmBeach />} />
+        <Route path="/nursing-homes-broadbeach" element={<NursingHomesBroadbeach />} />
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/acat-pathway-finder" element={<AcatPathwayFinderPage />} />

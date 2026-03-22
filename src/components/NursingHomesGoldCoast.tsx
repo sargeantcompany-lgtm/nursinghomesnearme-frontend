@@ -196,24 +196,26 @@ export default function NursingHomesGoldCoast() {
           Burleigh, Palm Beach, Currumbin, Tugun and surrounding suburbs.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            to="/nursing-homes-southport"
-            className="inline-block rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-white"
-          >
-            Southport guide
-          </Link>
-          <Link
-            to="/nursing-homes-robina"
-            className="inline-block rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-white"
-          >
-            Robina guide
-          </Link>
-          <Link
-            to="/nursing-homes-burleigh"
-            className="inline-block rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-white"
-          >
-            Burleigh guide
-          </Link>
+          {[
+            { label: "Southport", to: "/nursing-homes-southport" },
+            { label: "Robina", to: "/nursing-homes-robina" },
+            { label: "Burleigh", to: "/nursing-homes-burleigh" },
+            { label: "Nerang", to: "/nursing-homes-nerang" },
+            { label: "Labrador", to: "/nursing-homes-labrador" },
+            { label: "Ashmore", to: "/nursing-homes-ashmore" },
+            { label: "Helensvale", to: "/nursing-homes-helensvale" },
+            { label: "Coomera", to: "/nursing-homes-coomera" },
+            { label: "Palm Beach", to: "/nursing-homes-palm-beach" },
+            { label: "Broadbeach", to: "/nursing-homes-broadbeach" },
+          ].map((s) => (
+            <Link
+              key={s.to}
+              to={s.to}
+              className="inline-block rounded-xl border border-slate-300 px-4 py-2 font-semibold text-slate-800 hover:bg-white"
+            >
+              {s.label} guide
+            </Link>
+          ))}
         </div>
       </div>
 
