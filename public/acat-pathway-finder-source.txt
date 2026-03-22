@@ -273,9 +273,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .cmp-table tr:last-child td{border-bottom:none}
 .cmp-table .us{background:#f0fdf4}
 .cmp-table .us td:first-child{font-weight:700;color:var(--teal)}
-.cmp-tick{color:var(--green);font-weight:700}
-.cmp-no{color:var(--mid)}
-.cmp-partial{color:var(--amber);font-weight:600}
 
 /* ── CareCircle callout ── */
 .carecircle-callout{border-radius:16px;padding:22px 24px;margin-bottom:24px;background:linear-gradient(135deg,#0d2a3b,#0f3340);border:1px solid rgba(125,211,216,.2)}
@@ -349,58 +346,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
   </div>
 
   <div class="sec-h" style="margin-bottom:12px">
-    <span class="sec-h-ico">🔍</span>
-    <span class="sec-h-t">How we compare to other options</span>
+    <span class="sec-h-ico">✅</span>
+    <span class="sec-h-t">What makes us different</span>
   </div>
-  <div style="overflow-x:auto;margin-bottom:6px">
-  <div class="cmp-table-wrap">
+  <div class="cmp-table-wrap" style="margin-bottom:8px">
   <table class="cmp-table">
-    <tr>
-      <th>What you need</th>
-      <th>Us (nursinghomesnearme.com.au)</th>
-      <th>Aged Care Decisions</th>
-      <th>My Aged Care (official)</th>
-    </tr>
-    <tr class="us">
-      <td>Understand the ACAT process</td>
-      <td><span class="cmp-tick">✓</span> This guide + personalized plan</td>
-      <td><span class="cmp-tick">✓</span> Articles and guides</td>
-      <td><span class="cmp-no">— General info only</span></td>
-    </tr>
-    <tr>
-      <td>Apply for an ACAT assessment</td>
-      <td><span class="cmp-no">— We guide you there</span></td>
-      <td><span class="cmp-no">— Guides you to My Aged Care</span></td>
-      <td><span class="cmp-tick">✓</span> Required — start here: 1800 200 422</td>
-    </tr>
-    <tr class="us">
-      <td>Find a nursing home after approval</td>
-      <td><span class="cmp-tick">✓</span> Placement support (Gold Coast + QLD)</td>
-      <td><span class="cmp-tick">✓</span> Strong — especially Brisbane</td>
-      <td><span class="cmp-partial">~ Find a provider tool, no shortlisting</span></td>
-    </tr>
-    <tr>
-      <td>Coordinate family during the wait</td>
-      <td><span class="cmp-tick">✓</span> CareCircle app — free, unique</td>
-      <td><span class="cmp-no">— Not offered</span></td>
-      <td><span class="cmp-no">— Not offered</span></td>
-    </tr>
-    <tr class="us">
-      <td>Check vacancy availability</td>
-      <td><span class="cmp-tick">✓</span> Direct facility checks</td>
-      <td><span class="cmp-tick">✓</span> Specialists call facilities</td>
-      <td><span class="cmp-no">— Listed but not live</span></td>
-    </tr>
-    <tr>
-      <td>Referral payments from facilities</td>
-      <td><span class="cmp-tick">✓ None — we don't take them</span></td>
-      <td><span class="cmp-partial">~ Charges facilities, not families</span></td>
-      <td><span class="cmp-no">— Government service</span></td>
-    </tr>
+    <tr><th>What we do</th><th>How</th></tr>
+    <tr class="us"><td>Explain the ACAT process in plain language</td><td>This free guide — personalised action plan, real wait times, exact phone scripts</td></tr>
+    <tr><td>Help you find the right nursing home after approval</td><td>Direct vacancy checks, fee comparisons, care type matching — Gold Coast &amp; South East QLD</td></tr>
+    <tr class="us"><td>Keep the whole family in sync during the wait</td><td>CareCircle app — free, shared medication tracking, appointments, visit logs</td></tr>
+    <tr><td>We never take referral payments from facilities</td><td>Our advice is not influenced by which facility pays more — there are none</td></tr>
+    <tr class="us"><td>No cost to families, ever</td><td>Free placement support, free ACAT guide, free CareCircle app</td></tr>
   </table>
   </div>
-  </div>
-  <p style="font-size:11px;color:var(--light);margin-bottom:32px">Our placement support is strongest for South East Queensland. If you are in Brisbane or the Gold Coast, we can help directly. If you are elsewhere, this ACAT guide is still fully relevant and we can point you in the right direction.</p>
+  <p style="font-size:11px;color:var(--light);margin-bottom:32px">Our placement support is strongest for South East Queensland — Gold Coast and Brisbane. If you are elsewhere in Australia, this ACAT guide still applies in full and we can point you in the right direction.</p>
 
 </div><!-- /how-we-help -->
 
