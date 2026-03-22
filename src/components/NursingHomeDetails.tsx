@@ -362,7 +362,15 @@ export default function NursingHomeDetails() {
                           borderColor: heroIndex === index ? "#0f766e" : "#d9e2ec",
                         }}
                       >
-                        <img src={image} alt={`Facility image ${index + 1}`} style={thumbImage} />
+                        <img
+                          src={image}
+                          alt=""
+                          style={thumbImage}
+                          onError={(e) => {
+                            const btn = (e.currentTarget as HTMLImageElement).closest("button");
+                            if (btn) btn.style.display = "none";
+                          }}
+                        />
                       </button>
                     ))}
                   </div>
