@@ -185,6 +185,14 @@ function uniqueList(list?: string[] | null): string[] {
   return Array.from(new Set((list ?? []).map((item) => (item ?? "").trim()).filter(Boolean)));
 }
 
+function formatPhone(raw?: string | null): string {
+  if (!raw) return "";
+  // Strip leading country code: 61... → 0...
+  let p = raw.replace(/\s+/g, "").replace(/[^0-9]/g, "");
+  if (p.startsWith("61") && p.length >= 11) p = "0" + p.slice(2);
+  return p;
+}
+
 export default function NursingHomeDetails() {
   const id = useMemo(() => getIdFromPath(), []);
   const [data, setData] = useState<NursingHomePublicDetails | null>(null);
@@ -326,7 +334,7 @@ export default function NursingHomeDetails() {
                         Visit website
                       </a>
                     ) : null}
-                    {data.phone ? <a href={`tel:${data.phone}`} style={heroSubtleButton}>Call facility</a> : null}
+                    {data.phone ? <a href={`tel:${formatPhone(data.phone)}`} style={heroSubtleButton}>Call facility</a> : null}
                     {data.email ? <a href={`mailto:${data.email}`} style={heroSubtleButton}>Email facility</a> : null}
                     {cleanGovernmentListing ? (
                       <a href={cleanGovernmentListing} target="_blank" rel="noreferrer" style={heroSubtleButton}>
@@ -352,7 +360,7 @@ export default function NursingHomeDetails() {
                   <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ width: 200, height: "auto", marginBottom: 8 }} />
                   <Stat label="Facility type" value={data.facilityType || "Residential aged care"} />
                   <Stat label="Beds" value={data.beds ? `${data.beds}` : "Not listed"} />
-                  <Stat label="Info last updated" value={formatDate(data.lastProfileScanAt)} />
+                  {data.lastProfileScanAt ? <Stat label="Info last updated" value={formatDate(data.lastProfileScanAt)} /> : null}
                 </div>
 
                 {images.length > 1 ? (
@@ -501,18 +509,18 @@ export default function NursingHomeDetails() {
                 ) : null}
               </div>
 
-              <div style={{ display: "grid", gap: 18 }}>
+              <div style={{ display: "grid", gap: 18, alignSelf: "start" }}>
                 <div style={{ padding: "16px 18px", borderRadius: 20, background: "rgba(255,255,255,0.88)", border: "1px solid #dbe3ed", boxShadow: "0 4px 12px rgba(15,23,42,0.05)" }}>
                   <div style={{ fontWeight: 900, fontSize: 15, color: "#10273b", marginBottom: 10 }}>Contact</div>
                   <div style={{ display: "grid", gap: 6, fontSize: 13, color: "#405062", marginBottom: 12 }}>
                     {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).length > 0 ? (
                       <div>📍 {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ")}</div>
                     ) : null}
-                    {data.phone ? <div>📞 <a href={`tel:${data.phone}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.phone}</a></div> : null}
+                    {data.phone ? <div>📞 <a href={`tel:${formatPhone(data.phone)}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{formatPhone(data.phone)}</a></div> : null}
                     {data.email ? <div>✉️ <a href={`mailto:${data.email}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.email}</a></div> : null}
                   </div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
+                    {data.phone ? <a href={`tel:${formatPhone(data.phone)}`} style={contactPill}>Call now</a> : null}
                     {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Email</a> : null}
                     {cleanWebsite ? <a href={cleanWebsite} target="_blank" rel="noreferrer" style={contactPill}>Website</a> : null}
                     {data.facebookUrl ? <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>Facebook</a> : null}
