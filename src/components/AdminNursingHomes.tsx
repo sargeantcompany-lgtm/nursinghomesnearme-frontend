@@ -3162,12 +3162,15 @@ function PreviewFacilityCard({ form, currentId }: { form: UpsertForm; currentId:
           >
             <div style={{ fontWeight: 800, color: "#0b3b5b" }}>Room snapshot</div>
             {previewRooms.map((room, index) => {
-              const price = [room.radMin.trim(), room.radMax.trim()].filter(Boolean).join(" - ");
+              const dap = room.dapAmount.trim() ? `DAP $${room.dapAmount.trim()}/day` : "";
+              const rad = room.radMin.trim() ? `RAD $${room.radMin.trim()}` : "";
+              const name = room.roomName.trim() || room.roomType.trim() || `Room option ${index + 1}`;
+              const type = room.roomType.trim() && room.roomName.trim() ? room.roomType.trim() : "";
               return (
-                <div key={`${room.roomType}-${index}`} style={{ fontSize: 13, color: "#334155" }}>
-                  <div style={{ fontWeight: 700 }}>{room.roomType.trim() || `Room option ${index + 1}`}</div>
+                <div key={`${name}-${index}`} style={{ fontSize: 13, color: "#334155" }}>
+                  <div style={{ fontWeight: 700 }}>{type ? `${type} · ${name}` : name}</div>
                   <div>
-                    {[room.bathroomType.trim(), price ? `RAD ${price}` : "", room.availabilityNote.trim()]
+                    {[room.bathroomType.trim(), dap || rad, room.availabilityNote.trim()]
                       .filter(Boolean)
                       .join(" · ") || "Room details to be added"}
                   </div>

@@ -3,9 +3,12 @@ import { API_BASE } from "../lib/runtimeConfig";
 
 type RoomOptionDto = {
   roomType?: string | null;
+  roomName?: string | null;
   bathroomType?: string | null;
+  sizeM2?: number | null;
   radMin?: number | null;
   radMax?: number | null;
+  dapAmount?: number | null;
   availabilityNote?: string | null;
 };
 
@@ -347,9 +350,10 @@ export default function NursingHomeDetails() {
 
               <div style={heroAside}>
                 <div style={statsCard}>
+                  <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ width: 120, height: "auto", marginBottom: 4 }} />
                   <Stat label="Facility type" value={data.facilityType || "Residential aged care"} />
                   <Stat label="Beds" value={data.beds ? `${data.beds}` : "Not listed"} />
-                  <Stat label="Last profile update" value={formatDate(data.lastProfileScanAt)} />
+                  <Stat label="Info last updated" value={formatDate(data.lastProfileScanAt)} />
                 </div>
 
                 {images.length > 1 ? (
@@ -380,6 +384,47 @@ export default function NursingHomeDetails() {
               </div>
             </section>
 
+            {(fallbackRad || fallbackDap || rooms.length > 0) ? (
+              <div style={pricingStrip}>
+                {(fallbackRad || fallbackDap) ? (
+                  <div style={pricingStripLeft}>
+                    {fallbackRad ? (
+                      <div style={pricingBadge}>
+                        <div style={pricingBadgeLabel}>RAD range</div>
+                        <div style={pricingBadgeValue}>{fallbackRad}</div>
+                      </div>
+                    ) : null}
+                    {fallbackDap ? (
+                      <div style={{ ...pricingBadge, background: "linear-gradient(135deg, #0b3b5b 0%, #0f5072 100%)" }}>
+                        <div style={pricingBadgeLabel}>DAP range</div>
+                        <div style={pricingBadgeValue}>{fallbackDap}</div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {rooms.length > 0 ? (
+                  <div style={pricingRoomsScroll}>
+                    {rooms.map((room, index) => {
+                      const dap = room.dapAmount != null ? `$${room.dapAmount}/day` : null;
+                      const rad = niceCurrency(room.radMin);
+                      return (
+                        <div key={`strip-${index}`} style={pricingRoomCard}>
+                          <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+                            {room.roomType ? <span style={pricingTypeBadge}>{room.roomType}</span> : null}
+                            {room.bathroomType ? <span style={{ ...pricingTypeBadge, background: "#e0f2fe", color: "#0369a1" }}>{room.bathroomType}</span> : null}
+                          </div>
+                          <div style={{ fontWeight: 900, color: "#10273b", fontSize: 14, marginBottom: 4 }}>{room.roomName || room.roomType || "Room"}</div>
+                          <div style={{ fontSize: 13, color: "#526072" }}>
+                            {[room.sizeM2 ? `${room.sizeM2}m²` : null, dap, rad ? `RAD ${rad}` : null, room.availabilityNote].filter(Boolean).join(" · ")}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             <section style={contentGrid}>
               <div style={{ display: "grid", gap: 18 }}>
                   <InfoPanel title={overviewHeading}>
@@ -394,17 +439,11 @@ export default function NursingHomeDetails() {
                     </InfoPanel>
                   ) : null}
 
-                {(cleanAccommodationSummary || cleanPricingSummary || fallbackRad || fallbackDap) ? (
-                  <InfoPanel title="Accommodation and pricing">
+                {(cleanAccommodationSummary || cleanPricingSummary) ? (
+                  <InfoPanel title="Accommodation">
                     <div style={{ display: "grid", gap: 14 }}>
                       {cleanAccommodationSummary ? <p style={bodyText}>{cleanAccommodationSummary}</p> : null}
                       {cleanPricingSummary ? <p style={bodyText}>{cleanPricingSummary}</p> : null}
-                      {(fallbackRad || fallbackDap) ? (
-                        <div style={{ display: "grid", gap: 8 }}>
-                          {fallbackRad ? <Fact label="RAD range" value={fallbackRad} /> : null}
-                          {fallbackDap ? <Fact label="DAP range" value={fallbackDap} /> : null}
-                        </div>
-                      ) : null}
                     </div>
                   </InfoPanel>
                 ) : null}
@@ -451,11 +490,13 @@ export default function NursingHomeDetails() {
                           const pricing = radMin && radMax ? `${radMin} – ${radMax}` : radMin || radMax || "Pricing on request";
                           return (
                             <div key={`${room.roomType}-${index}`} style={roomCard}>
-                              <div>
-                                <div style={roomTitle}>{room.roomType || "Room option"}</div>
-                                <div style={roomMeta}>
-                                  {[room.bathroomType, pricing, room.availabilityNote].filter(Boolean).join(" • ")}
-                                </div>
+                              <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                                {room.roomType ? <span style={{ padding: "3px 10px", borderRadius: 999, background: "#eef6f5", color: "#0f766e", fontWeight: 800, fontSize: 12 }}>{room.roomType}</span> : null}
+                                {room.bathroomType ? <span style={{ padding: "3px 10px", borderRadius: 999, background: "#e0f2fe", color: "#0369a1", fontWeight: 800, fontSize: 12 }}>{room.bathroomType}</span> : null}
+                              </div>
+                              <div style={roomTitle}>{room.roomName || room.roomType || "Room option"}</div>
+                              <div style={roomMeta}>
+                                {[room.sizeM2 ? `${room.sizeM2}m²` : null, room.dapAmount ? `$${room.dapAmount}/day DAP` : null, pricing !== "Pricing on request" ? pricing : null, room.availabilityNote].filter(Boolean).join(" · ")}
                               </div>
                             </div>
                           );
@@ -491,32 +532,20 @@ export default function NursingHomeDetails() {
 
               <div style={{ display: "grid", gap: 18 }}>
                 <InfoPanel title="Contact">
-                  <div style={sideStack}>
-                    <Fact label="Address" value={[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ") || "Not listed"} />
-                    <Fact label="Phone" value={data.phone || "Not listed"} />
-                    <Fact label="Email" value={data.email || "Not listed"} />
+                  <div style={{ display: "grid", gap: 8, fontSize: 14, color: "#405062", marginBottom: 14 }}>
+                    {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).length > 0 ? (
+                      <div>📍 {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ")}</div>
+                    ) : null}
+                    {data.phone ? <div>📞 <a href={`tel:${data.phone}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.phone}</a></div> : null}
+                    {data.email ? <div>✉️ <a href={`mailto:${data.email}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.email}</a></div> : null}
                   </div>
-                  {(data.phone || data.email || cleanWebsite || data.facebookUrl || data.instagramUrl) ? (
-                    <div style={{ ...heroActions, marginTop: 16 }}>
-                      {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
-                      {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Send email</a> : null}
-                      {cleanWebsite ? (
-                        <a href={cleanWebsite} target="_blank" rel="noreferrer" style={contactPill}>
-                          Contact via website
-                        </a>
-                      ) : null}
-                      {data.facebookUrl ? (
-                        <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>
-                          Facebook
-                        </a>
-                      ) : null}
-                      {data.instagramUrl ? (
-                        <a href={data.instagramUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#E1306C", color: "#fff", borderColor: "#E1306C" }}>
-                          Instagram
-                        </a>
-                      ) : null}
-                    </div>
-                  ) : null}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
+                    {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Email</a> : null}
+                    {cleanWebsite ? <a href={cleanWebsite} target="_blank" rel="noreferrer" style={contactPill}>Website</a> : null}
+                    {data.facebookUrl ? <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>Facebook</a> : null}
+                    {data.instagramUrl ? <a href={data.instagramUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#E1306C", color: "#fff", borderColor: "#E1306C" }}>Instagram</a> : null}
+                  </div>
                 </InfoPanel>
 
                 {(data.abn || data.reviewCount != null || data.lastProfileScanAt || data.sourcePrimary) ? (
@@ -524,7 +553,7 @@ export default function NursingHomeDetails() {
                     <div style={sideStack}>
                       {data.sourcePrimary ? <Fact label="Source" value={data.sourcePrimary} /> : null}
                       {data.status ? <Fact label="Profile status" value={data.status} /> : null}
-                      {data.lastProfileScanAt ? <Fact label="Last profile update" value={formatDate(data.lastProfileScanAt)} /> : null}
+                      {data.lastProfileScanAt ? <Fact label="Info last updated" value={formatDate(data.lastProfileScanAt)} /> : null}
                       {data.abn ? <Fact label="ABN" value={data.abn} /> : null}
                       {data.reviewCount != null ? <Fact label="Review count" value={String(data.reviewCount)} /> : null}
                     </div>
@@ -907,4 +936,68 @@ const roomMeta: React.CSSProperties = {
 const sideStack: React.CSSProperties = {
   display: "grid",
   gap: 14,
+};
+
+const pricingStrip: React.CSSProperties = {
+  marginTop: 18,
+  display: "flex",
+  gap: 14,
+  alignItems: "flex-start",
+  flexWrap: "wrap",
+};
+
+const pricingStripLeft: React.CSSProperties = {
+  display: "flex",
+  gap: 12,
+  flexShrink: 0,
+  flexWrap: "wrap",
+};
+
+const pricingBadge: React.CSSProperties = {
+  padding: "14px 20px",
+  borderRadius: 20,
+  background: "linear-gradient(135deg, #0f766e 0%, #0b3b5b 100%)",
+  color: "white",
+  minWidth: 130,
+};
+
+const pricingBadgeLabel: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 800,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  opacity: 0.8,
+  marginBottom: 4,
+};
+
+const pricingBadgeValue: React.CSSProperties = {
+  fontSize: 18,
+  fontWeight: 900,
+};
+
+const pricingRoomsScroll: React.CSSProperties = {
+  display: "flex",
+  gap: 12,
+  overflowX: "auto",
+  flex: 1,
+  paddingBottom: 4,
+};
+
+const pricingRoomCard: React.CSSProperties = {
+  padding: "14px 16px",
+  borderRadius: 20,
+  background: "rgba(255,255,255,0.9)",
+  border: "1px solid #dbe3ed",
+  boxShadow: "0 4px 12px rgba(15,23,42,0.05)",
+  minWidth: 200,
+  flexShrink: 0,
+};
+
+const pricingTypeBadge: React.CSSProperties = {
+  padding: "3px 10px",
+  borderRadius: 999,
+  background: "#eef6f5",
+  color: "#0f766e",
+  fontWeight: 800,
+  fontSize: 11,
 };
