@@ -248,7 +248,7 @@ function rowsToRoomOptions(
 
       const sizeM2 = parseOptionalFloat(r.sizeM2);
       const radMin = parseOptionalNumber(r.radMin);
-      const radMax = parseOptionalNumber(r.radMax);
+      const radMax = radMin !== undefined ? radMin : parseOptionalNumber(r.radMax);
       const dapAmount = parseOptionalFloat(r.dapAmount);
 
       const hasAny =
@@ -2684,7 +2684,7 @@ export default function AdminNursingHomes() {
                     <th style={th}>Room name</th>
                     <th style={th}>Bathroom</th>
                     <th style={th}>Size m²</th>
-                    <th style={th}>RAD min</th>
+                    <th style={th}>RAD $</th>
                     <th style={th}>DAP $/day</th>
                     <th style={th}>Availability note</th>
                     <th style={th}></th>
