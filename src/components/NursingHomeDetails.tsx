@@ -460,21 +460,47 @@ export default function NursingHomeDetails() {
                 ) : null}
 
                 {/* ACAT + CareCircle widgets */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <a href="/acat-pathway-finder" style={{ textDecoration: "none" }}>
-                    <div style={{ padding: "18px 20px", borderRadius: 20, background: "linear-gradient(135deg, #f0fdf9 0%, #e6f7f5 100%)", border: "1.5px solid #a7f3d0", cursor: "pointer" }}>
-                      <div style={{ fontSize: 22, marginBottom: 6 }}>📋</div>
-                      <div style={{ fontWeight: 900, fontSize: 15, color: "#065f46", marginBottom: 4 }}>ACAT Tracker & Guide</div>
-                      <div style={{ fontSize: 13, color: "#047857", lineHeight: 1.5 }}>ACAT approval is required before entering a nursing home. Track your progress and know exactly what to do next.</div>
-                      <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: "#065f46" }}>Start tracking →</div>
+                <div style={{ display: "grid", gap: 14 }}>
+                  {/* ACAT */}
+                  <a href="/acat-pathway-finder" style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ borderRadius: 22, background: "linear-gradient(130deg, #0b3b5b 0%, #0f766e 100%)", padding: "24px 28px", display: "flex", alignItems: "center", gap: 24, boxShadow: "0 8px 32px rgba(11,59,91,0.22)", position: "relative", overflow: "hidden" }}>
+                      {/* decorative circle */}
+                      <div style={{ position: "absolute", right: -30, top: -30, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+                      <div style={{ position: "absolute", right: 40, bottom: -50, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+                      {/* icon */}
+                      <div style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>Free tool</div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 6 }}>ACAT Tracker & Guide</div>
+                        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.78)", lineHeight: 1.6 }}>ACAT approval is required before entering a nursing home. Track where you are in the process and get step-by-step guidance.</div>
+                      </div>
+                      <div style={{ flexShrink: 0, background: "white", color: "#0b3b5b", fontWeight: 800, fontSize: 13, padding: "10px 20px", borderRadius: 999, whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+                        Track progress →
+                      </div>
                     </div>
                   </a>
-                  <a href="/carecircle" style={{ textDecoration: "none" }}>
-                    <div style={{ padding: "18px 20px", borderRadius: 20, background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)", border: "1.5px solid #d8b4fe", cursor: "pointer" }}>
-                      <div style={{ fontSize: 22, marginBottom: 6 }}>🤝</div>
-                      <div style={{ fontWeight: 900, fontSize: 15, color: "#6b21a8", marginBottom: 4 }}>CareCircle</div>
-                      <div style={{ fontSize: 13, color: "#7c3aed", lineHeight: 1.5 }}>Organise family, friends and local help to keep your loved one safely at home while waiting for placement.</div>
-                      <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: "#6b21a8" }}>Set up your circle →</div>
+                  {/* CareCircle */}
+                  <a href="/carecircle" style={{ textDecoration: "none", display: "block" }}>
+                    <div style={{ borderRadius: 22, background: "linear-gradient(130deg, #4c1d95 0%, #7c3aed 100%)", padding: "24px 28px", display: "flex", alignItems: "center", gap: 24, boxShadow: "0 8px 32px rgba(76,29,149,0.22)", position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", right: -30, top: -30, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+                      <div style={{ position: "absolute", right: 40, bottom: -50, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)" }} />
+                      <div style={{ flexShrink: 0, width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+                        </svg>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>Free tool</div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 6 }}>CareCircle</div>
+                        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.78)", lineHeight: 1.6 }}>Organise family, friends, nurses and local help to keep your loved one safely at home while waiting for placement.</div>
+                      </div>
+                      <div style={{ flexShrink: 0, background: "white", color: "#4c1d95", fontWeight: 800, fontSize: 13, padding: "10px 20px", borderRadius: 999, whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+                        Set up circle →
+                      </div>
                     </div>
                   </a>
                 </div>
