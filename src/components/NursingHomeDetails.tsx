@@ -268,11 +268,18 @@ export default function NursingHomeDetails() {
   const cleanReviewSummary = cleanDescription(data?.reviewSummary);
   const cleanWebsite = cleanWebsiteUrl(data?.website);
   const cleanGovernmentListing = cleanWebsiteUrl(data?.governmentListingUrl);
-  const fallbackRad = data?.radFrom != null || data?.radTo != null
-    ? [niceCurrency(data?.radFrom), niceCurrency(data?.radTo)].filter(Boolean).join(" – ")
+  // Derive RAD/DAP from room options if facility-level fields are missing or zero
+  const roomRads = (data?.roomOptions ?? []).map(r => r.radMin).filter((v): v is number => v != null && v > 0);
+  const roomDaps = (data?.roomOptions ?? []).map(r => r.dapAmount).filter((v): v is number => v != null && v > 0);
+  const radFromVal = (data?.radFrom && data.radFrom > 0) ? data.radFrom : (roomRads.length ? Math.min(...roomRads) : null);
+  const radToVal   = (data?.radTo   && data.radTo   > 0) ? data.radTo   : (roomRads.length ? Math.max(...roomRads) : null);
+  const dapFromVal = (data?.dapFrom && data.dapFrom > 0) ? data.dapFrom : (roomDaps.length ? Math.min(...roomDaps) : null);
+  const dapToVal   = (data?.dapTo   && data.dapTo   > 0) ? data.dapTo   : (roomDaps.length ? Math.max(...roomDaps) : null);
+  const fallbackRad = radFromVal != null || radToVal != null
+    ? [niceCurrency(radFromVal), niceCurrency(radToVal)].filter(Boolean).join(" – ")
     : "";
-  const fallbackDap = data?.dapFrom != null || data?.dapTo != null
-    ? [niceCurrency(data?.dapFrom), niceCurrency(data?.dapTo)].filter(Boolean).join(" – ")
+  const fallbackDap = dapFromVal != null || dapToVal != null
+    ? [niceCurrency(dapFromVal), niceCurrency(dapToVal)].filter(Boolean).join(" – ")
     : "";
 
   return (
@@ -423,13 +430,13 @@ export default function NursingHomeDetails() {
                     </div>
                     {rooms.length > 0 ? (
                       <>
-                        <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 110px 70px 80px 110px", gap: 0, padding: "10px 22px", background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
-                          {["Type", "Room name", "Bathroom", "Size", "DAP/day", "Availability"].map((h) => (
+                        <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 90px 55px 90px 80px 100px", gap: 0, padding: "10px 22px", background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                          {["Type", "Room name", "Bathroom", "Size", "RAD", "DAP/day", "Availability"].map((h) => (
                             <div key={h} style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748b" }}>{h}</div>
                           ))}
                         </div>
                         {rooms.map((room, index) => (
-                          <div key={`row-${index}`} style={{ display: "grid", gridTemplateColumns: "90px 1fr 110px 70px 80px 110px", gap: 0, padding: "12px 22px", borderBottom: index < rooms.length - 1 ? "1px solid #f1f5f9" : "none", alignItems: "center", background: index % 2 === 0 ? "white" : "#fafbfc" }}>
+                          <div key={`row-${index}`} style={{ display: "grid", gridTemplateColumns: "80px 1fr 90px 55px 90px 80px 100px", gap: 0, padding: "12px 22px", borderBottom: index < rooms.length - 1 ? "1px solid #f1f5f9" : "none", alignItems: "center", background: index % 2 === 0 ? "white" : "#fafbfc" }}>
                             <div>
                               {room.roomType ? <span style={{ padding: "3px 10px", borderRadius: 999, background: room.roomType === "Single" ? "#eef6f5" : "#eff6ff", color: room.roomType === "Single" ? "#0f766e" : "#1d4ed8", fontWeight: 800, fontSize: 12 }}>{room.roomType}</span> : <span style={{ color: "#94a3b8", fontSize: 12 }}>—</span>}
                             </div>
@@ -438,6 +445,7 @@ export default function NursingHomeDetails() {
                             </div>
                             <div style={{ fontSize: 12, color: "#405062" }}>{room.bathroomType || "—"}</div>
                             <div style={{ fontSize: 12, color: "#405062" }}>{room.sizeM2 ? `${room.sizeM2}m²` : "—"}</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#0b3b5b" }}>{room.radMin != null && room.radMin > 0 ? niceCurrency(room.radMin) : "—"}</div>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "#0b3b5b" }}>{room.dapAmount != null ? `$${room.dapAmount}` : "—"}</div>
                             <div>
                               {room.availabilityNote
@@ -450,6 +458,26 @@ export default function NursingHomeDetails() {
                     ) : null}
                   </div>
                 ) : null}
+
+                {/* ACAT + CareCircle widgets */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <a href="/acat-pathway-finder" style={{ textDecoration: "none" }}>
+                    <div style={{ padding: "18px 20px", borderRadius: 20, background: "linear-gradient(135deg, #f0fdf9 0%, #e6f7f5 100%)", border: "1.5px solid #a7f3d0", cursor: "pointer" }}>
+                      <div style={{ fontSize: 22, marginBottom: 6 }}>📋</div>
+                      <div style={{ fontWeight: 900, fontSize: 15, color: "#065f46", marginBottom: 4 }}>ACAT Tracker & Guide</div>
+                      <div style={{ fontSize: 13, color: "#047857", lineHeight: 1.5 }}>ACAT approval is required before entering a nursing home. Track your progress and know exactly what to do next.</div>
+                      <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: "#065f46" }}>Start tracking →</div>
+                    </div>
+                  </a>
+                  <a href="/carecircle" style={{ textDecoration: "none" }}>
+                    <div style={{ padding: "18px 20px", borderRadius: 20, background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)", border: "1.5px solid #d8b4fe", cursor: "pointer" }}>
+                      <div style={{ fontSize: 22, marginBottom: 6 }}>🤝</div>
+                      <div style={{ fontWeight: 900, fontSize: 15, color: "#6b21a8", marginBottom: 4 }}>CareCircle</div>
+                      <div style={{ fontSize: 13, color: "#7c3aed", lineHeight: 1.5 }}>Organise family, friends and local help to keep your loved one safely at home while waiting for placement.</div>
+                      <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: "#6b21a8" }}>Set up your circle →</div>
+                    </div>
+                  </a>
+                </div>
 
                   {tags.length ? (
                     <InfoPanel title="Highlights and features">
