@@ -2763,36 +2763,44 @@ export default function AdminNursingHomes() {
                         />
                       </td>
                       <td style={td}>
-                        <input
-                          value={r.radMin}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setForm((p) => {
-                              const next = [...p.roomOptions];
-                              next[idx] = { ...next[idx], radMin: v };
-                              return { ...p, roomOptions: next };
-                            });
-                          }}
-                          disabled={disabled}
-                          inputMode="numeric"
-                          style={{ ...miniInput, minWidth: 100 }}
-                        />
+                        <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #bfdbfe", borderRadius: 10, background: "#f8fbff", overflow: "hidden", width: 110 }}>
+                          <span style={{ padding: "0 6px", color: "#0b3b5b", fontWeight: 700, fontSize: 13 }}>$</span>
+                          <input
+                            value={r.radMin}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setForm((p) => {
+                                const next = [...p.roomOptions];
+                                next[idx] = { ...next[idx], radMin: v };
+                                return { ...p, roomOptions: next };
+                              });
+                            }}
+                            disabled={disabled}
+                            inputMode="numeric"
+                            placeholder="000000"
+                            style={{ ...miniInput, border: "none", background: "transparent", width: 80, padding: "8px 4px" }}
+                          />
+                        </div>
                       </td>
                       <td style={td}>
-                        <input
-                          value={r.dapAmount}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setForm((p) => {
-                              const next = [...p.roomOptions];
-                              next[idx] = { ...next[idx], dapAmount: v };
-                              return { ...p, roomOptions: next };
-                            });
-                          }}
-                          disabled={disabled}
-                          inputMode="decimal"
-                          style={miniInput}
-                        />
+                        <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #bfdbfe", borderRadius: 10, background: "#f8fbff", overflow: "hidden", width: 90 }}>
+                          <span style={{ padding: "0 6px", color: "#0b3b5b", fontWeight: 700, fontSize: 13 }}>$</span>
+                          <input
+                            value={r.dapAmount}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setForm((p) => {
+                                const next = [...p.roomOptions];
+                                next[idx] = { ...next[idx], dapAmount: v };
+                                return { ...p, roomOptions: next };
+                              });
+                            }}
+                            disabled={disabled}
+                            inputMode="decimal"
+                            placeholder="000.00"
+                            style={{ ...miniInput, border: "none", background: "transparent", width: 65, padding: "8px 4px" }}
+                          />
+                        </div>
                       </td>
                       <td style={td}>
                         <input
