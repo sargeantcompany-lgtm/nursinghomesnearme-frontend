@@ -2693,7 +2693,7 @@ export default function AdminNursingHomes() {
                     <th style={th}>RAD $</th>
                     <th style={th}>DAP $/day</th>
                     <th style={th}>Availability note</th>
-                    <th style={th}></th>
+                    <th style={{ ...th, textAlign: "center" }}>Remove</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2817,7 +2817,7 @@ export default function AdminNursingHomes() {
                           style={miniInput}
                         />
                       </td>
-                      <td style={td}>
+                      <td style={{ ...td, textAlign: "center" }}>
                         <button
                           type="button"
                           disabled={disabled || form.roomOptions.length <= 4}
@@ -2827,9 +2827,9 @@ export default function AdminNursingHomes() {
                               roomOptions: p.roomOptions.filter((_, i) => i !== idx),
                             }));
                           }}
-                          style={dangerBtn}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#991b1b", fontSize: 18, fontWeight: 900, lineHeight: 1, padding: "2px 6px", opacity: disabled || form.roomOptions.length <= 4 ? 0.3 : 1 }}
                         >
-                          Remove
+                          ✕
                         </button>
                       </td>
                     </tr>
