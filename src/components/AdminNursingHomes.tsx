@@ -624,16 +624,17 @@ export default function AdminNursingHomes() {
   }
 
   async function handleScanRooms() {
-    if (currentId == null) {
-      setRoomScanMsg("Save the facility first, then scan rooms.");
+    if (!form.governmentListingUrl.trim()) {
+      setRoomScanMsg("Set the Government Listing URL first, then scan rooms.");
       return;
     }
     setRoomScanning(true);
     setRoomScanMsg(null);
     try {
+      const govUrl = form.governmentListingUrl.trim() || null;
       const result = await apiFetch<{ rooms: Array<{ roomType: string; roomName: string; bathroomType: string; sizeM2: number | null; radMin: number | null; radMax: number | null; dapAmount: number | null; availabilityNote: string }>; scannedUrl: string }>(
         "/api/admin/nursing-homes/scan-rooms",
-        { method: "POST", body: JSON.stringify({ facilityId: currentId }) }
+        { method: "POST", body: JSON.stringify({ facilityId: currentId, govUrl }) }
       );
       const rooms = result.rooms ?? [];
       if (rooms.length === 0) {
