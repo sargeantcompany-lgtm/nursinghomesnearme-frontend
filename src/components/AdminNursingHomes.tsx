@@ -540,7 +540,7 @@ export default function AdminNursingHomes() {
         name:               String(data.name || p.name),
         oneLineDescription: String(data.oneLineDescription || p.oneLineDescription),
         description:        String(data.description || p.description),
-        addressLine1:       String(data.addressLine1 || p.addressLine1),
+        addressLine1:       String(data.addressLine1 || (typeof data.fullAddress === "string" && data.fullAddress ? data.fullAddress.split(",")[0].trim() : "") || p.addressLine1),
         suburb:             String(data.suburb || p.suburb),
         state:              String(data.state || p.state),
         postcode:           String(data.postcode || p.postcode),
