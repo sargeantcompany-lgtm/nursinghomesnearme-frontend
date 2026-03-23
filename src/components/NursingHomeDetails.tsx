@@ -144,7 +144,7 @@ function cleanWebsiteUrl(value?: string | null): string {
   }
 }
 
-function cleanDescription(value?: string | null, fallback?: string | null): string {
+function cleanDescription(value?: string | null, fallback?: string | null, maxSentences = 4): string {
   const base = cleanText(value) || cleanText(fallback);
   if (!base) return "";
   const trimmed = base
@@ -158,7 +158,7 @@ function cleanDescription(value?: string | null, fallback?: string | null): stri
     .map((part) => part.trim())
     .filter(Boolean)
     .filter((part) => !/^(search for|skip to content|home\b)/i.test(part));
-  return sentences.slice(0, 4).join(" ") || trimmed;
+  return (maxSentences > 0 ? sentences.slice(0, maxSentences) : sentences).join(" ") || trimmed;
 }
 
 
@@ -258,8 +258,8 @@ export default function NursingHomeDetails() {
   const cleanOneLine = cleanDescription(data?.oneLineDescription);
   const overviewHeading = cleanText(data?.overviewHeading) || "Overview";
   const cleanOverview = cleanDescription(data?.oneLineDescription, data?.providerOverview) || "Full facility profile coming soon.";
-  const cleanLongOverview = cleanDescription(data?.description);
-  const cleanAccommodationSummary = cleanDescription(data?.accommodationSummary);
+  const cleanLongOverview = cleanDescription(data?.description, null, 0);
+  const cleanAccommodationSummary = cleanDescription(data?.accommodationSummary, null, 0);
   const cleanPricingSummary = cleanDescription(data?.pricingSummary);
   const cleanFoodHighlights = cleanDescription(data?.foodHighlights);
   const cleanVisitingHours = cleanText(data?.visitingHours);
