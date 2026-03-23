@@ -236,7 +236,6 @@ export default function NursingHomeDetails() {
   const careTypes = useMemo(() => uniqueList(data?.careTypes), [data]);
   const specialties = useMemo(() => uniqueList(data?.specialties), [data]);
   const languages = useMemo(() => uniqueList(data?.languages), [data]);
-  const roomTypes = useMemo(() => uniqueList(data?.roomTypes), [data]);
   const amenities = useMemo(() => uniqueList(data?.amenities), [data]);
   const servicesIncluded = useMemo(() => uniqueList(data?.servicesIncluded), [data]);
   const alliedHealth = useMemo(() => uniqueList(data?.alliedHealth), [data]);
@@ -890,89 +889,7 @@ const miniCardTitle: React.CSSProperties = {
   fontWeight: 900,
 };
 
-const roomCard: React.CSSProperties = {
-  padding: 14,
-  borderRadius: 18,
-  background: "#f8fbfd",
-  border: "1px solid #e3ebf3",
-};
-
-const roomTitle: React.CSSProperties = {
-  color: "#10273b",
-  fontWeight: 900,
-  marginBottom: 5,
-};
-
-const roomMeta: React.CSSProperties = {
-  color: "#526072",
-  lineHeight: 1.6,
-};
-
 const sideStack: React.CSSProperties = {
   display: "grid",
   gap: 14,
-};
-
-const pricingStrip: React.CSSProperties = {
-  marginTop: 18,
-  display: "flex",
-  gap: 14,
-  alignItems: "flex-start",
-  flexWrap: "wrap",
-};
-
-const pricingStripLeft: React.CSSProperties = {
-  display: "flex",
-  gap: 12,
-  flexShrink: 0,
-  flexWrap: "wrap",
-};
-
-const pricingBadge: React.CSSProperties = {
-  padding: "14px 20px",
-  borderRadius: 20,
-  background: "linear-gradient(135deg, #0f766e 0%, #0b3b5b 100%)",
-  color: "white",
-  minWidth: 130,
-};
-
-const pricingBadgeLabel: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 800,
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  opacity: 0.8,
-  marginBottom: 4,
-};
-
-const pricingBadgeValue: React.CSSProperties = {
-  fontSize: 18,
-  fontWeight: 900,
-};
-
-const pricingRoomsScroll: React.CSSProperties = {
-  display: "flex",
-  gap: 12,
-  overflowX: "auto",
-  flex: 1,
-  paddingBottom: 4,
-};
-
-const pricingRoomCard: React.CSSProperties = {
-  padding: "14px 16px",
-  borderRadius: 20,
-  background: "rgba(255,255,255,0.9)",
-  border: "1px solid #dbe3ed",
-  boxShadow: "0 4px 12px rgba(15,23,42,0.05)",
-  minWidth: 200,
-  flexShrink: 0,
-};
-
-const pricingTypeBadge: React.CSSProperties = {
-  padding: "3px 10px",
-  borderRadius: 999,
-  background: "#eef6f5",
-  color: "#0f766e",
-  fontWeight: 800,
-  fontSize: 11,
 };
