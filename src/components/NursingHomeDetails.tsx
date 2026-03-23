@@ -6,6 +6,7 @@ type RoomOptionDto = {
   roomName?: string | null;
   bathroomType?: string | null;
   sizeM2?: number | null;
+  sizeText?: string | null;
   radMin?: number | null;
   radMax?: number | null;
   dapAmount?: number | null;
@@ -444,7 +445,7 @@ export default function NursingHomeDetails() {
                               {room.roomName || <span style={{ color: "#94a3b8", fontStyle: "italic", fontWeight: 400 }}>Not confirmed</span>}
                             </div>
                             <div style={{ fontSize: 12, color: "#405062" }}>{room.bathroomType || "—"}</div>
-                            <div style={{ fontSize: 12, color: "#405062" }}>{room.sizeM2 ? `${room.sizeM2}m²` : "—"}</div>
+                            <div style={{ fontSize: 12, color: "#405062" }}>{room.sizeText ? `${room.sizeText}m²` : room.sizeM2 ? `${room.sizeM2}m²` : "—"}</div>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "#0b3b5b" }}>{room.radMin != null && room.radMin > 0 ? niceCurrency(room.radMin) : "—"}</div>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "#0b3b5b" }}>{room.dapAmount != null ? `$${room.dapAmount}` : "—"}</div>
                             <div>

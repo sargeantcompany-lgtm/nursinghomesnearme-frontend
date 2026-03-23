@@ -104,14 +104,15 @@ type RoomOptionRow = {
   roomName: string;
   bathroomType: string;
   sizeM2: string;
-  radMin: string; // keep as string for input, convert on save
+  sizeText: string;
+  radMin: string;
   radMax: string;
   dapAmount: string;
   availabilityNote: string;
 };
 
 function emptyRoomOptionRow(): RoomOptionRow {
-  return { roomType: "", roomName: "", bathroomType: "", sizeM2: "", radMin: "", radMax: "", dapAmount: "", availabilityNote: "" };
+  return { roomType: "", roomName: "", bathroomType: "", sizeM2: "", sizeText: "", radMin: "", radMax: "", dapAmount: "", availabilityNote: "" };
 }
 
 function ensureMinimumRoomRows(rows: RoomOptionRow[], minimum = 4): RoomOptionRow[] {
@@ -199,6 +200,7 @@ function toRoomRows(list?: RoomOption[] | null): RoomOptionRow[] {
     roomName: (r.roomName ?? "") as string,
     bathroomType: (r.bathroomType ?? "") as string,
     sizeM2: r.sizeM2 == null ? "" : String(r.sizeM2),
+    sizeText: (r.sizeText ?? "") as string,
     radMin: r.radMin == null ? "" : String(r.radMin),
     radMax: r.radMax == null ? "" : String(r.radMax),
     dapAmount: r.dapAmount == null ? "" : String(r.dapAmount),
@@ -207,14 +209,14 @@ function toRoomRows(list?: RoomOption[] | null): RoomOptionRow[] {
 }
 
 function parseOptionalNumber(raw: string): number | undefined {
-  const t = raw.trim();
+  const t = raw.trim().replace(/[$,\s]/g, "");
   if (!t) return undefined;
   const n = Number(t);
   return Number.isFinite(n) ? n : undefined;
 }
 
 function parseOptionalFloat(raw: string): number | undefined {
-  const t = raw.trim();
+  const t = raw.trim().replace(/[$,\s]/g, "").split("-")[0].trim();
   if (!t) return undefined;
   const n = Number(t);
   return Number.isFinite(n) ? n : undefined;
@@ -246,7 +248,8 @@ function rowsToRoomOptions(
       const bathroomType = r.bathroomType.trim();
       const availabilityNote = r.availabilityNote.trim();
 
-      const sizeM2 = parseOptionalFloat(r.sizeM2);
+      const sizeText = r.sizeText.trim() || undefined;
+      const sizeM2 = parseOptionalFloat(r.sizeM2 || r.sizeText);
       const radMin = parseOptionalNumber(r.radMin);
       const radMax = radMin !== undefined ? radMin : parseOptionalNumber(r.radMax);
       const dapAmount = parseOptionalFloat(r.dapAmount);
@@ -256,6 +259,7 @@ function rowsToRoomOptions(
         roomName ||
         bathroomType ||
         availabilityNote ||
+        sizeText ||
         sizeM2 !== undefined ||
         radMin !== undefined ||
         radMax !== undefined ||
@@ -263,7 +267,7 @@ function rowsToRoomOptions(
 
       if (!hasAny) return null;
 
-      return { roomType, roomName, bathroomType, sizeM2, radMin, radMax, dapAmount, availabilityNote };
+      return { roomType, roomName, bathroomType, sizeM2, sizeText, radMin, radMax, dapAmount, availabilityNote };
     })
     .filter((x): x is NonNullable<typeof x> => x != null);
 }
@@ -2748,18 +2752,18 @@ export default function AdminNursingHomes() {
                       </td>
                       <td style={td}>
                         <input
-                          value={r.sizeM2}
+                          value={r.sizeText || r.sizeM2}
                           onChange={(e) => {
                             const v = e.target.value;
                             setForm((p) => {
                               const next = [...p.roomOptions];
-                              next[idx] = { ...next[idx], sizeM2: v };
+                              next[idx] = { ...next[idx], sizeText: v, sizeM2: "" };
                               return { ...p, roomOptions: next };
                             });
                           }}
                           disabled={disabled}
-                          inputMode="decimal"
-                          style={{ ...miniInput, width: 55 }}
+                          placeholder="e.g. 16-24"
+                          style={{ ...miniInput, width: 65 }}
                         />
                       </td>
                       <td style={td}>
