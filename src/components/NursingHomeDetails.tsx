@@ -350,7 +350,7 @@ export default function NursingHomeDetails() {
 
               <div style={heroAside}>
                 <div style={statsCard}>
-                  <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ width: 120, height: "auto", marginBottom: 4 }} />
+                  <img src="/nursing-homes-near-me-logo.png" alt="Nursing Homes Near Me" style={{ width: 200, height: "auto", marginBottom: 8 }} />
                   <Stat label="Facility type" value={data.facilityType || "Residential aged care"} />
                   <Stat label="Beds" value={data.beds ? `${data.beds}` : "Not listed"} />
                   <Stat label="Info last updated" value={formatDate(data.lastProfileScanAt)} />
@@ -385,37 +385,38 @@ export default function NursingHomeDetails() {
             </section>
 
             {(fallbackRad || fallbackDap || rooms.length > 0) ? (
-              <div style={pricingStrip}>
+              <div style={{ marginTop: 18, padding: "20px 24px", borderRadius: 24, background: "linear-gradient(135deg, #0b3b5b 0%, #0f766e 100%)", display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
                 {(fallbackRad || fallbackDap) ? (
-                  <div style={pricingStripLeft}>
+                  <div style={{ display: "flex", gap: 12, flexShrink: 0, flexWrap: "wrap" }}>
                     {fallbackRad ? (
-                      <div style={pricingBadge}>
-                        <div style={pricingBadgeLabel}>RAD range</div>
-                        <div style={pricingBadgeValue}>{fallbackRad}</div>
+                      <div style={{ padding: "10px 18px", borderRadius: 16, background: "rgba(255,255,255,0.15)", color: "white", borderLeft: "3px solid rgba(255,255,255,0.5)" }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.75, marginBottom: 3 }}>RAD range</div>
+                        <div style={{ fontSize: 17, fontWeight: 900 }}>{fallbackRad}</div>
                       </div>
                     ) : null}
                     {fallbackDap ? (
-                      <div style={{ ...pricingBadge, background: "linear-gradient(135deg, #0b3b5b 0%, #0f5072 100%)" }}>
-                        <div style={pricingBadgeLabel}>DAP range</div>
-                        <div style={pricingBadgeValue}>{fallbackDap}</div>
+                      <div style={{ padding: "10px 18px", borderRadius: 16, background: "rgba(255,255,255,0.15)", color: "white", borderLeft: "3px solid rgba(255,255,255,0.5)" }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.75, marginBottom: 3 }}>DAP range</div>
+                        <div style={{ fontSize: 17, fontWeight: 900 }}>{fallbackDap}</div>
                       </div>
                     ) : null}
                   </div>
                 ) : null}
                 {rooms.length > 0 ? (
-                  <div style={pricingRoomsScroll}>
+                  <div style={{ display: "flex", gap: 10, overflowX: "auto", flex: 1, paddingBottom: 2 }}>
                     {rooms.map((room, index) => {
-                      const dap = room.dapAmount != null ? `$${room.dapAmount}/day` : null;
+                      const name = room.roomName || (room.roomType ? null : "Room option");
+                      const dap = room.dapAmount != null ? `DAP $${room.dapAmount}/day` : null;
                       const rad = niceCurrency(room.radMin);
                       return (
-                        <div key={`strip-${index}`} style={pricingRoomCard}>
-                          <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-                            {room.roomType ? <span style={pricingTypeBadge}>{room.roomType}</span> : null}
-                            {room.bathroomType ? <span style={{ ...pricingTypeBadge, background: "#e0f2fe", color: "#0369a1" }}>{room.bathroomType}</span> : null}
+                        <div key={`strip-${index}`} style={{ padding: "12px 14px", borderRadius: 16, background: "rgba(255,255,255,0.12)", color: "white", minWidth: 180, flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
+                          <div style={{ display: "flex", gap: 5, marginBottom: 6, flexWrap: "wrap" }}>
+                            {room.roomType ? <span style={{ padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.2)", fontSize: 11, fontWeight: 800 }}>{room.roomType}</span> : null}
+                            {room.bathroomType ? <span style={{ padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.2)", fontSize: 11, fontWeight: 800 }}>{room.bathroomType}</span> : null}
                           </div>
-                          <div style={{ fontWeight: 900, color: "#10273b", fontSize: 14, marginBottom: 4 }}>{room.roomName || room.roomType || "Room"}</div>
-                          <div style={{ fontSize: 13, color: "#526072" }}>
-                            {[room.sizeM2 ? `${room.sizeM2}m²` : null, dap, rad ? `RAD ${rad}` : null, room.availabilityNote].filter(Boolean).join(" · ")}
+                          <div style={{ fontWeight: 900, fontSize: 13, marginBottom: 4 }}>{name || <span style={{ opacity: 0.6, fontStyle: "italic" }}>Name not confirmed</span>}</div>
+                          <div style={{ fontSize: 12, opacity: 0.85 }}>
+                            {[room.sizeM2 ? `${room.sizeM2}m²` : null, dap, rad ? `RAD ${rad}` : null, room.availabilityNote].filter(Boolean).join(" · ") || "Pricing not confirmed"}
                           </div>
                         </div>
                       );
@@ -451,14 +452,14 @@ export default function NursingHomeDetails() {
                   {tags.length ? (
                     <InfoPanel title="Highlights and features">
                       <div style={tagWrap}>
-                        {tags.map((tag) => (
-                          <span key={tag} style={softTag}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </InfoPanel>
-                ) : null}
+                        {tags.map((tag, i) => (
+                          <span key={tag} style={{ ...softTag, background: i % 3 === 0 ? "#eef6f5" : i % 3 === 1 ? "#eff6ff" : "#fef3c7", color: i % 3 === 0 ? "#0f766e" : i % 3 === 1 ? "#1d4ed8" : "#92400e", fontWeight: 800 }}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </InfoPanel>
+                  ) : null}
 
                 {(careTypes.length || specialties.length || languages.length) ? (
                   <InfoPanel title="Care fit">
@@ -480,44 +481,20 @@ export default function NursingHomeDetails() {
                   </InfoPanel>
                 ) : null}
 
-                {(roomTypes.length || rooms.length) ? (
-                  <InfoPanel title="Rooms and pricing">
-                    {rooms.length ? (
-                      <div style={{ display: "grid", gap: 10 }}>
-                        {rooms.map((room, index) => {
-                          const radMin = niceCurrency(room.radMin);
-                          const radMax = niceCurrency(room.radMax);
-                          const pricing = radMin && radMax ? `${radMin} – ${radMax}` : radMin || radMax || "Pricing on request";
-                          return (
-                            <div key={`${room.roomType}-${index}`} style={roomCard}>
-                              <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                                {room.roomType ? <span style={{ padding: "3px 10px", borderRadius: 999, background: "#eef6f5", color: "#0f766e", fontWeight: 800, fontSize: 12 }}>{room.roomType}</span> : null}
-                                {room.bathroomType ? <span style={{ padding: "3px 10px", borderRadius: 999, background: "#e0f2fe", color: "#0369a1", fontWeight: 800, fontSize: 12 }}>{room.bathroomType}</span> : null}
-                              </div>
-                              <div style={roomTitle}>{room.roomName || room.roomType || "Room option"}</div>
-                              <div style={roomMeta}>
-                                {[room.sizeM2 ? `${room.sizeM2}m²` : null, room.dapAmount ? `$${room.dapAmount}/day DAP` : null, pricing !== "Pricing on request" ? pricing : null, room.availabilityNote].filter(Boolean).join(" · ")}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div style={tagWrap}>
-                        {roomTypes.map((roomType) => (
-                          <span key={roomType} style={softTag}>
-                            {roomType}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </InfoPanel>
+
+                {cleanFoodHighlights ? (
+                  <div style={{ padding: 22, borderRadius: 24, background: "linear-gradient(135deg, #fef9ec 0%, #fff7e6 100%)", border: "1px solid #fde68a", boxShadow: "0 4px 16px rgba(245,158,11,0.1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <span style={{ fontSize: 24 }}>🍽️</span>
+                      <div style={{ fontSize: 16, fontWeight: 900, color: "#92400e" }}>Dining & food</div>
+                    </div>
+                    <p style={{ ...bodyText, color: "#78350f" }}>{cleanFoodHighlights}</p>
+                  </div>
                 ) : null}
 
-                {(cleanFoodHighlights || cleanVisitingHours || cleanAdmissionsProcess || cleanWaitingListSummary || cleanTransportNotes || nearbyHospitals.length || faqItems.length || cleanReviewSummary) ? (
+                {(cleanVisitingHours || cleanAdmissionsProcess || cleanWaitingListSummary || cleanTransportNotes || nearbyHospitals.length || faqItems.length || cleanReviewSummary) ? (
                   <InfoPanel title="More details">
                     <div style={{ display: "grid", gap: 14 }}>
-                      {cleanFoodHighlights ? <Fact label="Food" value={cleanFoodHighlights} /> : null}
                       {cleanVisitingHours ? <Fact label="Visiting hours" value={cleanVisitingHours} /> : null}
                       {cleanAdmissionsProcess ? <Fact label="Admissions" value={cleanAdmissionsProcess} /> : null}
                       {cleanWaitingListSummary ? <Fact label="Waitlist" value={cleanWaitingListSummary} /> : null}
@@ -531,22 +508,23 @@ export default function NursingHomeDetails() {
               </div>
 
               <div style={{ display: "grid", gap: 18 }}>
-                <InfoPanel title="Contact">
-                  <div style={{ display: "grid", gap: 8, fontSize: 14, color: "#405062", marginBottom: 14 }}>
+                <div style={{ padding: "16px 18px", borderRadius: 20, background: "rgba(255,255,255,0.88)", border: "1px solid #dbe3ed", boxShadow: "0 4px 12px rgba(15,23,42,0.05)" }}>
+                  <div style={{ fontWeight: 900, fontSize: 15, color: "#10273b", marginBottom: 10 }}>Contact</div>
+                  <div style={{ display: "grid", gap: 6, fontSize: 13, color: "#405062", marginBottom: 12 }}>
                     {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).length > 0 ? (
                       <div>📍 {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ")}</div>
                     ) : null}
                     {data.phone ? <div>📞 <a href={`tel:${data.phone}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.phone}</a></div> : null}
                     {data.email ? <div>✉️ <a href={`mailto:${data.email}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.email}</a></div> : null}
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {data.phone ? <a href={`tel:${data.phone}`} style={contactPill}>Call now</a> : null}
                     {data.email ? <a href={`mailto:${data.email}`} style={contactPill}>Email</a> : null}
                     {cleanWebsite ? <a href={cleanWebsite} target="_blank" rel="noreferrer" style={contactPill}>Website</a> : null}
                     {data.facebookUrl ? <a href={data.facebookUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#1877F2", color: "#fff", borderColor: "#1877F2" }}>Facebook</a> : null}
                     {data.instagramUrl ? <a href={data.instagramUrl} target="_blank" rel="noreferrer" style={{ ...contactPill, background: "#E1306C", color: "#fff", borderColor: "#E1306C" }}>Instagram</a> : null}
                   </div>
-                </InfoPanel>
+                </div>
 
                 {(data.abn || data.reviewCount != null || data.lastProfileScanAt || data.sourcePrimary) ? (
                   <InfoPanel title="Profile details">
