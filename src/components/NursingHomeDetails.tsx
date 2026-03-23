@@ -513,8 +513,8 @@ export default function NursingHomeDetails() {
                 <div style={{ padding: "16px 18px", borderRadius: 20, background: "rgba(255,255,255,0.88)", border: "1px solid #dbe3ed", boxShadow: "0 4px 12px rgba(15,23,42,0.05)" }}>
                   <div style={{ fontWeight: 900, fontSize: 15, color: "#10273b", marginBottom: 10 }}>Contact</div>
                   <div style={{ display: "grid", gap: 6, fontSize: 13, color: "#405062", marginBottom: 12 }}>
-                    {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).length > 0 ? (
-                      <div>📍 {[data.addressLine1, data.addressLine2, pageLocation].filter(Boolean).join(", ")}</div>
+                    {(data.addressLine1 || data.addressLine2 || data.suburb) ? (
+                      <div>📍 {[data.addressLine1, data.addressLine2, data.suburb, data.postcode].filter(Boolean).join(", ")}</div>
                     ) : null}
                     {data.phone ? <div>📞 <a href={`tel:${formatPhone(data.phone)}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{formatPhone(data.phone)}</a></div> : null}
                     {data.email ? <div>✉️ <a href={`mailto:${data.email}`} style={{ color: "#0b3b5b", fontWeight: 700, textDecoration: "none" }}>{data.email}</a></div> : null}
@@ -835,7 +835,7 @@ const thumbImage: React.CSSProperties = {
 const contentGrid: React.CSSProperties = {
   marginTop: 20,
   display: "grid",
-  gridTemplateColumns: "1.45fr 0.9fr",
+  gridTemplateColumns: "1.7fr 0.6fr",
   gap: 18,
 };
 
