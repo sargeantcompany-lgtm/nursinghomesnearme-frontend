@@ -2711,8 +2711,8 @@ export default function AdminNursingHomes() {
                             });
                           }}
                           disabled={disabled}
-                          style={miniInput}
-                          placeholder="Single / Shared"
+                          style={{ ...miniInput, width: 70 }}
+                          placeholder="Single"
                         />
                       </td>
                       <td style={td}>
@@ -2743,7 +2743,7 @@ export default function AdminNursingHomes() {
                             });
                           }}
                           disabled={disabled}
-                          style={miniInput}
+                          style={{ ...miniInput, width: 75 }}
                         />
                       </td>
                       <td style={td}>
@@ -2759,11 +2759,11 @@ export default function AdminNursingHomes() {
                           }}
                           disabled={disabled}
                           inputMode="decimal"
-                          style={miniInput}
+                          style={{ ...miniInput, width: 55 }}
                         />
                       </td>
                       <td style={td}>
-                        <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #bfdbfe", borderRadius: 10, background: "#f8fbff", overflow: "hidden", width: 110 }}>
+                        <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #bfdbfe", borderRadius: 10, background: "#f8fbff", overflow: "hidden", width: 90 }}>
                           <span style={{ padding: "0 6px", color: "#0b3b5b", fontWeight: 700, fontSize: 13 }}>$</span>
                           <input
                             value={r.radMin}
@@ -2778,12 +2778,12 @@ export default function AdminNursingHomes() {
                             disabled={disabled}
                             inputMode="numeric"
                             placeholder="000000"
-                            style={{ ...miniInput, border: "none", background: "transparent", width: 80, padding: "8px 4px" }}
+                            style={{ ...miniInput, border: "none", background: "transparent", width: 65, padding: "8px 4px" }}
                           />
                         </div>
                       </td>
                       <td style={td}>
-                        <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #bfdbfe", borderRadius: 10, background: "#f8fbff", overflow: "hidden", width: 90 }}>
+                        <div style={{ display: "flex", alignItems: "center", border: "1.5px solid #bfdbfe", borderRadius: 10, background: "#f8fbff", overflow: "hidden", width: 75 }}>
                           <span style={{ padding: "0 6px", color: "#0b3b5b", fontWeight: 700, fontSize: 13 }}>$</span>
                           <input
                             value={r.dapAmount}
