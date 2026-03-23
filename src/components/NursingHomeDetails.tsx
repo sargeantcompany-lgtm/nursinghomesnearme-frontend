@@ -385,43 +385,40 @@ export default function NursingHomeDetails() {
             </section>
 
             {(fallbackRad || fallbackDap || rooms.length > 0) ? (
-              <div style={{ marginTop: 18, padding: "20px 24px", borderRadius: 24, background: "linear-gradient(135deg, #0b3b5b 0%, #0f766e 100%)", display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-                {(fallbackRad || fallbackDap) ? (
-                  <div style={{ display: "flex", gap: 12, flexShrink: 0, flexWrap: "wrap" }}>
-                    {fallbackRad ? (
-                      <div style={{ padding: "10px 18px", borderRadius: 16, background: "rgba(255,255,255,0.15)", color: "white", borderLeft: "3px solid rgba(255,255,255,0.5)" }}>
-                        <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.75, marginBottom: 3 }}>RAD range</div>
-                        <div style={{ fontSize: 17, fontWeight: 900 }}>{fallbackRad}</div>
-                      </div>
-                    ) : null}
-                    {fallbackDap ? (
-                      <div style={{ padding: "10px 18px", borderRadius: 16, background: "rgba(255,255,255,0.15)", color: "white", borderLeft: "3px solid rgba(255,255,255,0.5)" }}>
-                        <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.75, marginBottom: 3 }}>DAP range</div>
-                        <div style={{ fontSize: 17, fontWeight: 900 }}>{fallbackDap}</div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
+              <div style={{ marginTop: 18, borderRadius: 24, background: "rgba(255,255,255,0.92)", border: "1px solid #dbe3ed", boxShadow: "0 8px 24px rgba(15,23,42,0.07)", overflow: "hidden" }}>
+                {/* Header bar */}
+                <div style={{ padding: "18px 24px", background: "linear-gradient(135deg, #0b3b5b 0%, #0f766e 100%)", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+                  <div style={{ color: "white", fontWeight: 900, fontSize: 18 }}>Rooms and costs</div>
+                  {fallbackRad ? <div style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}>RAD: <strong>{fallbackRad}</strong></div> : null}
+                  {fallbackDap ? <div style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}>DAP: <strong>{fallbackDap}</strong></div> : null}
+                </div>
+                {/* Column headers */}
                 {rooms.length > 0 ? (
-                  <div style={{ display: "flex", gap: 10, overflowX: "auto", flex: 1, paddingBottom: 2 }}>
-                    {rooms.map((room, index) => {
-                      const name = room.roomName || (room.roomType ? null : "Room option");
-                      const dap = room.dapAmount != null ? `DAP $${room.dapAmount}/day` : null;
-                      const rad = niceCurrency(room.radMin);
-                      return (
-                        <div key={`strip-${index}`} style={{ padding: "12px 14px", borderRadius: 16, background: "rgba(255,255,255,0.12)", color: "white", minWidth: 180, flexShrink: 0, border: "1px solid rgba(255,255,255,0.2)" }}>
-                          <div style={{ display: "flex", gap: 5, marginBottom: 6, flexWrap: "wrap" }}>
-                            {room.roomType ? <span style={{ padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.2)", fontSize: 11, fontWeight: 800 }}>{room.roomType}</span> : null}
-                            {room.bathroomType ? <span style={{ padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.2)", fontSize: 11, fontWeight: 800 }}>{room.bathroomType}</span> : null}
-                          </div>
-                          <div style={{ fontWeight: 900, fontSize: 13, marginBottom: 4 }}>{name || <span style={{ opacity: 0.6, fontStyle: "italic" }}>Name not confirmed</span>}</div>
-                          <div style={{ fontSize: 12, opacity: 0.85 }}>
-                            {[room.sizeM2 ? `${room.sizeM2}m²` : null, dap, rad ? `RAD ${rad}` : null, room.availabilityNote].filter(Boolean).join(" · ") || "Pricing not confirmed"}
-                          </div>
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 110px 80px 90px 110px", gap: 0, padding: "10px 24px", background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                      {["Type", "Room name", "Bathroom", "Size", "DAP/day", "Availability"].map((h) => (
+                        <div key={h} style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748b" }}>{h}</div>
+                      ))}
+                    </div>
+                    {rooms.map((room, index) => (
+                      <div key={`row-${index}`} style={{ display: "grid", gridTemplateColumns: "90px 1fr 110px 80px 90px 110px", gap: 0, padding: "14px 24px", borderBottom: index < rooms.length - 1 ? "1px solid #f1f5f9" : "none", alignItems: "center", background: index % 2 === 0 ? "white" : "#fafbfc" }}>
+                        <div>
+                          {room.roomType ? <span style={{ padding: "3px 10px", borderRadius: 999, background: room.roomType === "Single" ? "#eef6f5" : "#eff6ff", color: room.roomType === "Single" ? "#0f766e" : "#1d4ed8", fontWeight: 800, fontSize: 12 }}>{room.roomType}</span> : <span style={{ color: "#94a3b8", fontSize: 12 }}>—</span>}
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 14 }}>
+                          {room.roomName || <span style={{ color: "#94a3b8", fontStyle: "italic", fontWeight: 400 }}>Not confirmed</span>}
+                        </div>
+                        <div style={{ fontSize: 13, color: "#405062" }}>{room.bathroomType || "—"}</div>
+                        <div style={{ fontSize: 13, color: "#405062" }}>{room.sizeM2 ? `${room.sizeM2}m²` : "—"}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#0b3b5b" }}>{room.dapAmount != null ? `$${room.dapAmount}` : "—"}</div>
+                        <div>
+                          {room.availabilityNote
+                            ? <span style={{ padding: "3px 10px", borderRadius: 999, background: "#dcfce7", color: "#166534", fontWeight: 700, fontSize: 12 }}>{room.availabilityNote}</span>
+                            : <span style={{ color: "#94a3b8", fontSize: 12 }}>—</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </>
                 ) : null}
               </div>
             ) : null}
