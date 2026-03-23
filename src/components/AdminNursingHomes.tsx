@@ -1477,10 +1477,16 @@ export default function AdminNursingHomes() {
     loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingVacancyChecks || importingPhotoManifest || sendingWeeklyCheck;
 
   return (
-    <div style={{ minHeight: "100vh", padding: 20, background: "#f8fafc" }}>
+    <div style={{ minHeight: "100vh", padding: 20, background: "linear-gradient(160deg, #e8f4f8 0%, #f0f9f8 100%)" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <h1 style={{ margin: 0, color: "#0b3b5b" }}>Admin: Nursing Homes</h1>
-        <p style={{ marginTop: 8, color: "#334155" }}>
+        <div style={{ background: "linear-gradient(135deg, #0b3b5b 0%, #0f766e 100%)", borderRadius: 16, padding: "18px 24px", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }}>
+          <img src="/nursing-homes-near-me-logo.png" alt="Logo" style={{ width: 44, height: "auto" }} />
+          <div>
+            <div style={{ color: "#fff", fontWeight: 900, fontSize: 20, margin: 0 }}>Admin: Nursing Homes</div>
+            <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 2 }}>Manage facilities, run scans, and bulk import data</div>
+          </div>
+        </div>
+        <p style={{ marginTop: 0, color: "#334155" }}>
           Add / update facilities in your database (matches the new “options list + details” spec).
         </p>
 
@@ -2937,7 +2943,7 @@ export default function AdminNursingHomes() {
 
 function SectionTitle({ text }: { text: string }) {
   return (
-    <div style={{ marginTop: 16, marginBottom: 8, fontWeight: 800, color: "#0b3b5b" }}>
+    <div style={{ marginTop: 20, marginBottom: 10, fontWeight: 900, color: "#0b3b5b", fontSize: 14, borderLeft: "4px solid #0f766e", paddingLeft: 10, letterSpacing: "0.01em" }}>
       {text}
     </div>
   );
@@ -3461,16 +3467,17 @@ const gridWrap: CSSProperties = {
 };
 
 const cardStyle: CSSProperties = {
-  padding: 14,
-  background: "white",
-  borderRadius: 12,
-  border: "1px solid #e5e7eb",
+  padding: 16,
+  background: "rgba(255,255,255,0.92)",
+  borderRadius: 14,
+  border: "1.5px solid #bfdbfe",
+  boxShadow: "0 4px 16px rgba(11,59,91,0.07)",
 };
 
 const labelStyle: CSSProperties = {
   fontSize: 13,
   fontWeight: 800,
-  color: "#334155",
+  color: "#0b3b5b",
   marginBottom: 6,
 };
 
@@ -3478,23 +3485,25 @@ const inputStyle: CSSProperties = {
   width: "100%",
   padding: "10px 12px",
   borderRadius: 10,
-  border: "1px solid #cbd5e1",
+  border: "1.5px solid #bfdbfe",
   fontSize: 14,
+  background: "#f8fbff",
 };
 
 const miniInput: CSSProperties = {
   width: "100%",
   padding: "8px 10px",
   borderRadius: 10,
-  border: "1px solid #cbd5e1",
+  border: "1.5px solid #bfdbfe",
   fontSize: 13,
+  background: "#f8fbff",
 };
 
 const primaryBtn: CSSProperties = {
   padding: "10px 12px",
   borderRadius: 10,
   border: "1px solid #0b3b5b",
-  background: "#0b3b5b",
+  background: "linear-gradient(135deg, #0b3b5b 0%, #0f766e 100%)",
   color: "white",
   cursor: "pointer",
   fontWeight: 700,
@@ -3503,7 +3512,7 @@ const primaryBtn: CSSProperties = {
 const secondaryBtn: CSSProperties = {
   padding: "10px 12px",
   borderRadius: 10,
-  border: "1px solid #cbd5e1",
+  border: "1.5px solid #93c5fd",
   background: "white",
   color: "#0b3b5b",
   cursor: "pointer",
@@ -3552,12 +3561,14 @@ const saveBtn = (disabled: boolean): CSSProperties => ({
 const th: CSSProperties = {
   textAlign: "left",
   fontSize: 12,
-  color: "#334155",
-  padding: "8px 6px",
-  borderBottom: "1px solid #e5e7eb",
+  fontWeight: 800,
+  color: "#0b3b5b",
+  padding: "10px 6px",
+  borderBottom: "2px solid #bfdbfe",
+  background: "#f0f7ff",
 };
 
 const td: CSSProperties = {
   padding: "8px 6px",
-  borderBottom: "1px solid #f1f5f9",
+  borderBottom: "1px solid #dbeafe",
 };
