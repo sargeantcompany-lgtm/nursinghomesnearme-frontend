@@ -40,6 +40,7 @@ type NursingHomeListResponse = {
 
 type RoomOption = {
   roomType?: string | null;
+  roomName?: string | null;
   bathroomType?: string | null;
   sizeM2?: number | null;
   radMin?: number | null;
@@ -100,6 +101,7 @@ type NursingHome = {
 
 type RoomOptionRow = {
   roomType: string;
+  roomName: string;
   bathroomType: string;
   sizeM2: string;
   radMin: string; // keep as string for input, convert on save
@@ -109,7 +111,7 @@ type RoomOptionRow = {
 };
 
 function emptyRoomOptionRow(): RoomOptionRow {
-  return { roomType: "", bathroomType: "", sizeM2: "", radMin: "", radMax: "", dapAmount: "", availabilityNote: "" };
+  return { roomType: "", roomName: "", bathroomType: "", sizeM2: "", radMin: "", radMax: "", dapAmount: "", availabilityNote: "" };
 }
 
 function ensureMinimumRoomRows(rows: RoomOptionRow[], minimum = 4): RoomOptionRow[] {
@@ -194,6 +196,7 @@ function toRoomRows(list?: RoomOption[] | null): RoomOptionRow[] {
 
   return ensureMinimumRoomRows(src.map((r) => ({
     roomType: (r.roomType ?? "") as string,
+    roomName: (r.roomName ?? "") as string,
     bathroomType: (r.bathroomType ?? "") as string,
     sizeM2: r.sizeM2 == null ? "" : String(r.sizeM2),
     radMin: r.radMin == null ? "" : String(r.radMin),
@@ -228,6 +231,7 @@ function rowsToRoomOptions(
   rows: RoomOptionRow[]
 ): Array<{
   roomType?: string;
+  roomName?: string;
   bathroomType?: string;
   sizeM2?: number;
   radMin?: number;
@@ -238,6 +242,7 @@ function rowsToRoomOptions(
   return rows
     .map((r) => {
       const roomType = r.roomType.trim();
+      const roomName = r.roomName.trim();
       const bathroomType = r.bathroomType.trim();
       const availabilityNote = r.availabilityNote.trim();
 
@@ -248,6 +253,7 @@ function rowsToRoomOptions(
 
       const hasAny =
         roomType ||
+        roomName ||
         bathroomType ||
         availabilityNote ||
         sizeM2 !== undefined ||
@@ -257,7 +263,7 @@ function rowsToRoomOptions(
 
       if (!hasAny) return null;
 
-      return { roomType, bathroomType, sizeM2, radMin, radMax, dapAmount, availabilityNote };
+      return { roomType, roomName, bathroomType, sizeM2, radMin, radMax, dapAmount, availabilityNote };
     })
     .filter((x): x is NonNullable<typeof x> => x != null);
 }
@@ -625,7 +631,7 @@ export default function AdminNursingHomes() {
     setRoomScanning(true);
     setRoomScanMsg(null);
     try {
-      const result = await apiFetch<{ rooms: Array<{ roomType: string; bathroomType: string; sizeM2: number | null; radMin: number | null; radMax: number | null; dapAmount: number | null; availabilityNote: string }>; scannedUrl: string }>(
+      const result = await apiFetch<{ rooms: Array<{ roomType: string; roomName: string; bathroomType: string; sizeM2: number | null; radMin: number | null; radMax: number | null; dapAmount: number | null; availabilityNote: string }>; scannedUrl: string }>(
         "/api/admin/nursing-homes/scan-rooms",
         { method: "POST", body: JSON.stringify({ facilityId: currentId }) }
       );
@@ -636,6 +642,7 @@ export default function AdminNursingHomes() {
       }
       const newRows = rooms.map((r) => ({
         roomType: r.roomType ?? "",
+        roomName: r.roomName ?? "",
         bathroomType: r.bathroomType ?? "",
         sizeM2: r.sizeM2 != null ? String(r.sizeM2) : "",
         radMin: r.radMin != null ? String(r.radMin) : "",
@@ -2672,11 +2679,11 @@ export default function AdminNursingHomes() {
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>
                   <tr>
-                    <th style={th}>Room type</th>
+                    <th style={th}>Type</th>
+                    <th style={th}>Room name</th>
                     <th style={th}>Bathroom</th>
                     <th style={th}>Size m²</th>
                     <th style={th}>RAD min</th>
-                    <th style={th}>RAD max</th>
                     <th style={th}>DAP $/day</th>
                     <th style={th}>Availability note</th>
                     <th style={th}></th>
@@ -2698,6 +2705,23 @@ export default function AdminNursingHomes() {
                           }}
                           disabled={disabled}
                           style={miniInput}
+                          placeholder="Single / Shared"
+                        />
+                      </td>
+                      <td style={td}>
+                        <input
+                          value={r.roomName}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setForm((p) => {
+                              const next = [...p.roomOptions];
+                              next[idx] = { ...next[idx], roomName: v };
+                              return { ...p, roomOptions: next };
+                            });
+                          }}
+                          disabled={disabled}
+                          style={{ ...miniInput, minWidth: 160 }}
+                          placeholder="e.g. Boronia Wing"
                         />
                       </td>
                       <td style={td}>
@@ -2739,22 +2763,6 @@ export default function AdminNursingHomes() {
                             setForm((p) => {
                               const next = [...p.roomOptions];
                               next[idx] = { ...next[idx], radMin: v };
-                              return { ...p, roomOptions: next };
-                            });
-                          }}
-                          disabled={disabled}
-                          inputMode="numeric"
-                          style={miniInput}
-                        />
-                      </td>
-                      <td style={td}>
-                        <input
-                          value={r.radMax}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setForm((p) => {
-                              const next = [...p.roomOptions];
-                              next[idx] = { ...next[idx], radMax: v };
                               return { ...p, roomOptions: next };
                             });
                           }}
