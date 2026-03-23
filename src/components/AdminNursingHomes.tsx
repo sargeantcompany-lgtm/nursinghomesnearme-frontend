@@ -695,13 +695,15 @@ export default function AdminNursingHomes() {
   const [gapResults, setGapResults] = useState<GapResult[]>([]);
   const [gapCurrentName, setGapCurrentName] = useState("");
   const [showGapPanel, setShowGapPanel] = useState(false);
+  const [gapStateFilter, setGapStateFilter] = useState("");
   const gapStopRef = React.useRef(false);
 
   async function handleLoadGapCandidates() {
     setError("");
     setBulkGapFilling(true);
     try {
-      const candidates = await apiFetch<GapCandidate[]>("/api/admin/nursing-homes/gap-candidates");
+      const qs = gapStateFilter ? `?state=${encodeURIComponent(gapStateFilter)}` : "";
+      const candidates = await apiFetch<GapCandidate[]>(`/api/admin/nursing-homes/gap-candidates${qs}`);
       setGapCandidates(candidates);
       setGapResults([]);
       setShowGapPanel(true);
@@ -1603,6 +1605,17 @@ export default function AdminNursingHomes() {
                 : "Scan All Vacancies (AI)"}
             </button>
 
+            <select
+              value={gapStateFilter}
+              onChange={(e) => { setGapStateFilter(e.target.value); setShowGapPanel(false); setGapCandidates([]); setGapResults([]); }}
+              disabled={disabled || bulkGapFilling}
+              style={{ ...secondaryBtn, padding: "6px 10px", fontSize: 13 }}
+            >
+              <option value="">All states</option>
+              {["QLD","NSW","VIC","SA","WA","TAS","ACT","NT"].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
             <button
               onClick={showGapPanel && gapCandidates.length > 0 ? handleBulkGapFill : handleLoadGapCandidates}
               disabled={disabled || bulkGapFilling}
@@ -1618,7 +1631,7 @@ export default function AdminNursingHomes() {
                 ? `Scanning… ${gapCurrentName}`
                 : showGapPanel && gapCandidates.length > 0
                 ? `▶ Start gap-fill (${gapCandidates.length} facilities)`
-                : "Bulk Gap-Fill"}
+                : gapStateFilter ? `Bulk Gap-Fill (${gapStateFilter})` : "Bulk Gap-Fill"}
             </button>
             {bulkGapFilling && (
               <button
