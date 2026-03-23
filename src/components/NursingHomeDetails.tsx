@@ -616,7 +616,10 @@ export default function NursingHomeDetails() {
 function InfoPanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={panel}>
-      <div style={panelTitle}>{title}</div>
+      <div style={panelTitle}>
+        <span style={{ display: "inline-block", width: 4, height: 18, background: "linear-gradient(180deg, #0b3b5b, #0f766e)", borderRadius: 4, marginRight: 10, verticalAlign: "middle" }} />
+        {title}
+      </div>
       {children}
     </section>
   );
@@ -634,14 +637,14 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Fact({ label, value }: { label: string; value: string }) {
   const isLink = value.startsWith("http");
   return (
-    <div style={{ display: "grid", gap: 3 }}>
-      <div style={{ color: "#64748b", fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 2, padding: "10px 0", borderBottom: "1px solid #e8f0f6" }}>
+      <div style={{ color: "#7a96ab", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.09em" }}>{label}</div>
       {isLink ? (
-        <a href={value} target="_blank" rel="noreferrer" style={{ color: "#0b3b5b", fontWeight: 700, wordBreak: "break-word" }}>
+        <a href={value} target="_blank" rel="noreferrer" style={{ color: "#0b3b5b", fontWeight: 700, wordBreak: "break-word", fontSize: 14 }}>
           {value}
         </a>
       ) : (
-        <div style={{ color: "#0f172a", fontWeight: 700, wordBreak: "break-word" }}>{value}</div>
+        <div style={{ color: "#0f172a", fontWeight: 700, wordBreak: "break-word", fontSize: 14 }}>{value}</div>
       )}
     </div>
   );
@@ -668,7 +671,7 @@ function MiniList({ title, items, empty }: { title: string; items: string[]; emp
 
 const pageWrap: React.CSSProperties = {
   minHeight: "100vh",
-  background: "#f5f7fb",
+  background: "linear-gradient(160deg, #eaf3f8 0%, #f0f9f7 100%)",
   padding: 18,
   position: "relative",
   overflow: "hidden",
@@ -894,59 +897,66 @@ const contentGrid: React.CSSProperties = {
 };
 
 const panel: React.CSSProperties = {
-  padding: 22,
-  borderRadius: 24,
-  background: "rgba(255,255,255,0.88)",
-  border: "1px solid #dbe3ed",
-  boxShadow: "0 16px 30px rgba(15, 23, 42, 0.05)",
+  padding: "22px 24px",
+  borderRadius: 20,
+  background: "rgba(255,255,255,0.95)",
+  border: "1px solid #dbe8f0",
+  boxShadow: "0 4px 20px rgba(11,59,91,0.07)",
 };
 
 const panelTitle: React.CSSProperties = {
-  fontSize: 18,
+  fontSize: 16,
   fontWeight: 900,
-  color: "#10273b",
-  marginBottom: 14,
+  color: "#0b3b5b",
+  marginBottom: 16,
+  display: "flex",
+  alignItems: "center",
 };
 
 const bodyText: React.CSSProperties = {
   margin: 0,
   fontSize: 15,
-  lineHeight: 1.8,
-  color: "#405062",
+  lineHeight: 1.85,
+  color: "#3d5166",
 };
 
 const tagWrap: React.CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
-  gap: 10,
+  gap: 8,
 };
 
 const softTag: React.CSSProperties = {
-  padding: "8px 12px",
+  padding: "6px 14px",
   borderRadius: 999,
   background: "#eef6f5",
   color: "#0f766e",
-  fontWeight: 800,
+  fontWeight: 700,
   fontSize: 13,
+  border: "1px solid #c1e8e3",
 };
 
 const triGrid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
   gap: 12,
 };
 
 const miniCard: React.CSSProperties = {
-  padding: 16,
-  borderRadius: 18,
-  background: "#f8fbfd",
-  border: "1px solid #e3ebf3",
+  padding: "14px 16px",
+  borderRadius: 14,
+  background: "linear-gradient(135deg, #f8fbff 0%, #f0f7f6 100%)",
+  border: "1px solid #d0e8f0",
+  borderTop: "3px solid #0f766e",
 };
 
 const miniCardTitle: React.CSSProperties = {
   marginBottom: 10,
-  color: "#10273b",
+  color: "#0b3b5b",
   fontWeight: 900,
+  fontSize: 13,
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.05em",
 };
 
 const sideStack: React.CSSProperties = {
