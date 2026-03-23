@@ -2775,7 +2775,7 @@ export default function AdminNursingHomes() {
                           }}
                           disabled={disabled}
                           inputMode="numeric"
-                          style={miniInput}
+                          style={{ ...miniInput, minWidth: 100 }}
                         />
                       </td>
                       <td style={td}>
