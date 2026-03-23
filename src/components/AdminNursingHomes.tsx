@@ -43,6 +43,7 @@ type RoomOption = {
   roomName?: string | null;
   bathroomType?: string | null;
   sizeM2?: number | null;
+  sizeText?: string | null;
   radMin?: number | null;
   radMax?: number | null;
   dapAmount?: number | null;
@@ -651,6 +652,7 @@ export default function AdminNursingHomes() {
         bathroomType: r.bathroomType ?? "",
         sizeM2: r.sizeM2 != null ? String(r.sizeM2) : "",
         radMin: r.radMin != null ? String(r.radMin) : "",
+        sizeText: r.sizeM2 != null ? String(r.sizeM2) : "",
         radMax: r.radMax != null ? String(r.radMax) : "",
         dapAmount: r.dapAmount != null ? String(r.dapAmount) : "",
         availabilityNote: r.availabilityNote ?? "",
