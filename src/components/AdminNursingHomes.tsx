@@ -2568,6 +2568,9 @@ export default function AdminNursingHomes() {
                 disabled={disabled}
                 rows={5}
               />
+              <div style={{ marginTop: 6, fontSize: 12, color: "#64748b" }}>
+                Pasted remote image URLs are copied into our own <code>/uploads/facilities/</code> storage when you save.
+              </div>
 
               <div style={{ marginTop: 10 }}>
                 <label style={{ display: "block" }}>

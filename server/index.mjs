@@ -20,6 +20,7 @@ const distDir = path.join(projectRoot, "dist");
 const uploadsDir = path.isAbsolute(env.uploadsDir)
   ? env.uploadsDir
   : path.join(projectRoot, env.uploadsDir);
+const uploadsFacilitiesDir = path.join(uploadsDir, "facilities");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -137,6 +138,7 @@ app.use(
 );
 app.use(express.json({ limit: "1mb" }));
 fs.mkdirSync(uploadsDir, { recursive: true });
+fs.mkdirSync(uploadsFacilitiesDir, { recursive: true });
 app.use("/uploads", express.static(uploadsDir));
 app.use((error, _req, res, next) => {
   if (error?.message?.startsWith("CORS blocked")) {
@@ -310,6 +312,107 @@ function extForMime(mime) {
   }
 }
 
+function extForRemoteUrl(value = "") {
+  try {
+    const pathname = new URL(value).pathname || "";
+    const ext = path.extname(pathname).toLowerCase();
+    if ([".jpg", ".jpeg", ".png", ".webp"].includes(ext)) return ext;
+  } catch {
+    // Ignore invalid URLs here.
+  }
+  return "";
+}
+
+function filenameStemFromUrl(value = "", fallback = "facility-image") {
+  try {
+    const pathname = new URL(value).pathname || "";
+    const stem = path.basename(pathname, path.extname(pathname));
+    const clean = sanitizeFilename(stem).stem;
+    return clean || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeStoredImageUrl(raw) {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  if (value.startsWith("/")) return value;
+
+  const uploadsIdx = value.toLowerCase().indexOf("/uploads/");
+  if (uploadsIdx >= 0) return value.slice(uploadsIdx);
+
+  const publicIdx = value.toLowerCase().indexOf("/public/");
+  if (publicIdx >= 0) return value.slice(publicIdx + "/public".length);
+
+  return value;
+}
+
+async function mirrorRemoteImageUrl(rawUrl, { folder = "facilities", fallbackStem = "facility-image" } = {}) {
+  const sourceUrl = String(rawUrl || "").trim();
+  if (!sourceUrl) return "";
+
+  const normalizedExisting = normalizeStoredImageUrl(sourceUrl);
+  if (normalizedExisting.startsWith("/uploads/") || normalizedExisting.startsWith("/facility-gallery/")) {
+    return normalizedExisting;
+  }
+
+  let url;
+  try {
+    url = new URL(sourceUrl);
+  } catch {
+    return sourceUrl;
+  }
+
+  if (!/^https?:$/i.test(url.protocol)) {
+    return sourceUrl;
+  }
+
+  const response = await fetch(url, {
+    headers: {
+      "user-agent": "nursinghomesnearme-backend/1.0",
+      accept: "image/avif,image/webp,image/png,image/jpeg,*/*;q=0.8",
+    },
+    redirect: "follow",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Image download failed (${response.status}) for ${sourceUrl}`);
+  }
+
+  const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+  const mimeType = contentType.split(";")[0].trim();
+  const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!allowedMimeTypes.has(mimeType)) {
+    throw new Error(`Unsupported remote image type: ${contentType || "unknown"}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  if (!buffer.length) {
+    throw new Error(`Remote image was empty: ${sourceUrl}`);
+  }
+  if (buffer.length > 10 * 1024 * 1024) {
+    throw new Error(`Remote image exceeded 10MB: ${sourceUrl}`);
+  }
+
+  const ext = extForRemoteUrl(sourceUrl) || extForMime(mimeType);
+  if (!ext) {
+    throw new Error(`Could not determine file extension for ${sourceUrl}`);
+  }
+
+  const safeStem = filenameStemFromUrl(sourceUrl, fallbackStem);
+  const folderRelative = folder.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  const targetDir = folderRelative ? path.join(uploadsDir, folderRelative) : uploadsDir;
+  await fs.promises.mkdir(targetDir, { recursive: true });
+
+  const finalName = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}-${safeStem}${ext}`;
+  const targetPath = path.join(targetDir, finalName);
+  await fs.promises.writeFile(targetPath, buffer);
+
+  return folderRelative ? `/uploads/${folderRelative}/${finalName}` : `/uploads/${finalName}`;
+}
+
 async function readMultipartUpload(req, maxBytes = 8 * 1024 * 1024) {
   const contentType = String(req.headers["content-type"] || "");
   const boundaryMatch = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType);
@@ -368,6 +471,30 @@ async function readMultipartUpload(req, maxBytes = 8 * 1024 * 1024) {
 
 function toJsonArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+async function persistFacilityImageFields(body) {
+  const primaryImageUrl = await mirrorRemoteImageUrl(body?.primaryImageUrl, {
+    folder: "facilities",
+    fallbackStem: "facility-primary",
+  });
+
+  const nextGallery = [];
+  for (const item of toJsonArray(body?.galleryImageUrls)) {
+    const mirrored = await mirrorRemoteImageUrl(item, {
+      folder: "facilities",
+      fallbackStem: "facility-gallery",
+    });
+    if (mirrored && !nextGallery.includes(mirrored)) {
+      nextGallery.push(mirrored);
+    }
+  }
+
+  return {
+    ...body,
+    primaryImageUrl,
+    galleryImageUrls: nextGallery,
+  };
 }
 
 function parseTagsFromHome(row) {
@@ -1753,59 +1880,69 @@ function nursingHomePayload(body) {
 }
 
 app.post("/api/admin/nursing-homes", adminAuth, async (req, res) => {
-  const body = req.body || {};
-  if (!String(body.name || "").trim() || !String(body.suburb || "").trim() || !String(body.postcode || "").trim()) {
-    return res.status(400).json({ message: "Name, suburb, state, and postcode are required." });
-  }
+  try {
+    const body = await persistFacilityImageFields(req.body || {});
+    if (!String(body.name || "").trim() || !String(body.suburb || "").trim() || !String(body.postcode || "").trim()) {
+      return res.status(400).json({ message: "Name, suburb, state, and postcode are required." });
+    }
 
-  const result = await query(
-    `INSERT INTO nursing_homes (
-      name, one_line_description, description, address_line1, suburb, state, postcode,
-      latitude, longitude, phone, website, email, internal_notes, status, active_vacancies,
-      verified_at, primary_image_url, gallery_image_urls, feature_tags, other_tags, languages, room_options
-    ) VALUES (
-      $1,$2,$3,$4,$5,$6,$7,
-      $8,$9,$10,$11,$12,$13,$14,$15,
-      $16,$17,$18::jsonb,$19::jsonb,$20::jsonb,$21::jsonb,$22::jsonb
-    ) RETURNING *`,
-    nursingHomePayload(body),
-  );
-  return res.status(201).json({ id: Number(result.rows[0].id), name: result.rows[0].name });
+    const result = await query(
+      `INSERT INTO nursing_homes (
+        name, one_line_description, description, address_line1, suburb, state, postcode,
+        latitude, longitude, phone, website, email, internal_notes, status, active_vacancies,
+        verified_at, primary_image_url, gallery_image_urls, feature_tags, other_tags, languages, room_options
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,
+        $8,$9,$10,$11,$12,$13,$14,$15,
+        $16,$17,$18::jsonb,$19::jsonb,$20::jsonb,$21::jsonb,$22::jsonb
+      ) RETURNING *`,
+      nursingHomePayload(body),
+    );
+    return res.status(201).json({ id: Number(result.rows[0].id), name: result.rows[0].name });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to save nursing home.";
+    return res.status(400).json({ message });
+  }
 });
 
 app.put("/api/admin/nursing-homes/:id", adminAuth, async (req, res) => {
-  const body = req.body || {};
-  const result = await query(
-    `UPDATE nursing_homes
-     SET name = $2,
-         one_line_description = $3,
-         description = $4,
-         address_line1 = $5,
-         suburb = $6,
-         state = $7,
-         postcode = $8,
-         latitude = $9,
-         longitude = $10,
-         phone = $11,
-         website = $12,
-         email = $13,
-         internal_notes = $14,
-         status = $15,
-         active_vacancies = $16,
-         verified_at = $17,
-         primary_image_url = $18,
-         gallery_image_urls = $19::jsonb,
-         feature_tags = $20::jsonb,
-         other_tags = $21::jsonb,
-         languages = $22::jsonb,
-         room_options = $23::jsonb
-     WHERE id = $1
-     RETURNING *`,
-    [req.params.id, ...nursingHomePayload(body)],
-  );
-  const row = result.rows[0];
-  if (!row) return res.status(404).json({ message: "Nursing home not found." });
-  return res.json({ id: Number(row.id), name: row.name });
+  try {
+    const body = await persistFacilityImageFields(req.body || {});
+    const result = await query(
+      `UPDATE nursing_homes
+       SET name = $2,
+           one_line_description = $3,
+           description = $4,
+           address_line1 = $5,
+           suburb = $6,
+           state = $7,
+           postcode = $8,
+           latitude = $9,
+           longitude = $10,
+           phone = $11,
+           website = $12,
+           email = $13,
+           internal_notes = $14,
+           status = $15,
+           active_vacancies = $16,
+           verified_at = $17,
+           primary_image_url = $18,
+           gallery_image_urls = $19::jsonb,
+           feature_tags = $20::jsonb,
+           other_tags = $21::jsonb,
+           languages = $22::jsonb,
+           room_options = $23::jsonb
+       WHERE id = $1
+       RETURNING *`,
+      [req.params.id, ...nursingHomePayload(body)],
+    );
+    const row = result.rows[0];
+    if (!row) return res.status(404).json({ message: "Nursing home not found." });
+    return res.json({ id: Number(row.id), name: row.name });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to update nursing home.";
+    return res.status(400).json({ message });
+  }
 });
 
 app.patch("/api/admin/nursing-homes/:id/vacancy", adminAuth, async (req, res) => {
@@ -1833,91 +1970,97 @@ app.delete("/api/admin/nursing-homes/:id", adminAuth, async (req, res) => {
 });
 
 app.post("/api/admin/nursing-homes/import", adminAuth, async (req, res) => {
-  const rows = Array.isArray(req.body) ? req.body : [];
-  let created = 0;
-  let updated = 0;
-  let skipped = 0;
+  try {
+    const rows = Array.isArray(req.body) ? req.body : [];
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
 
-  for (const row of rows) {
-    const name = String(row.name || "").trim();
-    const suburb = String(row.suburb || "").trim();
-    const state = String(row.state || "").trim() || "QLD";
-    const postcode = String(row.postcode || "").trim();
-    if (!name || !suburb || !postcode) {
-      skipped++;
-      continue;
+    for (const row of rows) {
+      const normalizedRow = await persistFacilityImageFields(row || {});
+      const name = String(normalizedRow.name || "").trim();
+      const suburb = String(normalizedRow.suburb || "").trim();
+      const state = String(normalizedRow.state || "").trim() || "QLD";
+      const postcode = String(normalizedRow.postcode || "").trim();
+      if (!name || !suburb || !postcode) {
+        skipped++;
+        continue;
+      }
+
+      const existing = await query(
+        `SELECT id FROM nursing_homes
+         WHERE LOWER(name) = LOWER($1) AND LOWER(suburb) = LOWER($2) AND postcode = $3
+         LIMIT 1`,
+        [name, suburb, postcode],
+      );
+
+      if (existing.rows[0]) {
+        await query(
+          `UPDATE nursing_homes
+           SET one_line_description = COALESCE($2, one_line_description),
+               description = COALESCE($3, description),
+               address_line1 = COALESCE($4, address_line1),
+               state = COALESCE($5, state),
+               latitude = COALESCE($6, latitude),
+               longitude = COALESCE($7, longitude),
+               phone = COALESCE($8, phone),
+               website = COALESCE($9, website),
+               email = COALESCE($10, email),
+               primary_image_url = COALESCE($11, primary_image_url),
+               other_tags = CASE WHEN $12::jsonb = '[]'::jsonb THEN other_tags ELSE $12::jsonb END
+           WHERE id = $1`,
+          [
+            existing.rows[0].id,
+            normalizedRow.oneLineDescription || null,
+            normalizedRow.description || null,
+            normalizedRow.addressLine1 || null,
+            state,
+            normalizedRow.latitude ?? null,
+            normalizedRow.longitude ?? null,
+            normalizedRow.phone || null,
+            normalizedRow.website || null,
+            normalizedRow.email || null,
+            normalizedRow.primaryImageUrl || null,
+            JSON.stringify(toJsonArray(normalizedRow.otherTags)),
+          ],
+        );
+        updated++;
+      } else {
+        await query(
+          `INSERT INTO nursing_homes (
+            name, one_line_description, description, address_line1, suburb, state, postcode,
+            latitude, longitude, phone, website, email, status, primary_image_url, other_tags
+          ) VALUES (
+            $1,$2,$3,$4,$5,$6,$7,
+            $8,$9,$10,$11,$12,$13,$14,$15::jsonb
+          )`,
+          [
+            name,
+            normalizedRow.oneLineDescription || null,
+            normalizedRow.description || null,
+            normalizedRow.addressLine1 || null,
+            suburb,
+            state,
+            postcode,
+            normalizedRow.latitude ?? null,
+            normalizedRow.longitude ?? null,
+            normalizedRow.phone || null,
+            normalizedRow.website || null,
+            normalizedRow.email || null,
+            normalizedRow.status || "ACTIVE",
+            normalizedRow.primaryImageUrl || null,
+            JSON.stringify(toJsonArray(normalizedRow.otherTags)),
+          ],
+        );
+        created++;
+      }
     }
 
-    const existing = await query(
-      `SELECT id FROM nursing_homes
-       WHERE LOWER(name) = LOWER($1) AND LOWER(suburb) = LOWER($2) AND postcode = $3
-       LIMIT 1`,
-      [name, suburb, postcode],
-    );
-
-    if (existing.rows[0]) {
-      await query(
-        `UPDATE nursing_homes
-         SET one_line_description = COALESCE($2, one_line_description),
-             description = COALESCE($3, description),
-             address_line1 = COALESCE($4, address_line1),
-             state = COALESCE($5, state),
-             latitude = COALESCE($6, latitude),
-             longitude = COALESCE($7, longitude),
-             phone = COALESCE($8, phone),
-             website = COALESCE($9, website),
-             email = COALESCE($10, email),
-             primary_image_url = COALESCE($11, primary_image_url),
-             other_tags = CASE WHEN $12::jsonb = '[]'::jsonb THEN other_tags ELSE $12::jsonb END
-         WHERE id = $1`,
-        [
-          existing.rows[0].id,
-          row.oneLineDescription || null,
-          row.description || null,
-          row.addressLine1 || null,
-          state,
-          row.latitude ?? null,
-          row.longitude ?? null,
-          row.phone || null,
-          row.website || null,
-          row.email || null,
-          row.primaryImageUrl || null,
-          JSON.stringify(toJsonArray(row.otherTags)),
-        ],
-      );
-      updated++;
-    } else {
-      await query(
-        `INSERT INTO nursing_homes (
-          name, one_line_description, description, address_line1, suburb, state, postcode,
-          latitude, longitude, phone, website, email, status, primary_image_url, other_tags
-        ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,
-          $8,$9,$10,$11,$12,$13,$14,$15::jsonb
-        )`,
-        [
-          name,
-          row.oneLineDescription || null,
-          row.description || null,
-          row.addressLine1 || null,
-          suburb,
-          state,
-          postcode,
-          row.latitude ?? null,
-          row.longitude ?? null,
-          row.phone || null,
-          row.website || null,
-          row.email || null,
-          row.status || "ACTIVE",
-          row.primaryImageUrl || null,
-          JSON.stringify(toJsonArray(row.otherTags)),
-        ],
-      );
-      created++;
-    }
+    return res.json({ created, updated, skipped });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to import nursing homes.";
+    return res.status(400).json({ message });
   }
-
-  return res.json({ created, updated, skipped });
 });
 
 function normalizeImportText(value) {
