@@ -2385,8 +2385,10 @@ app.post("/api/admin/scan-facility", adminAuth, async (req, res) => {
   if (!env.firecrawlApiKey) {
     return res.status(503).json({ message: "Firecrawl API key not configured." });
   }
-  const url = String(req.body?.url || "").trim();
-  if (!url) return res.status(400).json({ message: "url is required." });
+  let url = String(req.body?.url || "").trim();
+  const govUrl = String(req.body?.govUrl || "").trim();
+  if (!url && !govUrl) return res.status(400).json({ message: "url or govUrl is required." });
+  if (!url && govUrl) url = govUrl;
 
   const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
     method: "POST",
@@ -2412,6 +2414,8 @@ app.post("/api/admin/scan-facility", adminAuth, async (req, res) => {
             postcode:            { type: "string", description: "Postcode" },
             phone:               { type: "string", description: "Main phone number" },
             email:               { type: "string", description: "Contact email address" },
+            primaryImageUrl:     { type: "string", description: "Best main facility image URL if available" },
+            galleryImageUrls:    { type: "array", items: { type: "string" }, description: "Additional facility image URLs if available" },
             careTypes:           { type: "array", items: { type: "string" }, description: "Care types offered e.g. Permanent Residential, Respite, Dementia, Palliative" },
             specialties:         { type: "array", items: { type: "string" }, description: "Clinical specialties or focus areas" },
             alliedHealth:        { type: "array", items: { type: "string" }, description: "Allied health services available e.g. Physiotherapy, Occupational Therapy, Podiatry, Dietitian" },
@@ -2440,7 +2444,62 @@ app.post("/api/admin/scan-facility", adminAuth, async (req, res) => {
   }
 
   const data = await scrapeRes.json();
-  return res.json(data?.extract ?? data?.data?.extract ?? {});
+  const websiteExtract = data?.extract ?? data?.data?.extract ?? {};
+
+  if (!govUrl) {
+    return res.json(websiteExtract);
+  }
+
+  const govScrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.firecrawlApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url: govUrl,
+      formats: ["extract"],
+      extract: {
+        prompt: `Extract the official facility address and any facility photo URLs from this My Aged Care or government listing page. Prefer the street address exactly as shown on the page. Return the best main photo URL and any additional gallery photo URLs if they exist.`,
+        schema: {
+          type: "object",
+          properties: {
+            addressLine1:     { type: "string", description: "Street address exactly as listed" },
+            suburb:           { type: "string", description: "Suburb/locality" },
+            state:            { type: "string", description: "State abbreviation" },
+            postcode:         { type: "string", description: "Postcode" },
+            primaryImageUrl:  { type: "string", description: "Best main facility photo URL if present on the listing" },
+            galleryImageUrls: { type: "array", items: { type: "string" }, description: "Additional facility photo URLs from the listing" },
+          },
+        },
+      },
+    }),
+  });
+
+  if (!govScrapeRes.ok) {
+    return res.json(websiteExtract);
+  }
+
+  const govData = await govScrapeRes.json();
+  const governmentExtract = govData?.extract ?? govData?.data?.extract ?? {};
+  const mergedGallery = uniqueTrimmed([
+    ...toJsonArray(governmentExtract.galleryImageUrls),
+    ...toJsonArray(websiteExtract.galleryImageUrls),
+    String(governmentExtract.primaryImageUrl || "").trim(),
+    String(websiteExtract.primaryImageUrl || "").trim(),
+  ]);
+
+  return res.json({
+    ...websiteExtract,
+    addressLine1: String(governmentExtract.addressLine1 || websiteExtract.addressLine1 || "").trim() || undefined,
+    suburb: String(governmentExtract.suburb || websiteExtract.suburb || "").trim() || undefined,
+    state: String(governmentExtract.state || websiteExtract.state || "").trim() || undefined,
+    postcode: String(governmentExtract.postcode || websiteExtract.postcode || "").trim() || undefined,
+    primaryImageUrl:
+      String(governmentExtract.primaryImageUrl || websiteExtract.primaryImageUrl || mergedGallery[0] || "").trim() || undefined,
+    galleryImageUrls: mergedGallery,
+    governmentListingUrl: govUrl,
+  });
 });
 
 app.post("/api/admin/nursing-homes/gap-fill/:id", adminAuth, async (req, res) => {

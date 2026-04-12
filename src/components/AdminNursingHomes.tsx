@@ -400,10 +400,6 @@ export default function AdminNursingHomes() {
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [importingSheet, setImportingSheet] = useState(false);
   const [importProgress, setImportProgress] = useState("");
-  const [importingVacancyChecks, setImportingVacancyChecks] = useState(false);
-  const [importingPhotoManifest, setImportingPhotoManifest] = useState(false);
-  const [sendingWeeklyCheck, setSendingWeeklyCheck] = useState(false);
-
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
@@ -460,29 +456,12 @@ export default function AdminNursingHomes() {
     [list],
   );
   const vacancyActivity = useMemo(() => {
-    if (importingVacancyChecks) {
-      return {
-        tone: "info" as const,
-        title: "Vacancy import running",
-        text: "Importing vacancy checks into the database now. Please wait until the import completes before refreshing or sending more actions.",
-      };
-    }
-    if (sendingWeeklyCheck) {
-      return {
-        tone: "info" as const,
-        title: "Weekly vacancy emails sending",
-        text:
-          selectedId === "NEW"
-            ? "Sending the weekly vacancy check to all active facilities now."
-            : "Sending the weekly vacancy check for the selected facility now.",
-      };
-    }
     return {
       tone: "idle" as const,
       title: "Vacancy status ready",
       text: "Use the vacancy import for scanner updates, or send the weekly check email to collect direct facility confirmations.",
     };
-  }, [importingVacancyChecks, sendingWeeklyCheck, selectedId]);
+  }, []);
 
   const galleryUrls = useMemo(() => galleryTextToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
@@ -570,13 +549,17 @@ export default function AdminNursingHomes() {
 
   async function handleScan() {
     const url = form.website.trim();
-    if (!url) return;
+    const govUrl = form.governmentListingUrl.trim();
+    if (!url && !govUrl) {
+      setScanMessage("Set a Website URL or Government Listing URL first.");
+      return;
+    }
     setScanning(true);
     setScanMessage(null);
     try {
       const data = await apiFetch<Record<string, unknown>>("/api/admin/scan-facility", {
         method: "POST",
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, govUrl }),
       });
       setForm((p) => ({
         ...p,
@@ -626,12 +609,12 @@ export default function AdminNursingHomes() {
             : "",
         ].filter(Boolean).join("\n").trim(),
       }));
-      const fieldsFound = [data.name, data.description, data.oneLineDescription, data.phone, data.email, data.addressLine1]
+      const fieldsFound = [data.name, data.description, data.oneLineDescription, data.phone, data.email, data.addressLine1, data.primaryImageUrl]
         .filter(Boolean).length;
       if (fieldsFound === 0) {
-        setScanMessage("Scan returned no data — Firecrawl may not have been able to read this page. Check FIRECRAWL_API_KEY is set in Railway and try again.");
+        setScanMessage("Scan returned no data — Firecrawl may not have been able to read the website or government listing. Check FIRECRAWL_API_KEY is set in Railway and try again.");
       } else {
-        setScanMessage(`Scan complete — ${fieldsFound} field(s) populated. Review below before saving.`);
+        setScanMessage(`Scan complete — ${fieldsFound} field(s) populated, including government address/photos when available. Review below before saving.`);
       }
     } catch (e: unknown) {
       setScanMessage(`Scan failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -747,55 +730,7 @@ export default function AdminNursingHomes() {
   const [gapResults, setGapResults] = useState<GapResult[]>([]);
   const [gapCurrentName, setGapCurrentName] = useState("");
   const [showGapPanel, setShowGapPanel] = useState(false);
-  const [gapStateFilter, setGapStateFilter] = useState("");
   const gapStopRef = React.useRef(false);
-
-  async function handleLoadGapCandidates() {
-    setError("");
-    setBulkGapFilling(true);
-    try {
-      const qs = gapStateFilter ? `?state=${encodeURIComponent(gapStateFilter)}` : "";
-      const candidates = await apiFetch<GapCandidate[]>(`/api/admin/nursing-homes/gap-candidates${qs}`);
-      setGapCandidates(candidates);
-      setGapResults([]);
-      setShowGapPanel(true);
-    } catch (e: unknown) {
-      setError(`Failed to load gap candidates: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setBulkGapFilling(false);
-    }
-  }
-
-  async function handleBulkGapFill() {
-    if (!gapCandidates.length) return;
-    gapStopRef.current = false;
-    setBulkGapFilling(true);
-    setGapResults([]);
-    setError("");
-
-    for (let i = 0; i < gapCandidates.length; i++) {
-      if (gapStopRef.current) break;
-      const c = gapCandidates[i];
-      setGapCurrentName(`${i + 1}/${gapCandidates.length} — ${c.name}`);
-      try {
-        await apiFetch(`/api/admin/nursing-homes/gap-fill/${c.id}`, { method: "POST" });
-        setGapResults((prev) => [...prev, { id: c.id, name: c.name, status: "filled", missingFields: c.missingFields }]);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes("unchanged") || msg.includes("200")) {
-          setGapResults((prev) => [...prev, { id: c.id, name: c.name, status: "unchanged", missingFields: c.missingFields }]);
-        } else {
-          setGapResults((prev) => [...prev, { id: c.id, name: c.name, status: "error", missingFields: c.missingFields, error: msg }]);
-        }
-      }
-      // small delay to respect Firecrawl rate limits
-      await new Promise((r) => setTimeout(r, 1500));
-    }
-
-    setBulkGapFilling(false);
-    setGapCurrentName("");
-    await refreshList();
-  }
 
   async function handleScanSelectedGaps() {
     const selectedFacilities = filteredList.filter((nh) => selectedGalleryIds.includes(nh.id));
@@ -1318,201 +1253,6 @@ export default function AdminNursingHomes() {
     }
   }
 
-  async function deleteAllFacilities() {
-    const answer = window.prompt(
-      `⚠️ This will permanently delete ALL facilities from the database.\n\nType DELETE to confirm:`
-    );
-    if (answer?.trim() !== "DELETE") {
-      setNotice("Delete cancelled.");
-      return;
-    }
-    setError("");
-    setNotice("Deleting all facilities…");
-    try {
-      const res = await apiFetch<{ deleted: number }>("/api/admin/nursing-homes/delete-all", {
-        method: "DELETE",
-        headers: { "X-Confirm-Delete-All": "DELETE_ALL_FACILITIES" },
-      });
-      setNotice(`Deleted ${res.deleted} facilities.`);
-      setSelectedId("NEW");
-      setCurrentId(null);
-      setCurrentMeta(null);
-      setForm(emptyForm());
-      await refreshList();
-    } catch (e) {
-      setError(getErrorMessage(e));
-      setNotice("");
-    }
-  }
-
-  async function importVacancyChecks(file: File) {
-    setError("");
-    setNotice("");
-    setImportingVacancyChecks(true);
-    try {
-      const XLSX = await import("xlsx");
-      const ab = await file.arrayBuffer();
-      const wb = XLSX.read(ab, { type: "array" });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-
-      const normalized = rows
-        .map((r) => {
-          const get = (...keys: string[]) => {
-            for (const key of keys) {
-              const v = r[key];
-              if (v != null && String(v).trim()) return String(v).trim();
-            }
-            return "";
-          };
-          const getNum = (...keys: string[]) => {
-            const txt = get(...keys);
-            if (!txt) return null;
-            const n = Number(txt);
-            return Number.isFinite(n) ? n : null;
-          };
-          const getBool = (...keys: string[]) => {
-            const txt = get(...keys).toLowerCase();
-            if (!txt) return false;
-            return txt === "true" || txt === "yes" || txt === "1";
-          };
-
-          return {
-            facilityId: getNum("facility_id", "facilityId", "Facility ID"),
-            facilityName: get("facility_name", "facilityName", "Facility Name", "name", "Name"),
-            suburb: get("suburb", "Suburb"),
-            postcode: get("postcode", "Postcode"),
-            website: get("website", "Website"),
-            governmentListingUrl: get("government_listing_url", "governmentListingUrl", "Government Listing URL"),
-            checkedAt: get("checked_at", "checkedAt", "Checked At"),
-            sourceType: get("source_type", "sourceType", "Source Type"),
-            sourceUrl: get("source_url", "sourceUrl", "Source URL"),
-            websiteSaysVacancies: get("website_says_vacancies", "websiteSaysVacancies", "Website Says Vacancies"),
-            facilityConfirmedVacancies: get("facility_confirmed_vacancies", "facilityConfirmedVacancies", "Facility Confirmed Vacancies"),
-            websiteCheckedAt: get("website_checked_at", "websiteCheckedAt", "Website Checked At"),
-            websiteSourceUrl: get("website_source_url", "websiteSourceUrl", "Website Source URL"),
-            facilityConfirmedAt: get("facility_confirmed_at", "facilityConfirmedAt", "Facility Confirmed At"),
-            facilityConfirmationSource: get("facility_confirmation_source", "facilityConfirmationSource", "Facility Confirmation Source"),
-            vacancyStatus: get("vacancy_status", "vacancyStatus", "Vacancy Status"),
-            vacancySummary: get("vacancy_summary", "vacancySummary", "Vacancy Summary"),
-            waitlistStatus: get("waitlist_status", "waitlistStatus", "Waitlist Status"),
-            admissionsStatus: get("admissions_status", "admissionsStatus", "Admissions Status"),
-            contactCta: get("contact_cta", "contactCta", "Contact CTA"),
-            confidence: get("confidence", "Confidence"),
-            rawTextExcerpt: get("raw_text_excerpt", "rawTextExcerpt", "Raw Text Excerpt"),
-            conflictFlag: getBool("conflict_flag", "conflictFlag", "Conflict Flag"),
-            needsManualReview: getBool("needs_manual_review", "needsManualReview", "Needs Manual Review"),
-          };
-        })
-        .filter((x) => x.facilityId != null || x.website || x.governmentListingUrl || (x.facilityName && x.suburb && x.postcode));
-
-      if (!normalized.length) {
-        throw new Error("No valid rows found. Need facility_id, website, government_listing_url, or name+suburb+postcode.");
-      }
-
-      const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
-        "/api/admin/nursing-homes/import-vacancy-checks",
-        {
-          method: "POST",
-          body: JSON.stringify(normalized),
-        },
-      );
-
-      setNotice(`Vacancy import complete. Created ${res.created}, updated ${res.updated}, skipped ${res.skipped}.`);
-      await refreshList();
-    } catch (e) {
-      setError(getErrorMessage(e));
-    } finally {
-      setImportingVacancyChecks(false);
-    }
-  }
-
-  async function importPhotoManifest(file: File) {
-    setError("");
-    setNotice("");
-    setImportingPhotoManifest(true);
-    try {
-      const XLSX = await import("xlsx");
-      const ab = await file.arrayBuffer();
-      const wb = XLSX.read(ab, { type: "array" });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-
-      const normalized = rows
-        .map((r) => {
-          const get = (...keys: string[]) => {
-            for (const key of keys) {
-              const v = r[key];
-              if (v != null && String(v).trim()) return String(v).trim();
-            }
-            return "";
-          };
-          const getBool = (...keys: string[]) => {
-            const txt = get(...keys).toLowerCase();
-            return txt === "true" || txt === "yes" || txt === "1";
-          };
-
-          return {
-            facilityRowId: get("facilityRowId", "facility_row_id", "Facility Row ID"),
-            facilityName: get("facilityName", "facility_name", "Facility Name"),
-            photoId: get("photoId", "photo_id", "Photo ID"),
-            isPrimary: getBool("isPrimary", "is_primary", "Is Primary"),
-            sourceUrl: get("sourceUrl", "source_url", "Source URL"),
-            localPath: get("localPath", "local_path", "Local Path"),
-            fileName: get("fileName", "file_name", "File Name"),
-            contentType: get("contentType", "content_type", "Content Type"),
-            downloadStatus: get("downloadStatus", "download_status", "Download Status"),
-          };
-        })
-        .filter((x) => x.facilityRowId || x.facilityName);
-
-      if (!normalized.length) {
-        throw new Error("No valid photo manifest rows found. Required: facility_row_id or facility_name.");
-      }
-
-      const res = await apiFetch<{ created: number; updated: number; skipped: number }>(
-        "/api/admin/nursing-homes/import-photo-manifest",
-        {
-          method: "POST",
-          body: JSON.stringify(normalized),
-        },
-      );
-
-      setNotice(`Photo manifest import complete. Updated ${res.updated}, skipped ${res.skipped}.`);
-      await refreshList();
-    } catch (e) {
-      setError(getErrorMessage(e));
-    } finally {
-      setImportingPhotoManifest(false);
-    }
-  }
-
-  async function sendWeeklyVacancyCheck() {
-    setError("");
-    setNotice("");
-    setSendingWeeklyCheck(true);
-    try {
-      const payload =
-        selectedId === "NEW"
-          ? {}
-          : { facilityIds: [Number(selectedId)] };
-
-      const res = await apiFetch<{ sent: number; skipped: number }>(
-        "/api/admin/facility-outreach/send-weekly",
-        {
-          method: "POST",
-          body: JSON.stringify(payload),
-        },
-      );
-
-      setNotice(`Weekly vacancy check sent to ${res.sent} facility(s). Skipped ${res.skipped}.`);
-    } catch (e) {
-      setError(getErrorMessage(e));
-    } finally {
-      setSendingWeeklyCheck(false);
-    }
-  }
-
   async function uploadOnePhoto(file: File): Promise<string> {
     const fd = new FormData();
     fd.append("file", file);
@@ -1603,7 +1343,7 @@ export default function AdminNursingHomes() {
   }, [selectedId]);
 
   const disabled =
-    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet || importingVacancyChecks || importingPhotoManifest || sendingWeeklyCheck;
+    loadingList || loadingOne || saving || deleting || uploadingPrimary || uploadingGallery || importingSheet;
 
   return (
     <div style={{ minHeight: "100vh", padding: 20, background: "linear-gradient(160deg, #e8f4f8 0%, #f0f9f8 100%)" }}>
@@ -1660,36 +1400,6 @@ export default function AdminNursingHomes() {
               />
             </label>
 
-            <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              {importingVacancyChecks ? "Importing..." : "Import Vacancy Checks"}
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                style={{ display: "none" }}
-                disabled={disabled || importingVacancyChecks}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) importVacancyChecks(f).catch(() => {});
-                  e.currentTarget.value = "";
-                }}
-              />
-            </label>
-
-            <label style={{ ...secondaryBtn, display: "inline-flex", alignItems: "center", gap: 8 }}>
-              {importingPhotoManifest ? "Uploading..." : "Upload Photo Manifest"}
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                style={{ display: "none" }}
-                disabled={disabled || importingPhotoManifest}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) importPhotoManifest(f).catch(() => {});
-                  e.currentTarget.value = "";
-                }}
-              />
-            </label>
-
             <a
               href="/facility_full_card_scanner_template.csv"
               target="_blank"
@@ -1699,37 +1409,12 @@ export default function AdminNursingHomes() {
               Download Full Card Template
             </a>
 
-            <a
-              href="/facility_vacancy_checks_template.csv"
-              target="_blank"
-              rel="noreferrer"
-              style={{ ...secondaryBtn, textDecoration: "none", display: "inline-flex", alignItems: "center" }}
-            >
-              Download Vacancy Template
-            </a>
-
             <button
               onClick={() => exportAllCsv()}
               disabled={disabled}
               style={{ ...secondaryBtn, background: "#0f766e", color: "#fff", borderColor: "#0f766e" }}
             >
               ⬇ Export All as CSV
-            </button>
-
-            <button
-              onClick={() => deleteAllFacilities()}
-              disabled={disabled}
-              style={{ ...secondaryBtn, background: "#991b1b", color: "#fff", borderColor: "#991b1b" }}
-            >
-              🗑 Delete All Facilities
-            </button>
-
-            <button onClick={() => sendWeeklyVacancyCheck()} disabled={disabled} style={secondaryBtn}>
-              {sendingWeeklyCheck
-                ? "Sending..."
-                : selectedId === "NEW"
-                  ? "Send Weekly Check to All"
-                  : "Send Weekly Check to Selected"}
             </button>
 
             <button
@@ -1748,43 +1433,6 @@ export default function AdminNursingHomes() {
                 : "Scan All Vacancies (AI)"}
             </button>
 
-            <select
-              value={gapStateFilter}
-              onChange={(e) => { setGapStateFilter(e.target.value); setShowGapPanel(false); setGapCandidates([]); setGapResults([]); }}
-              disabled={disabled || bulkGapFilling}
-              style={{ ...secondaryBtn, padding: "6px 10px", fontSize: 13 }}
-            >
-              <option value="">All states</option>
-              {["QLD","NSW","VIC","SA","WA","TAS","ACT","NT"].map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <button
-              onClick={showGapPanel && gapCandidates.length > 0 ? handleBulkGapFill : handleLoadGapCandidates}
-              disabled={disabled || bulkGapFilling}
-              style={{
-                ...secondaryBtn,
-                background: bulkGapFilling ? "#94a3b8" : "#0369a1",
-                color: "white",
-                border: "none",
-                fontWeight: 700,
-              }}
-            >
-              {bulkGapFilling
-                ? `Scanning… ${gapCurrentName}`
-                : showGapPanel && gapCandidates.length > 0
-                ? `▶ Start gap-fill (${gapCandidates.length} facilities)`
-                : gapStateFilter ? `Bulk Gap-Fill (${gapStateFilter})` : "Bulk Gap-Fill"}
-            </button>
-            {bulkGapFilling && (
-              <button
-                onClick={() => { gapStopRef.current = true; }}
-                style={{ ...secondaryBtn, color: "#991b1b", borderColor: "#fecaca" }}
-              >
-                Stop
-              </button>
-            )}
-
             <div style={{ marginLeft: "auto", color: "#64748b", fontSize: 13 }}>
               API: {API_BASE}
             </div>
@@ -1796,17 +1444,13 @@ export default function AdminNursingHomes() {
             <div><strong>{missingGeoCount}</strong> missing geo on this page</div>
           </div>
 
-          <div style={{ marginTop: 10, color: "#64748b", fontSize: 13 }}>
-            Upload order for each region: <strong>1.</strong> facility CSV, <strong>2.</strong> photo manifest, <strong>3.</strong> vacancy checks.
-          </div>
-
           <div
             style={{
               marginTop: 12,
               padding: 12,
               borderRadius: 12,
-              border: vacancyActivity.tone === "info" ? "1px solid #bfdbfe" : "1px solid #dbeafe",
-              background: vacancyActivity.tone === "info" ? "#eff6ff" : "#f8fbff",
+              border: "1px solid #dbeafe",
+              background: "#f8fbff",
             }}
           >
             <div style={{ fontWeight: 800, color: "#0b3b5b" }}>{vacancyActivity.title}</div>
