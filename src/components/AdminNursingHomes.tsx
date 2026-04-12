@@ -350,8 +350,22 @@ function facilityPreviewPath(id?: number | null): string {
   return id == null ? "/options" : `/options/${id}`;
 }
 
+function getInitialFacilityIdFromUrl(): number | "NEW" {
+  if (typeof window === "undefined") return "NEW";
+  const raw = new URLSearchParams(window.location.search).get("facilityId");
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : "NEW";
+}
+
+function adminEditPath(id: number): string {
+  if (typeof window === "undefined") return `/admin?facilityId=${id}`;
+  const url = new URL(window.location.href);
+  url.searchParams.set("facilityId", String(id));
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export default function AdminNursingHomes() {
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
   const [token, setToken] = useState<string>(() => {
     const savedToken = localStorage.getItem("nhnm_admin_token");
     const savedSession = localStorage.getItem("nhnm_admin_session");
@@ -361,7 +375,8 @@ export default function AdminNursingHomes() {
   const [list, setList] = useState<NursingHomeListItem[]>([]);
   const [totalFacilities, setTotalFacilities] = useState(0);
   const [pageOffset, setPageOffset] = useState(0);
-  const [selectedId, setSelectedId] = useState<number | "NEW">("NEW");
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [selectedId, setSelectedId] = useState<number | "NEW">(() => getInitialFacilityIdFromUrl());
 
   const [loadingList, setLoadingList] = useState(false);
   const [loadingOne, setLoadingOne] = useState(false);
@@ -464,6 +479,10 @@ export default function AdminNursingHomes() {
     setShowFacilitiesBoard(true);
   }
 
+  function openFacilityEditor(id: number) {
+    window.open(adminEditPath(id), "_blank", "noopener,noreferrer");
+  }
+
   // localFetch: always hits the Node.js server (same origin), ignores API_BASE.
   // Use this for endpoints that only exist in server/index.mjs (e.g. scan-facility, scan-vacancy).
   async function localFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -511,7 +530,7 @@ export default function AdminNursingHomes() {
     setLoadingList(true);
     try {
       const params = new URLSearchParams();
-      params.set("limit", String(PAGE_SIZE));
+      params.set("limit", String(pageSize));
       params.set("offset", String(nextOffset));
       if (search.trim()) params.set("search", search.trim());
       if (stateFilter !== "ALL") params.set("state", stateFilter);
@@ -1471,7 +1490,7 @@ export default function AdminNursingHomes() {
     setPageOffset(0);
     refreshList(0).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, stateFilter]);
+  }, [search, stateFilter, pageSize]);
 
   useEffect(() => {
     if (selectedId === "NEW") return;
@@ -1861,6 +1880,24 @@ export default function AdminNursingHomes() {
                 })}
               </div>
 
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 12 }}>
+                <div style={{ fontSize: 13, color: "#475569", fontWeight: 700 }}>Cards per page</div>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPageOffset(0);
+                  }}
+                  style={{ ...inputStyle, width: 110, paddingTop: 8, paddingBottom: 8 }}
+                >
+                  {PAGE_SIZE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {facilitiesBoardView === "ops" ? (
                 <div
                   style={{
@@ -1882,10 +1919,7 @@ export default function AdminNursingHomes() {
                       <button
                         key={`board-${nh.id}`}
                         type="button"
-                        onClick={() => {
-                          setSelectedId(nh.id);
-                          setShowFacilitiesBoard(false);
-                        }}
+                        onClick={() => openFacilityEditor(nh.id)}
                         style={{
                           textAlign: "left",
                           padding: 14,
@@ -1925,6 +1959,16 @@ export default function AdminNursingHomes() {
                           </div>
                         ) : null}
                         <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openFacilityEditor(nh.id);
+                            }}
+                            style={{ ...secondaryBtn, padding: "6px 10px", fontSize: 12 }}
+                          >
+                            Edit in new tab
+                          </button>
                           <a
                             href={facilityPreviewPath(nh.id)}
                             target="_blank"
@@ -1967,8 +2011,7 @@ export default function AdminNursingHomes() {
                 <SmallCardGallery
                   items={filteredList}
                   onEdit={(id) => {
-                    setSelectedId(id);
-                    setShowFacilitiesBoard(false);
+                    openFacilityEditor(id);
                   }}
                 />
               )}
@@ -1976,19 +2019,19 @@ export default function AdminNursingHomes() {
               <div style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={() => refreshList(Math.max(0, pageOffset - PAGE_SIZE))}
+                  onClick={() => refreshList(Math.max(0, pageOffset - pageSize))}
                   disabled={disabled || pageOffset === 0}
                   style={secondaryBtn}
                 >
-                  Previous 10
+                  Previous {pageSize}
                 </button>
                 <button
                   type="button"
-                  onClick={() => refreshList(pageOffset + PAGE_SIZE)}
-                  disabled={disabled || pageOffset + PAGE_SIZE >= totalFacilities}
+                  onClick={() => refreshList(pageOffset + pageSize)}
+                  disabled={disabled || pageOffset + pageSize >= totalFacilities}
                   style={secondaryBtn}
                 >
-                  Next 10
+                  Next {pageSize}
                 </button>
                 <div style={{ color: "#64748b", fontSize: 13 }}>
                   Showing {totalFacilities === 0 ? 0 : pageOffset + 1} to {Math.min(pageOffset + list.length, totalFacilities)} of {totalFacilities}
@@ -2025,6 +2068,21 @@ export default function AdminNursingHomes() {
                   </option>
                 ))}
               </select>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPageOffset(0);
+                }}
+                disabled={disabled}
+                style={inputStyle}
+              >
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    Show {option}
+                  </option>
+                ))}
+              </select>
               <button type="button" onClick={newFacility} disabled={disabled} style={secondaryBtn}>
                 + Create new
               </button>
@@ -2038,7 +2096,7 @@ export default function AdminNursingHomes() {
                   <button
                     key={nh.id}
                     type="button"
-                    onClick={() => setSelectedId(nh.id)}
+                    onClick={() => openFacilityEditor(nh.id)}
                     disabled={disabled}
                     style={{
                       textAlign: "left",
@@ -2079,19 +2137,19 @@ export default function AdminNursingHomes() {
             <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <button
                 type="button"
-                onClick={() => refreshList(Math.max(0, pageOffset - PAGE_SIZE))}
+                onClick={() => refreshList(Math.max(0, pageOffset - pageSize))}
                 disabled={disabled || pageOffset === 0}
                 style={secondaryBtn}
               >
-                Previous 10
+                Previous {pageSize}
               </button>
               <button
                 type="button"
-                onClick={() => refreshList(pageOffset + PAGE_SIZE)}
-                disabled={disabled || pageOffset + PAGE_SIZE >= totalFacilities}
+                onClick={() => refreshList(pageOffset + pageSize)}
+                disabled={disabled || pageOffset + pageSize >= totalFacilities}
                 style={secondaryBtn}
               >
-                Next 10
+                Next {pageSize}
               </button>
               <div style={{ color: "#64748b", fontSize: 13 }}>
                 Showing {totalFacilities === 0 ? 0 : pageOffset + 1} to {Math.min(pageOffset + list.length, totalFacilities)} of {totalFacilities}
@@ -2099,7 +2157,7 @@ export default function AdminNursingHomes() {
             </div>
 
             <div style={{ marginTop: 12, fontSize: 13, color: "#64748b" }}>
-              Pick a facility from the list, review the geo and details, then edit on the right and hit <b>Save</b>.
+              Open a facility in a new tab to edit it without losing your place in this list.
             </div>
           </div>
 
