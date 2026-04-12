@@ -473,6 +473,133 @@ function toJsonArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function uniqueTrimmed(list) {
+  const next = [];
+  for (const item of Array.isArray(list) ? list : []) {
+    const value = String(item || "").trim();
+    if (!value || next.includes(value)) continue;
+    next.push(value);
+  }
+  return next;
+}
+
+function hasMeaningfulRoomOptions(value) {
+  return toJsonArray(value).some((room) => {
+    if (!room || typeof room !== "object") return false;
+    return [
+      room.roomType,
+      room.roomName,
+      room.bathroomType,
+      room.sizeM2,
+      room.sizeText,
+      room.radMin,
+      room.radMax,
+      room.dapAmount,
+      room.availabilityNote,
+    ].some((field) => String(field ?? "").trim());
+  });
+}
+
+function getFacilityGapInfo(row) {
+  const hasWebsite = !!String(row.website || "").trim();
+  const hasGovUrl = !!String(row.government_listing_url || "").trim();
+  const missing = [];
+
+  if (!String(row.one_line_description || "").trim()) missing.push({ label: "Summary", source: "Web" });
+  if (!String(row.description || "").trim()) missing.push({ label: "Description", source: "Web" });
+  if (!String(row.phone || "").trim()) missing.push({ label: "Phone", source: "Web" });
+  if (!String(row.email || "").trim()) missing.push({ label: "Email", source: "Web" });
+  if (!String(row.address_line1 || "").trim()) missing.push({ label: "Address", source: "Web" });
+  if (!toJsonArray(row.feature_tags).length && !toJsonArray(row.other_tags).length) missing.push({ label: "Tags", source: "Web" });
+  if (!toJsonArray(row.languages).length) missing.push({ label: "Languages", source: "Web" });
+  if (!String(row.primary_image_url || "").trim()) missing.push({ label: "Primary image", source: "Manual" });
+  if (!toJsonArray(row.gallery_image_urls).length) missing.push({ label: "Gallery images", source: "Manual" });
+  if (!hasMeaningfulRoomOptions(row.room_options)) missing.push({ label: "Rooms & pricing", source: "Gov" });
+  if (normalizeVacancyValue(row.website_says_vacancies) === "unknown") missing.push({ label: "Vacancy status", source: "Web" });
+
+  return {
+    missingFields: missing.map((item) => item.label),
+    missingDetails: missing,
+    scanSources: uniqueTrimmed(missing.map((item) => item.source)),
+    hasWebsite,
+    hasGovUrl,
+  };
+}
+
+function rowToAdminListItem(row) {
+  const gapInfo = getFacilityGapInfo(row);
+  return {
+    id: Number(row.id),
+    name: row.name,
+    facilityRowId: row.facility_row_id,
+    providerName: row.provider_name,
+    oneLineDescription: row.one_line_description,
+    suburb: row.suburb,
+    state: row.state,
+    postcode: row.postcode,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    status: row.status,
+    primaryImageUrl: row.primary_image_url,
+    phone: row.phone,
+    email: row.email,
+    website: row.website,
+    websiteSaysVacancies: row.website_says_vacancies,
+    facilityConfirmedVacancies: row.facility_confirmed_vacancies,
+    websiteCheckedAt: row.website_checked_at,
+    facilityConfirmedAt: row.facility_confirmed_at,
+    conflictFlag: row.conflict_flag,
+    lastOutreachSentAt: row.last_outreach_sent_at,
+    lastOutreachReplyAt: row.last_outreach_reply_at,
+    canReceiveWeeklyCheck: !!row.email,
+    hasWebsite: gapInfo.hasWebsite,
+    hasGovUrl: gapInfo.hasGovUrl,
+    missingFields: gapInfo.missingFields,
+    missingDetails: gapInfo.missingDetails,
+    scanSources: gapInfo.scanSources,
+  };
+}
+
+function rowToAdminNursingHome(row) {
+  return {
+    id: Number(row.id),
+    name: row.name,
+    oneLineDescription: row.one_line_description,
+    description: row.description,
+    addressLine1: row.address_line1,
+    suburb: row.suburb,
+    state: row.state,
+    postcode: row.postcode,
+    latitude: row.latitude,
+    longitude: row.longitude,
+    phone: row.phone,
+    website: row.website,
+    governmentListingUrl: row.government_listing_url,
+    websiteSaysVacancies: row.website_says_vacancies,
+    facilityConfirmedVacancies: row.facility_confirmed_vacancies,
+    websiteCheckedAt: row.website_checked_at,
+    websiteSourceUrl: row.website_source_url,
+    facilityConfirmedAt: row.facility_confirmed_at,
+    facilityConfirmationSource: row.facility_confirmation_source,
+    conflictFlag: row.conflict_flag,
+    lastProfileScanAt: row.last_profile_scan_at,
+    updatedAt: row.updated_at,
+    email: row.email,
+    facebookUrl: row.facebook_url,
+    instagramUrl: row.instagram_url,
+    internalNotes: row.internal_notes,
+    status: row.status,
+    activeVacancies: row.active_vacancies,
+    verifiedAt: row.verified_at,
+    primaryImageUrl: row.primary_image_url,
+    galleryImageUrls: toJsonArray(row.gallery_image_urls),
+    featureTags: toJsonArray(row.feature_tags),
+    otherTags: toJsonArray(row.other_tags),
+    languages: toJsonArray(row.languages),
+    roomOptions: toJsonArray(row.room_options),
+  };
+}
+
 async function persistFacilityImageFields(body) {
   const primaryImageUrl = await mirrorRemoteImageUrl(body?.primaryImageUrl, {
     folder: "facilities",
@@ -481,12 +608,19 @@ async function persistFacilityImageFields(body) {
 
   const nextGallery = [];
   for (const item of toJsonArray(body?.galleryImageUrls)) {
-    const mirrored = await mirrorRemoteImageUrl(item, {
-      folder: "facilities",
-      fallbackStem: "facility-gallery",
-    });
-    if (mirrored && !nextGallery.includes(mirrored)) {
-      nextGallery.push(mirrored);
+    try {
+      const mirrored = await mirrorRemoteImageUrl(item, {
+        folder: "facilities",
+        fallbackStem: "facility-gallery",
+      });
+      if (mirrored && !nextGallery.includes(mirrored)) {
+        nextGallery.push(mirrored);
+      }
+    } catch (error) {
+      console.warn("Skipping gallery image that could not be mirrored", {
+        url: String(item || ""),
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -1781,31 +1915,7 @@ app.get("/api/admin/nursing-homes", adminAuth, async (_req, res) => {
      ORDER BY UPPER(COALESCE(state, '')) ASC`,
   );
 
-  const items = result.rows.map((row) => ({
-    id: Number(row.id),
-    name: row.name,
-    facilityRowId: row.facility_row_id,
-    providerName: row.provider_name,
-    oneLineDescription: row.one_line_description,
-    suburb: row.suburb,
-    state: row.state,
-    postcode: row.postcode,
-    latitude: row.latitude,
-    longitude: row.longitude,
-    status: row.status,
-    primaryImageUrl: row.primary_image_url,
-    phone: row.phone,
-    email: row.email,
-    website: row.website,
-    websiteSaysVacancies: row.website_says_vacancies,
-    facilityConfirmedVacancies: row.facility_confirmed_vacancies,
-    websiteCheckedAt: row.website_checked_at,
-    facilityConfirmedAt: row.facility_confirmed_at,
-    conflictFlag: row.conflict_flag,
-    lastOutreachSentAt: row.last_outreach_sent_at,
-    lastOutreachReplyAt: row.last_outreach_reply_at,
-    canReceiveWeeklyCheck: !!row.email,
-  }));
+  const items = result.rows.map(rowToAdminListItem);
 
   return res.json(
     {
@@ -1821,35 +1931,37 @@ app.get("/api/admin/nursing-homes", adminAuth, async (_req, res) => {
   );
 });
 
+app.get("/api/admin/nursing-homes/gap-candidates", adminAuth, async (req, res) => {
+  const state = String(req.query.state || "").trim().toUpperCase();
+  const params = [];
+  const whereClause = state ? "WHERE UPPER(COALESCE(state, '')) = $1" : "";
+  if (state) params.push(state);
+
+  const result = await query(
+    `SELECT * FROM nursing_homes
+     ${whereClause}
+     ORDER BY name ASC`,
+    params,
+  );
+
+  const candidates = result.rows
+    .map((row) => ({
+      id: Number(row.id),
+      name: row.name,
+      suburb: row.suburb,
+      state: row.state,
+      ...getFacilityGapInfo(row),
+    }))
+    .filter((row) => row.missingFields.length > 0);
+
+  return res.json(candidates);
+});
+
 app.get("/api/admin/nursing-homes/:id", adminAuth, async (req, res) => {
   const result = await query("SELECT * FROM nursing_homes WHERE id = $1", [req.params.id]);
   const row = result.rows[0];
   if (!row) return res.status(404).json({ message: "Nursing home not found." });
-  return res.json({
-    id: Number(row.id),
-    name: row.name,
-    oneLineDescription: row.one_line_description,
-    description: row.description,
-    addressLine1: row.address_line1,
-    suburb: row.suburb,
-    state: row.state,
-    postcode: row.postcode,
-    latitude: row.latitude,
-    longitude: row.longitude,
-    phone: row.phone,
-    website: row.website,
-    email: row.email,
-    internalNotes: row.internal_notes,
-    status: row.status,
-    activeVacancies: row.active_vacancies,
-    verifiedAt: row.verified_at,
-    primaryImageUrl: row.primary_image_url,
-    galleryImageUrls: toJsonArray(row.gallery_image_urls),
-    featureTags: toJsonArray(row.feature_tags),
-    otherTags: toJsonArray(row.other_tags),
-    languages: toJsonArray(row.languages),
-    roomOptions: toJsonArray(row.room_options),
-  });
+  return res.json(rowToAdminNursingHome(row));
 });
 
 function nursingHomePayload(body) {
@@ -2329,6 +2441,250 @@ app.post("/api/admin/scan-facility", adminAuth, async (req, res) => {
 
   const data = await scrapeRes.json();
   return res.json(data?.extract ?? data?.data?.extract ?? {});
+});
+
+app.post("/api/admin/nursing-homes/gap-fill/:id", adminAuth, async (req, res) => {
+  if (!env.firecrawlApiKey) {
+    return res.status(503).json({ message: "Firecrawl API key not configured." });
+  }
+
+  const facilityId = Number(req.params.id);
+  if (!facilityId) return res.status(400).json({ message: "Facility id is required." });
+
+  const facilityResult = await query("SELECT * FROM nursing_homes WHERE id = $1", [facilityId]);
+  const row = facilityResult.rows[0];
+  if (!row) return res.status(404).json({ message: "Facility not found." });
+
+  const gapInfo = getFacilityGapInfo(row);
+  const website = String(row.website || "").trim();
+  const govUrl = String(row.government_listing_url || "").trim();
+
+  let oneLineDescription = row.one_line_description;
+  let description = row.description;
+  let addressLine1 = row.address_line1;
+  let phone = row.phone;
+  let email = row.email;
+  let featureTags = toJsonArray(row.feature_tags);
+  let otherTags = toJsonArray(row.other_tags);
+  let languages = toJsonArray(row.languages);
+  let roomOptions = toJsonArray(row.room_options);
+  let websiteSaysVacancies = row.website_says_vacancies;
+  let websiteCheckedAt = row.website_checked_at;
+  let websiteSourceUrl = row.website_source_url;
+  let changed = false;
+
+  const needsWebProfile = gapInfo.missingDetails.some((item) => item.source === "Web" && item.label !== "Vacancy status");
+  if (website && needsWebProfile) {
+    const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.firecrawlApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: website,
+        formats: ["extract"],
+        extract: {
+          prompt: `Extract all available information about this aged care / nursing home facility. Be thorough and capture everything published on the page.`,
+          schema: {
+            type: "object",
+            properties: {
+              oneLineDescription:  { type: "string" },
+              description:         { type: "string" },
+              addressLine1:        { type: "string" },
+              phone:               { type: "string" },
+              email:               { type: "string" },
+              careTypes:           { type: "array", items: { type: "string" } },
+              specialties:         { type: "array", items: { type: "string" } },
+              alliedHealth:        { type: "array", items: { type: "string" } },
+              languages:           { type: "array", items: { type: "string" } },
+              amenities:           { type: "array", items: { type: "string" } },
+              roomTypes:           { type: "array", items: { type: "string" } },
+              featureHighlights:   { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+      }),
+    });
+
+    if (!scrapeRes.ok) {
+      const err = await scrapeRes.text().catch(() => "Unknown error");
+      return res.status(502).json({ message: `Firecrawl error: ${err}` });
+    }
+
+    const profileData = await scrapeRes.json();
+    const extract = profileData?.extract ?? profileData?.data?.extract ?? {};
+    if (!String(oneLineDescription || "").trim() && String(extract.oneLineDescription || "").trim()) {
+      oneLineDescription = String(extract.oneLineDescription).trim();
+      changed = true;
+    }
+    if (!String(description || "").trim() && String(extract.description || "").trim()) {
+      description = String(extract.description).trim();
+      changed = true;
+    }
+    if (!String(addressLine1 || "").trim() && String(extract.addressLine1 || "").trim()) {
+      addressLine1 = String(extract.addressLine1).trim();
+      changed = true;
+    }
+    if (!String(phone || "").trim() && String(extract.phone || "").trim()) {
+      phone = String(extract.phone).trim();
+      changed = true;
+    }
+    if (!String(email || "").trim() && String(extract.email || "").trim()) {
+      email = String(extract.email).trim();
+      changed = true;
+    }
+
+    const nextFeatureTags = uniqueTrimmed([
+      ...featureTags,
+      ...toJsonArray(extract.careTypes),
+      ...toJsonArray(extract.specialties),
+      ...toJsonArray(extract.featureHighlights),
+      ...toJsonArray(extract.alliedHealth),
+    ]);
+    const nextOtherTags = uniqueTrimmed([
+      ...otherTags,
+      ...toJsonArray(extract.amenities),
+      ...toJsonArray(extract.roomTypes),
+    ]);
+    const nextLanguages = uniqueTrimmed([...languages, ...toJsonArray(extract.languages)]);
+
+    if (nextFeatureTags.length !== featureTags.length) {
+      featureTags = nextFeatureTags;
+      changed = true;
+    }
+    if (nextOtherTags.length !== otherTags.length) {
+      otherTags = nextOtherTags;
+      changed = true;
+    }
+    if (nextLanguages.length !== languages.length) {
+      languages = nextLanguages;
+      changed = true;
+    }
+  }
+
+  if (website && normalizeVacancyValue(websiteSaysVacancies) === "unknown") {
+    const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.firecrawlApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: website,
+        formats: ["extract"],
+        extract: {
+          prompt: `Check this aged care / nursing home website for current bed vacancies or room availability. Look for any mention of available rooms, vacancies, waiting lists, "enquire now", admissions, or similar. Return a concise summary.`,
+          schema: {
+            type: "object",
+            properties: {
+              hasVacancy: { type: "string", enum: ["yes", "no", "unknown"] },
+            },
+          },
+        },
+      }),
+    });
+
+    if (scrapeRes.ok) {
+      const vacancyData = await scrapeRes.json();
+      const extract = vacancyData?.extract ?? vacancyData?.data?.extract ?? {};
+      const nextVacancy = normalizeVacancyValue(extract.hasVacancy);
+      if (nextVacancy !== "unknown") {
+        websiteSaysVacancies = nextVacancy;
+        websiteCheckedAt = new Date().toISOString();
+        websiteSourceUrl = website;
+        changed = true;
+      }
+    }
+  }
+
+  if (govUrl && !hasMeaningfulRoomOptions(roomOptions)) {
+    const roomsUrl = govUrl.split("?")[0].replace(/\/$/, "") + "/rooms-and-cost";
+    const scrapeRes = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.firecrawlApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: roomsUrl,
+        formats: ["extract"],
+        extract: {
+          prompt: `Extract every individual room option listed on this MyAgedCare rooms-and-cost page. For each room return: the full room name, bathroom type, room size in square metres, the RAD lump sum amount in AUD, the DAP daily rate in AUD, and the current availability status. If only one RAD amount is shown use it for both radMin and radMax.`,
+          schema: {
+            type: "object",
+            properties: {
+              rooms: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    roomType: { type: "string" },
+                    roomName: { type: "string" },
+                    bathroomType: { type: "string" },
+                    sizeM2: { type: "number" },
+                    radMin: { type: "number" },
+                    radMax: { type: "number" },
+                    dapAmount: { type: "number" },
+                    availabilityNote: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    });
+
+    if (scrapeRes.ok) {
+      const roomsData = await scrapeRes.json();
+      const extract = roomsData?.extract ?? roomsData?.data?.extract ?? {};
+      const rooms = Array.isArray(extract.rooms) ? extract.rooms : [];
+      if (rooms.length > 0) {
+        roomOptions = rooms;
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    await query(
+      `UPDATE nursing_homes
+       SET one_line_description = COALESCE($2, one_line_description),
+           description = COALESCE($3, description),
+           address_line1 = COALESCE($4, address_line1),
+           phone = COALESCE($5, phone),
+           email = COALESCE($6, email),
+           feature_tags = $7::jsonb,
+           other_tags = $8::jsonb,
+           languages = $9::jsonb,
+           room_options = $10::jsonb,
+           website_says_vacancies = COALESCE($11, website_says_vacancies),
+           website_checked_at = COALESCE($12, website_checked_at),
+           website_source_url = COALESCE($13, website_source_url),
+           last_profile_scan_at = $14
+       WHERE id = $1`,
+      [
+        facilityId,
+        String(oneLineDescription || "").trim() || null,
+        String(description || "").trim() || null,
+        String(addressLine1 || "").trim() || null,
+        String(phone || "").trim() || null,
+        String(email || "").trim() || null,
+        JSON.stringify(featureTags),
+        JSON.stringify(otherTags),
+        JSON.stringify(languages),
+        JSON.stringify(roomOptions),
+        normalizeVacancyValue(websiteSaysVacancies),
+        websiteCheckedAt || null,
+        String(websiteSourceUrl || "").trim() || null,
+        new Date().toISOString(),
+      ],
+    );
+  }
+
+  const updatedResult = await query("SELECT * FROM nursing_homes WHERE id = $1", [facilityId]);
+  return res.json(rowToAdminNursingHome(updatedResult.rows[0]));
 });
 
 app.post("/api/admin/scan-vacancy", adminAuth, async (req, res) => {

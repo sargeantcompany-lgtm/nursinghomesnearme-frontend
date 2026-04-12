@@ -28,6 +28,11 @@ type NursingHomeListItem = {
   lastOutreachSentAt?: string | null;
   lastOutreachReplyAt?: string | null;
   canReceiveWeeklyCheck?: boolean;
+  hasWebsite?: boolean;
+  hasGovUrl?: boolean;
+  missingFields?: string[];
+  missingDetails?: Array<{ label: string; source: string }>;
+  scanSources?: string[];
 };
 
 type NursingHomeListResponse = {
@@ -173,6 +178,15 @@ function linesToList(text: string): string[] {
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function galleryTextToList(text: string): string[] {
+  const matches = text.match(/(?:https?:\/\/[^\s"'<>]+|\/uploads\/[^\s"'<>]+|\/facility-gallery\/[^\s"'<>]+)/g) ?? [];
+  const normalized = matches.length ? matches : linesToList(text);
+  return normalized
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((value, index, all) => all.indexOf(value) === index);
 }
 
 function listToLines(list?: string[] | null): string {
@@ -323,7 +337,7 @@ function getErrorMessage(err: unknown): string {
 }
 
 function appendLines(existingText: string, newUrls: string[]): string {
-  const existing = linesToList(existingText);
+  const existing = galleryTextToList(existingText);
   const next = [...existing];
   for (const u of newUrls) {
     const t = (u ?? "").trim();
@@ -396,6 +410,7 @@ export default function AdminNursingHomes() {
   const [stateFilter, setStateFilter] = useState("ALL");
   const [showFacilitiesBoard, setShowFacilitiesBoard] = useState(false);
   const [facilitiesBoardView, setFacilitiesBoardView] = useState<"ops" | "cards">("ops");
+  const [selectedGalleryIds, setSelectedGalleryIds] = useState<number[]>([]);
 
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [form, setForm] = useState<UpsertForm>(emptyForm());
@@ -436,6 +451,10 @@ export default function AdminNursingHomes() {
     return counts;
   }, [stateCountsList]);
   const filteredList = sortedList;
+  const selectedGalleryCount = useMemo(
+    () => filteredList.filter((nh) => selectedGalleryIds.includes(nh.id)).length,
+    [filteredList, selectedGalleryIds],
+  );
   const missingGeoCount = useMemo(
     () => list.filter((nh) => nh.latitude == null || nh.longitude == null).length,
     [list],
@@ -465,12 +484,12 @@ export default function AdminNursingHomes() {
     };
   }, [importingVacancyChecks, sendingWeeklyCheck, selectedId]);
 
-  const galleryUrls = useMemo(() => linesToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
+  const galleryUrls = useMemo(() => galleryTextToList(form.galleryImageUrlsText), [form.galleryImageUrlsText]);
 
   function removeGalleryUrl(url: string) {
     setForm((p) => ({
       ...p,
-      galleryImageUrlsText: listToLines(linesToList(p.galleryImageUrlsText).filter((item) => item !== url)),
+      galleryImageUrlsText: listToLines(galleryTextToList(p.galleryImageUrlsText).filter((item) => item !== url)),
     }));
   }
 
@@ -591,7 +610,7 @@ export default function AdminNursingHomes() {
         primaryImageUrl:
           String(data.primaryImageUrl || p.primaryImageUrl),
         galleryImageUrlsText: [
-          ...linesToList(p.galleryImageUrlsText),
+          ...galleryTextToList(p.galleryImageUrlsText),
           ...((data.galleryImageUrls as string[]) || []),
         ].filter((v, i, a) => v && a.indexOf(v) === i).join("\n"),
         internalNotes: [
@@ -707,10 +726,10 @@ export default function AdminNursingHomes() {
         const newPrimary = primary && !p.primaryImageUrl ? primary : p.primaryImageUrl;
         if (primary && !p.primaryImageUrl) populated++;
         const merged = [
-          ...linesToList(p.galleryImageUrlsText),
+          ...galleryTextToList(p.galleryImageUrlsText),
           ...gallery,
         ].filter((v, i, a) => v && a.indexOf(v) === i);
-        populated += gallery.filter((u) => !linesToList(p.galleryImageUrlsText).includes(u)).length;
+        populated += gallery.filter((u) => !galleryTextToList(p.galleryImageUrlsText).includes(u)).length;
         return { ...p, primaryImageUrl: newPrimary, galleryImageUrlsText: merged.join("\n") };
       });
       setPhotoScanMsg(populated > 0 ? `Found ${populated} photo(s). Review and save.` : "No photos found on this page.");
@@ -776,6 +795,91 @@ export default function AdminNursingHomes() {
     setBulkGapFilling(false);
     setGapCurrentName("");
     await refreshList();
+  }
+
+  async function handleScanSelectedGaps() {
+    const selectedFacilities = filteredList.filter((nh) => selectedGalleryIds.includes(nh.id));
+    if (!selectedFacilities.length) {
+      setNotice("Select at least one facility card first.");
+      return;
+    }
+
+    gapStopRef.current = false;
+    setBulkGapFilling(true);
+    setGapResults([]);
+    setShowGapPanel(true);
+    setError("");
+    setGapCandidates(
+      selectedFacilities.map((facility) => ({
+        id: facility.id,
+        name: facility.name,
+        suburb: facility.suburb ?? "",
+        state: facility.state ?? "",
+        hasWebsite: !!facility.hasWebsite,
+        hasGovUrl: !!facility.hasGovUrl,
+        missingFields: facility.missingFields ?? [],
+      })),
+    );
+
+    for (let i = 0; i < selectedFacilities.length; i++) {
+      if (gapStopRef.current) break;
+      const facility = selectedFacilities[i];
+      setGapCurrentName(`${i + 1}/${selectedFacilities.length} — ${facility.name}`);
+      try {
+        const updated = await apiFetch<NursingHome>(`/api/admin/nursing-homes/gap-fill/${facility.id}`, { method: "POST" });
+        const updatedMissingFields = [
+          !String(updated.oneLineDescription || "").trim() ? "Summary" : null,
+          !String(updated.description || "").trim() ? "Description" : null,
+          !String(updated.phone || "").trim() ? "Phone" : null,
+          !String(updated.email || "").trim() ? "Email" : null,
+          !String(updated.addressLine1 || "").trim() ? "Address" : null,
+          !(updated.featureTags?.length || updated.otherTags?.length) ? "Tags" : null,
+          !updated.languages?.length ? "Languages" : null,
+          !String(updated.primaryImageUrl || "").trim() ? "Primary image" : null,
+          !updated.galleryImageUrls?.length ? "Gallery images" : null,
+          !updated.roomOptions?.length ? "Rooms & pricing" : null,
+          !updated.websiteSaysVacancies || updated.websiteSaysVacancies === "unknown" ? "Vacancy status" : null,
+        ].filter((value): value is string => !!value);
+
+        setGapResults((prev) => [
+          ...prev,
+          {
+            id: facility.id,
+            name: facility.name,
+            status: updatedMissingFields.length < (facility.missingFields?.length ?? 0) ? "filled" : "unchanged",
+            missingFields: updatedMissingFields,
+          },
+        ]);
+      } catch (e: unknown) {
+        setGapResults((prev) => [
+          ...prev,
+          {
+            id: facility.id,
+            name: facility.name,
+            status: "error",
+            missingFields: facility.missingFields ?? [],
+            error: e instanceof Error ? e.message : String(e),
+          },
+        ]);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+
+    setBulkGapFilling(false);
+    setGapCurrentName("");
+    await refreshList();
+  }
+
+  function toggleGallerySelection(id: number) {
+    setSelectedGalleryIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  }
+
+  function selectAllVisibleCards() {
+    setSelectedGalleryIds(filteredList.map((nh) => nh.id));
+  }
+
+  function clearVisibleCardSelection() {
+    setSelectedGalleryIds([]);
   }
 
   async function handleScanAllVacancies() {
@@ -951,7 +1055,7 @@ export default function AdminNursingHomes() {
 
         // images
         primaryImageUrl: form.primaryImageUrl.trim() || null,
-        galleryImageUrls: linesToList(form.galleryImageUrlsText),
+        galleryImageUrls: galleryTextToList(form.galleryImageUrlsText),
 
         // lists
         featureTags: linesToList(form.featureTagsText),
@@ -1898,6 +2002,49 @@ export default function AdminNursingHomes() {
                 </select>
               </div>
 
+              {facilitiesBoardView === "cards" ? (
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: 12,
+                    borderRadius: 14,
+                    border: "1px solid #dbe3ed",
+                    background: "#f8fbfd",
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 13, color: "#334155", fontWeight: 700 }}>
+                    {selectedGalleryCount} selected on this page
+                  </div>
+                  <button type="button" onClick={selectAllVisibleCards} style={secondaryBtn}>
+                    Select visible
+                  </button>
+                  <button type="button" onClick={clearVisibleCardSelection} style={secondaryBtn}>
+                    Clear selection
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleScanSelectedGaps}
+                    disabled={disabled || bulkGapFilling || selectedGalleryCount === 0}
+                    style={{
+                      ...secondaryBtn,
+                      background: disabled || bulkGapFilling || selectedGalleryCount === 0 ? "#94a3b8" : "#0369a1",
+                      color: "white",
+                      border: "none",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {bulkGapFilling ? `Scanning… ${gapCurrentName}` : `Scan Selected Gaps (${selectedGalleryCount})`}
+                  </button>
+                  <div style={{ marginLeft: "auto", fontSize: 12, color: "#64748b" }}>
+                    Web fills copy, contact info, tags, languages, and vacancy. Gov fills rooms and pricing.
+                  </div>
+                </div>
+              ) : null}
+
               {facilitiesBoardView === "ops" ? (
                 <div
                   style={{
@@ -2013,6 +2160,8 @@ export default function AdminNursingHomes() {
                   onEdit={(id) => {
                     openFacilityEditor(id);
                   }}
+                  selectedIds={selectedGalleryIds}
+                  onToggleSelected={toggleGallerySelection}
                 />
               )}
 
@@ -3269,9 +3418,13 @@ function PreviewFacilityCard({ form, currentId }: { form: UpsertForm; currentId:
 function SmallCardGallery({
   items,
   onEdit,
+  selectedIds,
+  onToggleSelected,
 }: {
   items: NursingHomeListItem[];
   onEdit: (id: number) => void;
+  selectedIds: number[];
+  onToggleSelected: (id: number) => void;
 }) {
   return (
     <div
@@ -3284,6 +3437,7 @@ function SmallCardGallery({
     >
       {items.map((nh) => {
         const locationText = [nh.suburb, nh.state, nh.postcode].filter(Boolean).join(", ");
+        const isSelected = selectedIds.includes(nh.id);
         const vacancyLabel =
           nh.websiteSaysVacancies === "yes"
             ? "Vacancy available"
@@ -3296,6 +3450,7 @@ function SmallCardGallery({
             : nh.websiteSaysVacancies === "no"
               ? { background: "#fee2e2", color: "#991b1b" }
               : { background: "#dbeafe", color: "#1d4ed8" };
+        const missingDetails = nh.missingDetails ?? [];
 
         return (
           <article
@@ -3303,7 +3458,7 @@ function SmallCardGallery({
             style={{
               background: "white",
               borderRadius: 16,
-              border: "1px solid #dbe3ed",
+              border: isSelected ? "1px solid #0369a1" : "1px solid #dbe3ed",
               overflow: "hidden",
               boxShadow: "0 18px 36px rgba(15, 23, 42, 0.06)",
               display: "flex",
@@ -3311,6 +3466,27 @@ function SmallCardGallery({
             }}
           >
             <div style={{ position: "relative", height: 214, background: "#dbeafe" }}>
+              <label
+                style={{
+                  position: "absolute",
+                  left: 12,
+                  bottom: 12,
+                  zIndex: 2,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "rgba(255,255,255,0.94)",
+                  borderRadius: 999,
+                  padding: "6px 10px",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#0f172a",
+                }}
+              >
+                <input type="checkbox" checked={isSelected} onChange={() => onToggleSelected(nh.id)} />
+                Select
+              </label>
+
               {nh.primaryImageUrl ? (
                 <img
                   src={nh.primaryImageUrl}
@@ -3401,6 +3577,31 @@ function SmallCardGallery({
               <p style={{ margin: 0, color: "#475569", fontSize: 14, lineHeight: 1.6 }}>
                 {(nh.oneLineDescription || "Previewing the customer-facing small facility card.").slice(0, 140)}
               </p>
+
+              {missingDetails.length ? (
+                <div style={{ display: "grid", gap: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#0b3b5b" }}>Needs filling</div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {missingDetails.map((item) => (
+                      <span
+                        key={`${nh.id}-${item.label}-${item.source}`}
+                        style={{
+                          borderRadius: 999,
+                          padding: "5px 9px",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          background: item.source === "Gov" ? "#dbeafe" : item.source === "Web" ? "#dcfce7" : "#f3f4f6",
+                          color: item.source === "Gov" ? "#1d4ed8" : item.source === "Web" ? "#166534" : "#4b5563",
+                        }}
+                      >
+                        {item.label} · {item.source}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, fontWeight: 800, color: "#166534" }}>Core fields look filled</div>
+              )}
 
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {nh.phone ? <a href={`tel:${nh.phone}`} style={previewActionPill}>Call</a> : null}
